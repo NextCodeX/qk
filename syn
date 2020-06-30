@@ -1,0 +1,1259 @@
+#####demo.qk#####println("hi, \"joker\" \n")
+
+a = 1
+b = 3
+c = 7 + a * b
+if b > 0 {
+    println("b 大于 0")
+}
+println("c:", c)
+
+add(n1, n2) {
+    res = n1 + n2
+    return n3
+}
+d = add(13, 23)
+println("add result:", d)
+
+arr = [1, true, "testing"]
+println("a len:", a.len)
+println("a[1]", a[1])
+arr.add("hello world")
+println("a len:", a.len)
+
+obj = {
+name: "tome",
+age: 18
+}
+println("user age:", obj.name)
+
+
+~~~~~~~~~~~~~~~~~~~~
+#####src\core\compile.go#####package core
+
+import (
+    "fmt"
+    "strconv"
+)
+
+var (
+    funcList = make(map[string]Function)
+    mainFunc = newFunc()
+)
+
+
+func Compile(ts []Token) {
+    mainFunc.raw = ts
+    for i:=0; i<len(ts); {
+        t := ts[i]
+        var endIndex int
+        var stmt *Statement
+
+        if t.t != Identifier {
+            goto next_loop
+        }
+        switch t.str {
+        case "func":
+        case "if":
+           stmt, endIndex = parseIfStatement(i, ts)
+        case "for":
+           stmt, endIndex = parseForStatement(i, ts)
+        case "switch":
+        default:
+            endIndex = nextBoundary(i, ts)
+            if endIndex>0 {
+                stmt = newStatement(ExpressionStatement, ts[i:endIndex])
+            }
+
+        }
+        if endIndex>0 {
+            parseStatement(stmt)
+            mainFunc.addStatement(stmt)
+            i = endIndex
+        }
+
+
+        next_loop:
+        i++
+    }
+}
+
+func parseIfStatement(currentIndex int, ts []Token) (*Statement, int) {
+    stmt := &Statement{t:IfStatement}
+
+    index := nextSymbol(currentIndex, ts, "{")
+    stmt.condition = &Expression{
+        t:     BinaryExpression,
+        raw:   ts[currentIndex+1:index],
+    }
+
+    scopeOpenCount := 1
+    var endIndex int
+    for i:=index+1; i<=len(ts); i++ {
+        t := ts[i]
+        if t.str == "{" {
+            scopeOpenCount++
+        }
+        if t.str == "}" {
+            scopeOpenCount--
+            endIndex = i
+            if scopeOpenCount == 0 {
+                break
+            }
+        }
+        stmt.raw = append(stmt.raw, t)
+    }
+    return stmt, endIndex
+}
+
+func parseForStatement(currentIndex int, ts []Token) (*Statement, int) {
+    stmt := &Statement{t:IfStatement}
+    index := nextSymbol(currentIndex, ts, "{")
+    exprs := splitExpression(ts[currentIndex+1:index])
+    stmt.setHeaderInfo(exprs)
+    scopeOpenCount := 1
+    var endIndex int
+    for i:=index+1; i<=len(ts); i++ {
+        t := ts[i]
+        if t.str == "{" {
+            scopeOpenCount++
+        }
+        if t.str == "}" {
+            scopeOpenCount--
+            endIndex = i
+            if scopeOpenCount == 0 {
+                break
+            }
+        }
+        stmt.raw = append(stmt.raw, t)
+    }
+    return stmt, endIndex
+}
+
+func splitExpression(ts []Token) []*Expression {
+    res := make([]*Expression, 3)
+    if !hasSymbol(ts, ";") {
+        res[1] = &Expression{
+            t:     BinaryExpression,
+            raw:   ts,
+        }
+        return res
+    }
+    index := nextSymbol(0, ts, ";")
+    if index > 2 {
+        res[0] = &Expression{
+            t:     BinaryExpression,
+            raw:   ts[:index],
+        }
+    }
+    preIndex := index+1
+    index = nextSymbol(preIndex, ts, ";")
+    if index - preIndex > 2 {
+        res[1] = &Expression{
+            t:     BinaryExpression,
+            raw:   ts[preIndex:index],
+        }
+    }
+    preIndex = index+1
+    index = nextSymbol(preIndex, ts, ";")
+    if index - preIndex > 2 {
+        res[2] = &Expression{
+            t:     BinaryExpression,
+            raw:   ts[preIndex:index],
+        }
+    }
+    return res
+}
+
+func nextToken(currentIndex int, ts []Token) *Token {
+    if currentIndex+1>=len(ts) {
+        return nil
+    }
+    return &ts[currentIndex+1]
+}
+
+func nextBoundary(currentIndex int, ts []Token) int {
+    return nextSymbol(currentIndex, ts, ";")
+}
+
+func nextSymbol(currentIndex int, ts []Token, s string) int {
+    for i:=currentIndex; i<len(ts); i++ {
+        t := ts[i]
+        if t.t == Symbol && t.str == s {
+            return i
+        }
+    }
+    return -1;
+}
+
+func hasSymbol(ts []Token, s string) bool {
+    for i:=0; i<len(ts); i++ {
+        t := ts[i]
+        if t.t == Symbol && t.str == s {
+            return true
+        }
+    }
+    return false;
+}
+
+
+func parseStatement(stmt *Statement) {
+    ts := stmt.raw
+
+    switch {
+    case stmt.isExpressionStatement():
+        parseExpressionStatement(ts, stmt)
+
+    case stmt.isIfStatement():
+    case stmt.isForStatement():
+    case stmt.isSwitchStatement():
+    case stmt.isReturnStatement():
+    }
+
+}
+
+func parseExpressionStatement(ts []Token, stmt *Statement) {
+    var expr *Expression
+    tlen := len(ts)
+    if tlen < 2 {
+        return
+    }
+    if tlen == 2 {
+        if ts[0].isIdentifier() && (ts[1].str=="++" || ts[1].str=="--") {
+
+        }
+        return
+    }
+
+    // 去括号
+    if ts[0].str == "(" && ts[tlen-1].str == ")" {
+        ts = ts[1:tlen-1]
+    }
+    tlen = len(ts)
+
+    // 处理基本表达式
+    if tlen == 3 {
+        expr = parseTerm(ts)
+        if expr != nil {
+            stmt.addExpression(expr)
+        }
+        return
+    }
+
+    // 处理多维表达式
+    expr, next := parseListExpression(ts, stmt)
+    if expr != nil {
+        stmt.addExpression(expr)
+    }
+    if next != nil {
+        parseExpressionStatement(next, stmt)
+    }
+}
+
+func parseListExpression(ts []Token, stmt *Statement) (*Expression, []Token) {
+    first := ts[0]
+    mid := ts[1]
+    third := ts[2]
+    fourth := ts[3]
+    var expr *Expression
+    if first.isIdentifier() && mid.str == "=" {
+        if first.isTmp() && len(ts) == 5 {
+            fifth := ts[4]
+            exprType := getExpressionType(fourth.str)
+            expr = &Expression{
+                t:          exprType,
+                left:       parsePrimaryExpression(&third),
+                right:      parsePrimaryExpression(&fifth),
+                tmpname:    first.str,
+            }
+            return expr, nil
+        }
+
+        expr = newListExpression()
+        tmp := &Expression{
+            t:     AssignExpression | TmpExpression,
+            left:  PrimaryExpr{t: Varname, name: first.str},
+            right: PrimaryExpr{t: Fill},
+        }
+        expr.list = append(expr.list, tmp)
+
+        return expr, ts[3:]
+    }
+    b11 := isMulDiv(mid.str)
+    b12 := isAddSub(mid.str) && isAddSub(fourth.str)
+    if b11 || b12 {
+        exprType := getExpressionType(mid.str)
+        tmpname := getTmpname(stmt)
+        expr = &Expression{
+            t:          TmpExpression | exprType,
+            left:       parsePrimaryExpression(&first),
+            right:      parsePrimaryExpression(&third),
+            tmpname:    tmpname,
+        }
+        head := tmpToken(tmpname)
+        next := insert(head, ts[3:])
+        return expr, next
+    }
+    if isAddSub(mid.str) && isMulDiv(fourth.str) {
+        exprType := getExpressionType(mid.str)
+        tmpname := getTmpname(stmt)
+        tail := tmpToken(tmpname)
+        expr = &Expression{
+            t:          TmpExpression | exprType,
+            left:       parsePrimaryExpression(&first),
+            right:      parsePrimaryExpression(&tail),
+        }
+        assignToken := symbolToken("=")
+        next := insert2(tail, assignToken, ts[2:])
+        return expr, next
+    }
+    return nil, nil
+}
+
+func isAddSub(op string) bool {
+    return op == "+" || op == "-"
+}
+
+func isMulDiv(op string) bool {
+    return op == "*" || op == "/"
+}
+
+func getTmpname(stmt *Statement) string {
+    name := fmt.Sprintf("tmp.%v", stmt.tmpcount)
+    stmt.tmpcount++
+    return name
+}
+
+func parseTerm(ts []Token) *Expression{
+    first := ts[0]
+    mid := ts[1]
+    third := ts[2]
+    left := parsePrimaryExpression(&first)
+    right := parsePrimaryExpression(&third)
+    var exprType ExpressionType
+    switch {
+    case  first.isIdentifier() && mid.str == "=":
+        exprType = AssignExpression
+
+    case mid.str == "+":
+        exprType = AddExpression
+
+    case mid.str == "-":
+        exprType = SubExpression
+
+    case mid.str == "*":
+        exprType = MulExpression
+
+    case mid.str == "/":
+        exprType = DivExpression
+
+    default:
+        return nil
+    }
+
+    expr := &Expression{
+        t:     exprType,
+        left:  left,
+        right: right,
+    }
+    return expr
+}
+
+func getExpressionType(op string) ExpressionType {
+    switch op {
+    case "+": return AddExpression
+    case "-": return SubExpression
+    case "*": return MulExpression
+    case "/": return DivExpression
+
+    default:
+        return -1
+    }
+}
+
+func parsePrimaryExpression(t *Token) PrimaryExpr {
+    v := tokenToValue(t)
+    var res PrimaryExpr
+    if v == nil {
+        res = PrimaryExpr{t: Varname, name: t.str}
+    } else {
+        res = PrimaryExpr{t: Const, result: v}
+    }
+    return res
+}
+
+func tokenToValue(t *Token) *Value {
+    var v Value
+    if t.isFloat() {
+        f, err := strconv.ParseFloat(t.str, 64)
+        exitOnError(err)
+        v = newVal(f)
+        return &v
+    }
+    if t.isInt() {
+        i, err := strconv.Atoi(t.str)
+        exitOnError(err)
+        v = newVal(i)
+        return &v
+    }
+    if t.isStr() {
+        v = newVal(fmt.Sprintf("%v", t.str))
+        return &v
+    }
+    if t.str == "true" || t.str == "false" {
+        b, err := strconv.ParseBool(t.str)
+        exitOnError(err)
+        v = newVal(b)
+        return &v
+    }
+    return nil
+}
+~~~~~~~~~~~~~~~~~~~~
+#####src\core\expression.go#####package core
+
+import (
+    "bytes"
+)
+
+type ExpressionType int
+
+const (
+    IntExpression ExpressionType = 1 << iota
+    FloatExpression
+    BooleanExpression
+    StringExpression
+    ConstExpression
+    IdentifierExpression
+    AddExpression
+    SubExpression
+    MulExpression
+    DivExpression
+    AssignExpression
+    FunctionCallExpression
+    MethodCallExpression
+    BinaryExpression
+    ListExpression
+    TmpExpression
+)
+
+type OperationType int
+
+const (
+    Opeq OperationType = 1 << iota
+    Opgt
+    Oplt
+    Opge
+    Ople
+    Opassign
+)
+
+
+type Expression struct {
+    t ExpressionType
+    raw []Token
+    list []*Expression
+    listFinish bool
+    left PrimaryExpr
+    op OperationType
+    right PrimaryExpr
+    result *Value
+    tmpname string
+}
+
+func newListExpression() *Expression {
+    return &Expression{
+        t:          ListExpression,
+        listFinish: false,
+    }
+}
+
+func (this *Expression) isIntExpression() bool {
+    return (this.t & IntExpression) == IntExpression
+}
+
+func (this *Expression) isFloatExpression() bool {
+    return (this.t & FloatExpression) == FloatExpression
+}
+
+func (this *Expression) isBooleanExpression() bool {
+    return (this.t & BooleanExpression) == BooleanExpression
+}
+
+func (this *Expression) isStringExpression() bool {
+    return (this.t & StringExpression) == StringExpression
+}
+
+func (this *Expression) isConstExpression() bool {
+    return (this.t & ConstExpression) == ConstExpression
+}
+
+func (this *Expression) isIdentifierExpression() bool {
+    return (this.t & IdentifierExpression) == IdentifierExpression
+}
+
+func (this *Expression) isAssignExpression() bool {
+    return (this.t & AssignExpression) == AssignExpression
+}
+
+func (this *Expression) isFunctionCallExpression() bool {
+    return (this.t & FunctionCallExpression) == FunctionCallExpression
+}
+
+func (this *Expression) isMethodCallExpression() bool {
+    return (this.t & MethodCallExpression) == MethodCallExpression
+}
+
+func (this *Expression) isBinaryExpression() bool {
+    return (this.t & BinaryExpression) == BinaryExpression
+}
+
+func (this *Expression) isListExpression() bool {
+    return (this.t & ListExpression) == ListExpression
+}
+
+func (this *Expression) isTmpExpression() bool {
+    return (this.t & TmpExpression) == TmpExpression
+}
+
+func (s *Expression) execute(super, local Variables) *StatementResultType {
+
+
+    return nil
+}
+
+func (expr *Expression) String() string {
+    if expr == nil {
+        return ""
+    }
+    var res bytes.Buffer
+    for _, t := range expr.raw {
+        res.WriteString(t.String())
+        res.WriteString(" ")
+    }
+    return res.String()
+}
+
+type PrimaryExpressionType int
+
+const (
+    Varname PrimaryExpressionType = 1 << iota
+    Expr
+    Const
+    Fill
+)
+
+type PrimaryExpr struct {
+    t PrimaryExpressionType
+    name string
+    args []Expression
+    result *Value
+}
+
+func (this *PrimaryExpr) isVarname() bool {
+    return (this.t & Varname) == Varname
+}
+
+func (this *PrimaryExpr) isExpr() bool {
+    return (this.t & Expr) == Expr
+}
+
+func (this *PrimaryExpr) isConst() bool {
+    return (this.t & Const) == Const
+}
+
+~~~~~~~~~~~~~~~~~~~~
+#####src\core\index.go#####package core
+
+import (
+    "fmt"
+    "io/ioutil"
+    "os/exec"
+    "runtime"
+    "strings"
+)
+
+func Run() {
+    bs, _ := ioutil.ReadFile("demo.qk")
+    ts := Parse(bs)
+    printTokens(ts)
+    //Compile(ts)
+    //printMainFunc()
+}
+
+func printMainFunc() {
+    for i, stmt := range mainFunc.block {
+        fmt.Printf("line %v: [%v] \n", i, stmt)
+    }
+}
+
+func printTokens(tokens []Token) {
+    for i, token := range tokens {
+        fmt.Printf("line %v: [%v] -> %v \n", i, token.str, getTokenTypeName(token.t))
+    }
+}
+
+// 获取命令所在的路径
+func getCmdDir() string {
+    cmd := exec.Command( "cmd", "/c", "cd")
+    if runtime.GOOS != "windows" {
+        cmd = exec.Command("pwd")
+    }
+    d, err := cmd.CombinedOutput()
+    exitOnError(err)
+    pwd := strings.TrimSpace(string(d))
+    return pwd
+}
+
+
+~~~~~~~~~~~~~~~~~~~~
+#####src\core\interpreter.go#####package core
+
+
+func Interpret(ts []Token) {
+
+}
+
+~~~~~~~~~~~~~~~~~~~~
+#####src\core\lex.go#####package core
+
+import "fmt"
+
+type TokenType int
+const (
+    Identifier TokenType = 1 << iota
+    Str
+    Int
+    Float
+    Symbol
+    Fcall
+    Mtcall
+    Attribute
+    ArrLiteral
+    ObjLiteral
+    Tmp
+)
+
+const (
+    stateStr int = 1 << iota
+    stateStrLiteral
+    stateInt
+    stateDot
+    stateFloat
+    stateSymbol
+    stateSpace
+    Normal
+)
+
+type Token struct {
+    str string
+    t TokenType
+    caller string
+    ts []Token
+}
+
+func newToken(raw string, t TokenType) Token {
+    return Token{str:raw,t:t}
+}
+
+func symbolToken(s string) Token {
+    return Token{str:s, t:Symbol}
+}
+
+func tmpToken(raw string) Token {
+    return Token{str:raw, t:Tmp | Identifier}
+}
+
+func (this *Token) isIdentifier() bool {
+    return (this.t & Identifier) == Identifier
+}
+
+func (this *Token) isStr() bool {
+    return (this.t & Str) == Str
+}
+
+func (this *Token) isInt() bool {
+    return (this.t & Int) == Int
+}
+
+func (this *Token) isFloat() bool {
+    return (this.t & Float) == Float
+}
+
+func (this *Token) isSymbol() bool {
+    return (this.t & Symbol) == Symbol
+}
+
+func (this *Token) isTmp() bool {
+    return (this.t & Tmp) == Tmp
+}
+
+func (this *Token) isFcall() bool {
+    return (this.t & Fcall) == Fcall
+}
+
+func (this *Token) isMtcall() bool {
+    return (this.t & Mtcall) == Mtcall
+}
+
+func (this *Token) String() string {
+    var s string
+    s = this.str
+    if this.t == Str {
+        s = fmt.Sprintf(`"%v"`, s)
+    }
+    return s
+}
+
+
+func Parse(bs []byte) []Token {
+    // token 初步处理
+    ts := preparse(bs)
+    // 去掉无用的';', 合并token生成函数调用token(Fcall), 方法调用token(Mtcall)
+    ts = doprarse(ts)
+    return ts
+}
+
+func doprarse(ts []Token) []Token {
+
+    return nil
+}
+
+func preparse(bs []byte) []Token {
+    var tokens []Token
+    var tmp []byte
+    state := Normal
+    for _, b := range bs {
+
+        if state == stateStrLiteral && b != '"' {
+            tmp = append(tmp, b)
+            continue
+        }
+
+        switch {
+        case (b>='a' && b<='z') || (b>='A' && b<='Z') || b=='_':
+            tmp = append(tmp, b)
+            state = stateStr
+        case b>='0' && b<='9':
+            tmp = append(tmp, b)
+            if state == stateDot {
+                state = stateFloat
+            }else{
+                state = stateInt
+            }
+
+        case b==' ' || b=='\t' || b =='\n':
+            longTokenSave(b, state, &tmp, &tokens)
+
+            if b=='\n' {
+                addBoundry(&tokens)
+            }
+            state = stateSpace
+
+        case isSymbol(b):
+            if b == '.' && state==stateInt {
+                tmp = append(tmp, b)
+                state = stateDot
+                break
+            }
+
+            longTokenSave(b, state, &tmp, &tokens)
+
+            tokens = append(tokens, Token{
+                str: string(b),
+                t:   Symbol,
+            })
+            state = stateSymbol
+        case b == '"':
+            if len(tmp) < 1 {
+                state = stateStrLiteral
+            } else {
+                if tmp[len(tmp)-1] != '\\' {
+                    longTokenSave(b, state, &tmp, &tokens)
+                    state = Normal
+                } else {
+                    tmp = append(tmp, b)
+                }
+            }
+
+        }
+    }
+
+    addBoundry(&tokens)
+
+    return tokens
+}
+
+func addBoundry(ts *[]Token) {
+    *ts = append(*ts, Token{
+        str: ";",
+        t:   Symbol,
+    })
+}
+
+func longTokenSave(b byte, state int, tmp *[]byte, tokens *[]Token) {
+    s := string(*tmp)
+    if len(s) < 1 {
+        return
+    }
+
+    var tokenType TokenType
+    if state == stateFloat {
+        tokenType = Float
+    }
+    if state == stateInt && b != '.' {
+        tokenType = Int
+    }
+    if state == stateStr {
+        tokenType = Identifier
+    }
+    if state == stateStrLiteral {
+        tokenType = Str
+    }
+    *tokens = append(*tokens, Token{
+        str: s,
+        t:   tokenType,
+    })
+    // 重置临时变量
+    *tmp = nil
+}
+
+func isSymbol(b byte) bool {
+    switch b {
+    case '.': fallthrough
+    case ':': fallthrough
+    case '(': fallthrough
+    case ')': fallthrough
+    case '{': fallthrough
+    case '}': fallthrough
+    case ';': fallthrough
+    case ',': fallthrough
+    case '=': fallthrough
+    case '+': fallthrough
+    case '-': fallthrough
+    case '*': fallthrough
+    case '/': fallthrough
+    case '%': fallthrough
+    case '>': fallthrough
+    case '<':
+        return true
+    }
+    return false
+}
+
+func getTokenTypeName(t TokenType) string {
+    var tStr string
+    if (t & Str) == Str {
+        tStr += "string, "
+    }
+    if (t & Identifier) == Identifier {
+        tStr += "identifier, "
+    }
+    if (t & Int) == Int {
+        tStr += "int, "
+    }
+    if (t & Float) == Float {
+        tStr += "float, "
+    }
+    if (t & Symbol) == Symbol {
+        tStr += "symbol, "
+    }
+    return tStr
+}
+
+
+
+~~~~~~~~~~~~~~~~~~~~
+#####src\core\object.go#####package core
+
+import "fmt"
+
+type ValueType int
+
+const (
+    IntValue ValueType = 1 << iota
+    FloatValue
+    BooleanValue
+    StringValue
+    AnyValue
+    ArrayValue
+    ObjectValue
+)
+
+type Value struct {
+    t ValueType
+    int_value int
+    float_value float64
+    bool_value bool
+    str_value string
+    any_value interface{}
+    arr_value []interface{}
+    obj_value map[string]interface{}
+}
+
+func newVal(rawVal interface{}) Value {
+    var val Value
+    switch v := rawVal.(type) {
+    case int:
+        val = Value{t: IntValue, int_value: v}
+    case float64:
+        val = Value{t: FloatValue, float_value: v}
+    case float32:
+        val = Value{t: FloatValue, float_value: float64(v)}
+    case bool:
+        val = Value{t: BooleanValue, bool_value: v}
+    case string:
+        val = Value{t: StringValue, str_value: v}
+    case []interface{}:
+        val = Value{t: ArrayValue, arr_value: v}
+    case map[string]interface{}:
+        val = Value{t: ObjectValue, obj_value: v}
+    default:
+        panic(fmt.Sprintln("unknow exception when newVal:", rawVal))
+    }
+    return val
+}
+
+func (v *Value) isIntValue() bool {
+    return (v.t & IntValue) == IntValue
+}
+
+func (v *Value) isFloatValue() bool {
+    return (v.t & FloatValue) == FloatValue
+}
+
+func (v *Value) isBooleanValue() bool {
+    return (v.t & BooleanValue) == BooleanValue
+}
+
+func (v *Value) isStringValue() bool {
+    return (v.t & StringValue) == StringValue
+}
+
+func (v *Value) isAnyValue() bool {
+    return (v.t & AnyValue) == AnyValue
+}
+
+func (v *Value) isArrayValue() bool {
+    return (v.t & ArrayValue) == ArrayValue
+}
+
+func (v *Value) isObjectValue() bool {
+    return (v.t & ObjectValue) == ObjectValue
+}
+
+type StatementResultType int
+
+const (
+    StatementReturn StatementResultType = 1 << iota
+    StatementContinue
+    StatementBreak
+    StatementNormal
+)
+
+type StatementResult struct {
+    t StatementResultType
+    val Value
+}
+
+func (this *StatementResult) isStatementReturn() bool {
+    return (this.t & StatementReturn) == StatementReturn
+}
+
+func (this *StatementResult) isStatementContinue() bool {
+    return (this.t & StatementContinue) == StatementContinue
+}
+
+func (this *StatementResult) isStatementBreak() bool {
+    return (this.t & StatementBreak) == StatementBreak
+}
+
+func (this *StatementResult) isStatementNormal() bool {
+    return (this.t & StatementNormal) == StatementNormal
+}
+
+type Variable struct{
+    name string
+    val Value
+}
+
+func newVar(name string, rawVal interface{}) *Variable {
+    res := &Variable{
+        name: name,
+        val:  newVal(rawVal),
+    }
+
+    return res
+}
+
+func toVar(name string, rawVal Value) *Variable {
+    res := &Variable{
+        name: name,
+        val:  rawVal,
+    }
+    return res
+}
+
+
+type Variables map[string]*Variable
+
+func newVariables() Variables {
+    return make(map[string]*Variable)
+}
+
+func (vs *Variables) add(v *Variable) {
+    (*vs)[v.name] = v
+}
+
+func (vs *Variables) get(name string) *Variable {
+    return (*vs)[name]
+}
+~~~~~~~~~~~~~~~~~~~~
+#####src\core\object_test.go#####package core
+
+import (
+    "fmt"
+    "testing"
+)
+
+func Test_obj(t *testing.T) {
+    v1 := Value{
+        t:           IntValue,
+        int_value:   99,
+        float_value: 0,
+        bool_value:  false,
+        str_value:   "",
+        arr_value:   nil,
+        obj_value:   nil,
+    }
+    v2 := v1
+    v2.t = FloatValue
+    v2.float_value = 3.14
+    fmt.Println("v1:", v1)
+    fmt.Println("v2:", v2)
+}
+~~~~~~~~~~~~~~~~~~~~
+#####src\core\statement.go#####package core
+
+import (
+    "bytes"
+)
+
+type StatementType int
+
+const (
+    ExpressionStatement StatementType = 1 << iota
+    IfStatement
+    ForStatement
+    SwitchStatement
+    ReturnStatement
+)
+
+
+type Statement struct {
+    t StatementType
+
+    tmpcount int
+    exprs []*Expression
+    preExpr *Expression
+    condition *Expression
+    postExpr *Expression
+    raw []Token // token列表
+}
+
+func (s *Statement) setHeaderInfo(exprs []*Expression) {
+    s.preExpr = exprs[0]
+    s.condition = exprs[1]
+    s.postExpr = exprs[2]
+}
+
+func (s *Statement) addExpression(expr *Expression) {
+    if len(s.exprs)>0 && s.exprs[len(s.exprs)-1].isListExpression() && !(s.exprs[len(s.exprs)-1].listFinish) {
+        lastExpr := s.exprs[len(s.exprs)-1]
+        subExprs := &lastExpr.list
+
+        if expr.isListExpression() {
+            expr = expr.list[0]
+        }
+
+        *subExprs = append(*subExprs, expr)
+
+        if !expr.isTmpExpression() {
+            lastExpr.listFinish = true
+        }
+        return
+    }
+    s.exprs = append(s.exprs, expr)
+}
+
+func (s *Statement) isExpressionStatement() bool {
+    return (s.t & ExpressionStatement) == ExpressionStatement
+}
+
+func (s *Statement) isIfStatement() bool {
+    return (s.t & IfStatement) == IfStatement
+}
+
+func (s *Statement) isForStatement() bool {
+    return (s.t & ForStatement) == ForStatement
+}
+
+func (s *Statement) isSwitchStatement() bool {
+    return (s.t & SwitchStatement) == SwitchStatement
+}
+
+func (s *Statement) isReturnStatement() bool {
+    return (s.t & ReturnStatement) == ReturnStatement
+}
+
+func (s *Statement) execute(super, local Variables) *StatementResultType {
+
+
+    return nil
+}
+
+func (s *Statement) String() string {
+    var res bytes.Buffer
+    for _, t := range s.raw {
+        res.WriteString(t.String())
+        res.WriteString(" ")
+    }
+    if (s.t & IfStatement) == IfStatement {
+        res.WriteString("condition:")
+        res.WriteString(s.condition.String())
+        res.WriteString(" ")
+    }
+    if (s.t & ForStatement) == ForStatement {
+        res.WriteString("header:")
+        res.WriteString(s.preExpr.String())
+        res.WriteString("; ")
+        res.WriteString(s.condition.String())
+        res.WriteString("; ")
+        res.WriteString(s.postExpr.String())
+        res.WriteString(" ")
+    }
+    return res.String()
+}
+
+func newStatement(t StatementType, ts []Token) *Statement {
+    return &Statement{
+        t:     t,
+        exprs: nil,
+        raw:   ts,
+    }
+}
+
+type Function struct {
+    super Variables // 父作用域的变量列表
+    local Variables // 当前作用域的变量列表
+    params []Value // 参数
+    res []Value // 返回值
+    block []*Statement // 执行语句
+    raw []Token // token列表
+}
+
+
+func newFunc() *Function {
+    return &Function{local:newVariables()}
+}
+
+func (f *Function) addStatement(stm *Statement) {
+    f.block = append(f.block, stm)
+}
+
+
+
+
+~~~~~~~~~~~~~~~~~~~~
+#####src\core\util.go#####package core
+
+import "fmt"
+
+func exitOnError(err error, a ...string) {
+    if err != nil {
+        fmt.Println(a)
+        panic(err)
+    }
+}
+
+func insert(h Token, ts []Token) []Token {
+    res := make([]Token, 0, len(ts)+1)
+    res = append(res, h)
+    for _, t := range ts {
+        res = append(res, t)
+    }
+    return res
+}
+
+func insert2(t1, t2 Token, ts []Token) []Token {
+    res := make([]Token, 0, len(ts)+2)
+    res = append(res, t1)
+    res = append(res, t2)
+    for _, t := range ts {
+        res = append(res, t)
+    }
+    return res
+}
+~~~~~~~~~~~~~~~~~~~~
+#####src\qk\main.go#####package main
+
+import "core"
+
+func main()  {
+    core.Run()
+}
+
+
+~~~~~~~~~~~~~~~~~~~~
+#####src\qk\main_test.go#####package main
+
+import (
+    "bufio"
+    "bytes"
+    "encoding/json"
+    "fmt"
+    "strings"
+    "testing"
+)
+
+
+func Test_json1(t *testing.T) {
+    str := `[1, true, "testing"]`
+    var v interface{}
+    err := json.Unmarshal([]byte(str), &v)
+    fmt.Printf("%v -> %T \n", v, v)
+    fmt.Println(err)
+}
+
+
+func Test_genTypeAssert(t *testing.T) {
+    const input = `
+    Identifier 
+    Str
+    Int
+    Float
+    Symbol
+`
+    typename := "Token"
+    var buf bytes.Buffer
+    scanner := bufio.NewScanner(strings.NewReader(input))
+    for scanner.Scan() {
+        line := strings.TrimSpace(scanner.Text())
+        if line == "" {
+            continue
+        }
+        buf.WriteString(fmt.Sprintf("func (this *%v) is%v() bool {\n", typename, line))
+        buf.WriteString(fmt.Sprintf("\treturn (this.t & %v) == %v \n", line, line))
+        buf.WriteString("}\n\n")
+    }
+    fmt.Println(buf.String())
+}
+
+func Test_print(t *testing.T) {
+    fmt.Printf("%v", "hi, \"joker\" \n")
+    fmt.Println("++++++++++++++++++++++++++")
+}
+~~~~~~~~~~~~~~~~~~~~
+#####start#####
+export GOPATH=`pwd`
+
+go install qk~~~~~~~~~~~~~~~~~~~~
