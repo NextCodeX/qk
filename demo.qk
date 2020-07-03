@@ -1,0 +1,31 @@
+println("hi, \"joker\" \n")
+
+a = 1
+b = 3
+c = 7 + a * b
+if b > 0 {
+    println("b 大于 0")
+}
+println("c:", c)
+
+add(n1, n2) {
+    res = n1 + n2
+    return n3
+}
+d = add(13, 23)
+println("add result:", d)
+
+arr = [1, true, "testing"]
+println("a len:", a.len)
+println("a[1]", a[1])
+arr.add("hello world")
+println("a len:", a.len)
+
+obj = {
+name: "tome",
+age: 18
+}
+println("user age:", obj.age)
+println("user name:", obj["name"])
+
+
