@@ -38,7 +38,7 @@ import (
 )
 
 var (
-    funcList = make(map[string]Function)
+    funcList = make(map[string]*Function)
     mainFunc = newFunc()
 )
 
@@ -50,22 +50,26 @@ func Compile(ts []Token) {
         var endIndex int
         var stmt *Statement
 
-        if t.t != Identifier {
+        if !t.isIdentifier() && !t.isComplex() {
             goto next_loop
         }
         switch t.str {
-        case "func":
         case "if":
            stmt, endIndex = parseIfStatement(i, ts)
         case "for":
            stmt, endIndex = parseForStatement(i, ts)
         case "switch":
         default:
+            if t.isFdef() {
+                f, endIndex1 := parseFunction(i, ts)
+                funcList[f.name] = f
+                i = endIndex1
+                goto next_loop
+            }
             endIndex = nextBoundary(i, ts)
             if endIndex>0 {
                 stmt = newStatement(ExpressionStatement, ts[i:endIndex])
             }
-
         }
         if endIndex>0 {
             parseStatement(stmt)
@@ -73,10 +77,37 @@ func Compile(ts []Token) {
             i = endIndex
         }
 
-
         next_loop:
         i++
     }
+}
+
+func parseFunction(currentIndex int, ts []Token) (*Function, int) {
+    var nextIndex int
+    f := newFunc()
+    f.name = ts[0].str
+    f.defToken = ts[0]
+    var block []Token
+    size := len(ts)
+    scopeOpenCount := 1
+    for i:=currentIndex+2; i<size; i++ {
+        token := ts[i]
+        if token.assertSymbol("{") {
+            scopeOpenCount ++
+        }
+        if token.assertSymbol("}") {
+            scopeOpenCount --
+            if scopeOpenCount == 0 {
+                nextIndex = i
+                break
+            }
+        }
+        block = append(block, token)
+    }
+    if scopeOpenCount > 0 {
+        panic("parse function statement exception!")
+    }
+    return f, nextIndex
 }
 
 func parseIfStatement(currentIndex int, ts []Token) (*Statement, int) {
@@ -133,6 +164,7 @@ func parseForStatement(currentIndex int, ts []Token) (*Statement, int) {
 
 func splitExpression(ts []Token) []*Expression {
     res := make([]*Expression, 3)
+    // for语句没用";"分隔，表达式即为condition expression
     if !hasSymbol(ts, ";") {
         res[1] = &Expression{
             t:     BinaryExpression,
@@ -140,6 +172,9 @@ func splitExpression(ts []Token) []*Expression {
         }
         return res
     }
+
+    //for 语句存在";"分隔符时
+    // extract initialize expression
     index := nextSymbol(0, ts, ";")
     if index > 2 {
         res[0] = &Expression{
@@ -147,6 +182,8 @@ func splitExpression(ts []Token) []*Expression {
             raw:   ts[:index],
         }
     }
+
+    // extract condition expression
     preIndex := index+1
     index = nextSymbol(preIndex, ts, ";")
     if index - preIndex > 2 {
@@ -154,13 +191,19 @@ func splitExpression(ts []Token) []*Expression {
             t:     BinaryExpression,
             raw:   ts[preIndex:index],
         }
+    } else if !hasSymbol(ts[preIndex:], ";") {
+        res[1] = &Expression{
+            t:     BinaryExpression,
+            raw:   ts[preIndex:],
+        }
     }
+
+    // extract post expression
     preIndex = index+1
-    index = nextSymbol(preIndex, ts, ";")
-    if index - preIndex > 2 {
+    if preIndex < len(ts) {
         res[2] = &Expression{
             t:     BinaryExpression,
-            raw:   ts[preIndex:index],
+            raw:   ts[preIndex:],
         }
     }
     return res
@@ -174,7 +217,7 @@ func nextBoundary(currentIndex int, ts []Token) int {
 func nextSymbol(currentIndex int, ts []Token, s string) int {
     for i:=currentIndex; i<len(ts); i++ {
         t := ts[i]
-        if t.t == Symbol && t.str == s {
+        if t.assertSymbol(s) {
             return i
         }
     }
@@ -184,7 +227,7 @@ func nextSymbol(currentIndex int, ts []Token, s string) int {
 func hasSymbol(ts []Token, s string) bool {
     for i:=0; i<len(ts); i++ {
         t := ts[i]
-        if t.t == Symbol && t.str == s {
+        if t.assertSymbol(s) {
             return true
         }
     }
@@ -193,11 +236,11 @@ func hasSymbol(ts []Token, s string) bool {
 
 
 func parseStatement(stmt *Statement) {
-    ts := stmt.raw
+    //ts := stmt.raw
 
     switch {
     case stmt.isExpressionStatement():
-        parseExpressionStatement(ts, stmt)
+        //parseExpressionStatement(ts, stmt)
 
     case stmt.isIfStatement():
     case stmt.isForStatement():
@@ -645,7 +688,7 @@ const (
     stateFloat
     stateSymbol
     stateSpace
-    Normal
+    normal
 )
 
 type Token struct {
@@ -1094,7 +1137,7 @@ func extractFunctionCall(currentIndex int, ts []Token) (t Token, nextIndex int) 
 
     t = Token{
         str:    ts[currentIndex].str,
-        t:      Fcall,
+        t:      Fcall | Complex,
         ts:     args,
     }
     return t, nextIndex
@@ -1105,7 +1148,7 @@ func extractMethodCall(currentIndex int, ts []Token) (t Token, nextIndex int) {
 
     t = Token{
         str:    ts[currentIndex+2].str,
-        t:      Mtcall,
+        t:      Mtcall | Complex,
         caller: ts[currentIndex].str,
         ts:     args,
     }
@@ -1173,7 +1216,7 @@ func extractAttribute(currentIndex int, ts []Token) (t Token, nextIndex int) {
     }
     token := Token{
         str:    ts[currentIndex+2].str,
-        t:      Attribute,
+        t:      Attribute | Complex,
         caller: ts[currentIndex].str,
     }
     return token, currentIndex+3
@@ -1204,7 +1247,7 @@ func nextToken(currentIndex int, ts []Token) (t Token, ok bool) {
 func preparse(bs []byte) []Token {
     var tokens []Token
     var tmp []byte
-    state := Normal
+    state := normal
     for _, b := range bs {
 
         if state == stateStrLiteral && b != '"' {
@@ -1257,7 +1300,7 @@ func preparse(bs []byte) []Token {
             } else {
                 if tmp[len(tmp)-1] != '\\' {
                     longTokenSave(b, state, &tmp, &tokens)
-                    state = Normal
+                    state = normal
                 } else {
                     tmp = append(tmp, b)
                 }
@@ -1493,6 +1536,22 @@ import (
     "testing"
 )
 
+func Test_swi(t *testing.T) {
+    a := 3
+    a = a ^ 1
+    a = a ^ 1
+    switch a {
+    case 3:
+        fmt.Println("a == 3")
+        if a > 0 {
+            fmt.Println("a > 0")
+            break
+        }
+        fmt.Println("a <= 0")
+
+    }
+}
+
 func Test_obj(t *testing.T) {
     v1 := Value{
         t:           IntValue,
@@ -1625,6 +1684,8 @@ type Function struct {
     params []Value // 参数
     res []Value // 返回值
     block []*Statement // 执行语句
+    name string
+    defToken Token
     raw []Token // token列表
 }
 
@@ -1694,50 +1755,155 @@ func main()  {
 
 import (
     "bufio"
-    "bytes"
-    "encoding/json"
     "fmt"
+    "github.com/Luxurioust/excelize"
+    "os"
+    "regexp"
     "strings"
     "testing"
 )
 
+func Test_excels(t *testing.T) {
+    xlsx, err := excelize.OpenFile("d:/data.xlsx")
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
 
-func Test_json1(t *testing.T) {
-    str := `[1, true, "testing"]`
-    var v interface{}
-    err := json.Unmarshal([]byte(str), &v)
-    fmt.Printf("%v -> %T \n", v, v)
-    fmt.Println(err)
+    // Get all the rows in a sheet.
+    rows, _ := xlsx.GetRows("eBod实时" )
+    for i, row := range rows {
+        for _, colCell := range row {
+            fmt.Print(colCell, "\t")
+        }
+        fmt.Println()
+        if i>15 {
+            break
+        }
+    }
+    //os.MkdirAll("d:/software/golangLocalRepo/src/github.com/Luxurioust/excelize", os.ModePerm)
 }
 
 
-func Test_genTypeAssert(t *testing.T) {
-    const input = `
-    Identifier 
-    Str
-    Int
-    Float
-    Symbol
-`
-    typename := "Token"
-    var buf bytes.Buffer
-    scanner := bufio.NewScanner(strings.NewReader(input))
+func Test_fhandle2(t *testing.T) {
+    tableName := "table_info"
+    fmt.Printf("DROP TABLE IF EXISTS `%v`;\n", tableName)
+    fmt.Printf("CREATE TABLE `%v` (\n", tableName)
+    tfs := getTfs()
+    //fmt.Println(len(infos), len(comments))
+    for _, tf := range tfs {
+        fmt.Printf("%v    COMMENT '%v', \n", tf.f, tf.c)
+    }
+
+}
+
+type tf struct {
+    f string
+    c string
+}
+
+func getTfs() []tf {
+    var res []tf
+    f, _ := os.Open("d:/origin.txt")
+    scanner := bufio.NewScanner(f)
+    var comment string
+    var field string
     for scanner.Scan() {
         line := strings.TrimSpace(scanner.Text())
-        if line == "" {
-            continue
+        if comment == "" && strings.HasPrefix(line, "*") {
+            line = strings.TrimSpace(line[1:])
+            comment = line
         }
-        buf.WriteString(fmt.Sprintf("func (this *%v) is%v() bool {\n", typename, line))
-        buf.WriteString(fmt.Sprintf("\treturn (this.t & %v) == %v \n", line, line))
-        buf.WriteString("}\n\n")
+        if comment != "" && field == "" && strings.HasPrefix(line, "private") {
+            re := regexp.MustCompile(`\w+\s+(\w+);`)
+            arr := re.FindAllStringSubmatch(line, -1)
+            //fmt.Println("arr:", arr[0][1])
+            field = arr[0][1]
+
+            //handleInfo(field, comment)
+            res = append(res, tf{field, comment})
+            field = ""
+            comment = ""
+        }
     }
-    fmt.Println(buf.String())
+    return res
 }
 
-func Test_print(t *testing.T) {
-    fmt.Printf("%v", "hi, \"joker\" \n")
-    fmt.Println("++++++++++++++++++++++++++")
+func Test_fhandle1(t *testing.T) {
+    tableName := "table_info"
+    fmt.Printf("DROP TABLE IF EXISTS `%v`;\n", tableName)
+    fmt.Printf("CREATE TABLE `%v` (\n", tableName)
+    infos := fieldInfos()
+    comments := getComments()
+    //fmt.Println(len(infos), len(comments))
+    for i, info := range infos {
+      fmt.Printf("%v COMMENT '%v', \n", info, comments[i])
+    }
+
 }
+
+func getComments() []string {
+    var res []string
+    f, _ := os.Open("d:/origin.txt")
+    scanner := bufio.NewScanner(f)
+    var comment string
+    var field string
+    for scanner.Scan() {
+        line := strings.TrimSpace(scanner.Text())
+        if comment == "" && strings.HasPrefix(line, "*") {
+            line = strings.TrimSpace(line[1:])
+            comment = line
+        }
+        if comment != "" && field == "" && strings.HasPrefix(line, "private") {
+            re := regexp.MustCompile(`\w+\s+(\w+);`)
+            arr := re.FindAllStringSubmatch(line, -1)
+            //fmt.Println("arr:", arr[0][1])
+            field = arr[0][1]
+
+            //handleInfo(field, comment)
+            res = append(res, comment)
+            field = ""
+            comment = ""
+        }
+    }
+    return res
+}
+
+func handleInfo(field, comment string) {
+
+    //msg := fmt.Sprintf("alter table %v modify column %v comment '%v';", tableName, field, comment)
+    //fmt.Println(field, " - ", comment)
+    //fmt.Println(msg)
+}
+
+func fieldInfos() []string {
+    tableCreate := `
+id int primary key auto_increment,
+tableName varchar(100) not null,
+tableTag varchar(150) not null,
+taskId int,
+primaryKey varchar(200),
+lastUpdatedColumnName varchar(200),
+schemaInfo text,
+description varchar(2000),
+ext varchar(200),
+createdDate datetime,
+createdBy varchar(150),
+lastUpdatedDate datetime,
+lastUpdatedBy varchar(150),
+`
+var res []string
+scanner := bufio.NewScanner(strings.NewReader(tableCreate))
+for scanner.Scan() {
+    line := strings.TrimSpace(scanner.Text())
+    if line == "" {
+        continue
+    }
+    res = append(res, line[:len(line)-1])
+}
+return res
+}
+
 ~~~~~~~~~~~~~~~~~~~~
 #####start#####
 export GOPATH=`pwd`
