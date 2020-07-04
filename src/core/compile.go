@@ -6,7 +6,7 @@ import (
 )
 
 var (
-    funcList = make(map[string]Function)
+    funcList = make(map[string]*Function)
     mainFunc = newFunc()
 )
 
@@ -18,22 +18,26 @@ func Compile(ts []Token) {
         var endIndex int
         var stmt *Statement
 
-        if t.t != Identifier {
+        if !t.isIdentifier() && !t.isComplex() {
             goto next_loop
         }
         switch t.str {
-        case "func":
         case "if":
            stmt, endIndex = parseIfStatement(i, ts)
         case "for":
            stmt, endIndex = parseForStatement(i, ts)
         case "switch":
         default:
+            if t.isFdef() {
+                f, endIndex1 := parseFunction(i, ts)
+                funcList[f.name] = f
+                i = endIndex1
+                goto next_loop
+            }
             endIndex = nextBoundary(i, ts)
             if endIndex>0 {
                 stmt = newStatement(ExpressionStatement, ts[i:endIndex])
             }
-
         }
         if endIndex>0 {
             parseStatement(stmt)
@@ -41,10 +45,37 @@ func Compile(ts []Token) {
             i = endIndex
         }
 
-
         next_loop:
         i++
     }
+}
+
+func parseFunction(currentIndex int, ts []Token) (*Function, int) {
+    var nextIndex int
+    f := newFunc()
+    f.name = ts[0].str
+    f.defToken = ts[0]
+    var block []Token
+    size := len(ts)
+    scopeOpenCount := 1
+    for i:=currentIndex+2; i<size; i++ {
+        token := ts[i]
+        if token.assertSymbol("{") {
+            scopeOpenCount ++
+        }
+        if token.assertSymbol("}") {
+            scopeOpenCount --
+            if scopeOpenCount == 0 {
+                nextIndex = i
+                break
+            }
+        }
+        block = append(block, token)
+    }
+    if scopeOpenCount > 0 {
+        panic("parse function statement exception!")
+    }
+    return f, nextIndex
 }
 
 func parseIfStatement(currentIndex int, ts []Token) (*Statement, int) {
@@ -101,6 +132,7 @@ func parseForStatement(currentIndex int, ts []Token) (*Statement, int) {
 
 func splitExpression(ts []Token) []*Expression {
     res := make([]*Expression, 3)
+    // for语句没用";"分隔，表达式即为condition expression
     if !hasSymbol(ts, ";") {
         res[1] = &Expression{
             t:     BinaryExpression,
@@ -108,6 +140,9 @@ func splitExpression(ts []Token) []*Expression {
         }
         return res
     }
+
+    //for 语句存在";"分隔符时
+    // extract initialize expression
     index := nextSymbol(0, ts, ";")
     if index > 2 {
         res[0] = &Expression{
@@ -115,6 +150,8 @@ func splitExpression(ts []Token) []*Expression {
             raw:   ts[:index],
         }
     }
+
+    // extract condition expression
     preIndex := index+1
     index = nextSymbol(preIndex, ts, ";")
     if index - preIndex > 2 {
@@ -122,13 +159,19 @@ func splitExpression(ts []Token) []*Expression {
             t:     BinaryExpression,
             raw:   ts[preIndex:index],
         }
+    } else if !hasSymbol(ts[preIndex:], ";") {
+        res[1] = &Expression{
+            t:     BinaryExpression,
+            raw:   ts[preIndex:],
+        }
     }
+
+    // extract post expression
     preIndex = index+1
-    index = nextSymbol(preIndex, ts, ";")
-    if index - preIndex > 2 {
+    if preIndex < len(ts) {
         res[2] = &Expression{
             t:     BinaryExpression,
-            raw:   ts[preIndex:index],
+            raw:   ts[preIndex:],
         }
     }
     return res
@@ -142,7 +185,7 @@ func nextBoundary(currentIndex int, ts []Token) int {
 func nextSymbol(currentIndex int, ts []Token, s string) int {
     for i:=currentIndex; i<len(ts); i++ {
         t := ts[i]
-        if t.t == Symbol && t.str == s {
+        if t.assertSymbol(s) {
             return i
         }
     }
@@ -152,7 +195,7 @@ func nextSymbol(currentIndex int, ts []Token, s string) int {
 func hasSymbol(ts []Token, s string) bool {
     for i:=0; i<len(ts); i++ {
         t := ts[i]
-        if t.t == Symbol && t.str == s {
+        if t.assertSymbol(s) {
             return true
         }
     }
@@ -161,11 +204,11 @@ func hasSymbol(ts []Token, s string) bool {
 
 
 func parseStatement(stmt *Statement) {
-    ts := stmt.raw
+    //ts := stmt.raw
 
     switch {
     case stmt.isExpressionStatement():
-        parseExpressionStatement(ts, stmt)
+        //parseExpressionStatement(ts, stmt)
 
     case stmt.isIfStatement():
     case stmt.isForStatement():

@@ -113,6 +113,8 @@ type Function struct {
     params []Value // 参数
     res []Value // 返回值
     block []*Statement // 执行语句
+    name string
+    defToken Token
     raw []Token // token列表
 }
 

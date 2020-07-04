@@ -34,7 +34,7 @@ const (
     stateFloat
     stateSymbol
     stateSpace
-    Normal
+    normal
 )
 
 type Token struct {
@@ -483,7 +483,7 @@ func extractFunctionCall(currentIndex int, ts []Token) (t Token, nextIndex int) 
 
     t = Token{
         str:    ts[currentIndex].str,
-        t:      Fcall,
+        t:      Fcall | Complex,
         ts:     args,
     }
     return t, nextIndex
@@ -494,7 +494,7 @@ func extractMethodCall(currentIndex int, ts []Token) (t Token, nextIndex int) {
 
     t = Token{
         str:    ts[currentIndex+2].str,
-        t:      Mtcall,
+        t:      Mtcall | Complex,
         caller: ts[currentIndex].str,
         ts:     args,
     }
@@ -562,7 +562,7 @@ func extractAttribute(currentIndex int, ts []Token) (t Token, nextIndex int) {
     }
     token := Token{
         str:    ts[currentIndex+2].str,
-        t:      Attribute,
+        t:      Attribute | Complex,
         caller: ts[currentIndex].str,
     }
     return token, currentIndex+3
@@ -593,7 +593,7 @@ func nextToken(currentIndex int, ts []Token) (t Token, ok bool) {
 func preparse(bs []byte) []Token {
     var tokens []Token
     var tmp []byte
-    state := Normal
+    state := normal
     for _, b := range bs {
 
         if state == stateStrLiteral && b != '"' {
@@ -646,7 +646,7 @@ func preparse(bs []byte) []Token {
             } else {
                 if tmp[len(tmp)-1] != '\\' {
                     longTokenSave(b, state, &tmp, &tokens)
-                    state = Normal
+                    state = normal
                 } else {
                     tmp = append(tmp, b)
                 }

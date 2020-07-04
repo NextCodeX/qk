@@ -2,47 +2,152 @@ package main
 
 import (
     "bufio"
-    "bytes"
-    "encoding/json"
     "fmt"
+    "github.com/Luxurioust/excelize"
+    "os"
+    "regexp"
     "strings"
     "testing"
 )
 
+func Test_excels(t *testing.T) {
+    xlsx, err := excelize.OpenFile("d:/data.xlsx")
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
 
-func Test_json1(t *testing.T) {
-    str := `[1, true, "testing"]`
-    var v interface{}
-    err := json.Unmarshal([]byte(str), &v)
-    fmt.Printf("%v -> %T \n", v, v)
-    fmt.Println(err)
+    // Get all the rows in a sheet.
+    rows, _ := xlsx.GetRows("eBod实时" )
+    for i, row := range rows {
+        for _, colCell := range row {
+            fmt.Print(colCell, "\t")
+        }
+        fmt.Println()
+        if i>15 {
+            break
+        }
+    }
+    //os.MkdirAll("d:/software/golangLocalRepo/src/github.com/Luxurioust/excelize", os.ModePerm)
 }
 
 
-func Test_genTypeAssert(t *testing.T) {
-    const input = `
-    Identifier 
-    Str
-    Int
-    Float
-    Symbol
-`
-    typename := "Token"
-    var buf bytes.Buffer
-    scanner := bufio.NewScanner(strings.NewReader(input))
+func Test_fhandle2(t *testing.T) {
+    tableName := "table_info"
+    fmt.Printf("DROP TABLE IF EXISTS `%v`;\n", tableName)
+    fmt.Printf("CREATE TABLE `%v` (\n", tableName)
+    tfs := getTfs()
+    //fmt.Println(len(infos), len(comments))
+    for _, tf := range tfs {
+        fmt.Printf("%v    COMMENT '%v', \n", tf.f, tf.c)
+    }
+
+}
+
+type tf struct {
+    f string
+    c string
+}
+
+func getTfs() []tf {
+    var res []tf
+    f, _ := os.Open("d:/origin.txt")
+    scanner := bufio.NewScanner(f)
+    var comment string
+    var field string
     for scanner.Scan() {
         line := strings.TrimSpace(scanner.Text())
-        if line == "" {
-            continue
+        if comment == "" && strings.HasPrefix(line, "*") {
+            line = strings.TrimSpace(line[1:])
+            comment = line
         }
-        buf.WriteString(fmt.Sprintf("func (this *%v) is%v() bool {\n", typename, line))
-        buf.WriteString(fmt.Sprintf("\treturn (this.t & %v) == %v \n", line, line))
-        buf.WriteString("}\n\n")
+        if comment != "" && field == "" && strings.HasPrefix(line, "private") {
+            re := regexp.MustCompile(`\w+\s+(\w+);`)
+            arr := re.FindAllStringSubmatch(line, -1)
+            //fmt.Println("arr:", arr[0][1])
+            field = arr[0][1]
+
+            //handleInfo(field, comment)
+            res = append(res, tf{field, comment})
+            field = ""
+            comment = ""
+        }
     }
-    fmt.Println(buf.String())
+    return res
 }
 
-func Test_print(t *testing.T) {
-    fmt.Printf("%v", "hi, \"joker\" \n")
-    fmt.Println("++++++++++++++++++++++++++")
+func Test_fhandle1(t *testing.T) {
+    tableName := "table_info"
+    fmt.Printf("DROP TABLE IF EXISTS `%v`;\n", tableName)
+    fmt.Printf("CREATE TABLE `%v` (\n", tableName)
+    infos := fieldInfos()
+    comments := getComments()
+    //fmt.Println(len(infos), len(comments))
+    for i, info := range infos {
+      fmt.Printf("%v COMMENT '%v', \n", info, comments[i])
+    }
+
 }
+
+func getComments() []string {
+    var res []string
+    f, _ := os.Open("d:/origin.txt")
+    scanner := bufio.NewScanner(f)
+    var comment string
+    var field string
+    for scanner.Scan() {
+        line := strings.TrimSpace(scanner.Text())
+        if comment == "" && strings.HasPrefix(line, "*") {
+            line = strings.TrimSpace(line[1:])
+            comment = line
+        }
+        if comment != "" && field == "" && strings.HasPrefix(line, "private") {
+            re := regexp.MustCompile(`\w+\s+(\w+);`)
+            arr := re.FindAllStringSubmatch(line, -1)
+            //fmt.Println("arr:", arr[0][1])
+            field = arr[0][1]
+
+            //handleInfo(field, comment)
+            res = append(res, comment)
+            field = ""
+            comment = ""
+        }
+    }
+    return res
+}
+
+func handleInfo(field, comment string) {
+
+    //msg := fmt.Sprintf("alter table %v modify column %v comment '%v';", tableName, field, comment)
+    //fmt.Println(field, " - ", comment)
+    //fmt.Println(msg)
+}
+
+func fieldInfos() []string {
+    tableCreate := `
+id int primary key auto_increment,
+tableName varchar(100) not null,
+tableTag varchar(150) not null,
+taskId int,
+primaryKey varchar(200),
+lastUpdatedColumnName varchar(200),
+schemaInfo text,
+description varchar(2000),
+ext varchar(200),
+createdDate datetime,
+createdBy varchar(150),
+lastUpdatedDate datetime,
+lastUpdatedBy varchar(150),
+`
+var res []string
+scanner := bufio.NewScanner(strings.NewReader(tableCreate))
+for scanner.Scan() {
+    line := strings.TrimSpace(scanner.Text())
+    if line == "" {
+        continue
+    }
+    res = append(res, line[:len(line)-1])
+}
+return res
+}
+
