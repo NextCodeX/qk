@@ -132,6 +132,7 @@ func parseForStatement(currentIndex int, ts []Token) (*Statement, int) {
 
 func splitExpression(ts []Token) []*Expression {
     res := make([]*Expression, 3)
+    size := len(ts)
     // for语句没用";"分隔，表达式即为condition expression
     if !hasSymbol(ts, ";") {
         res[1] = &Expression{
@@ -159,16 +160,17 @@ func splitExpression(ts []Token) []*Expression {
             t:     BinaryExpression,
             raw:   ts[preIndex:index],
         }
-    } else if !hasSymbol(ts[preIndex:], ";") {
+    } else if preIndex<size && !hasSymbol(ts[preIndex:], ";") {
         res[1] = &Expression{
             t:     BinaryExpression,
             raw:   ts[preIndex:],
         }
+        index = size
     }
 
     // extract post expression
     preIndex = index+1
-    if preIndex < len(ts) {
+    if preIndex < size {
         res[2] = &Expression{
             t:     BinaryExpression,
             raw:   ts[preIndex:],
