@@ -12,13 +12,20 @@ func Run() {
     bs, _ := ioutil.ReadFile("demo.qk")
     ts := Parse(bs)
     //printTokens(ts)
-    Compile(ts)
-    printMainFunc()
+    Compile(mainFunc, ts)
+    printFunc()
 }
 
-func printMainFunc() {
-    for i, stmt := range mainFunc.block {
-        fmt.Printf("line %v: [%v] \n", i, stmt)
+func printFunc() {
+    doPrintFunc(mainFunc)
+    for _, fn := range funcList {
+        doPrintFunc(fn)
+    }
+}
+
+func doPrintFunc(fn *Function) {
+    for i, stmt := range fn.block {
+        fmt.Printf("line %v: \n %v \n", i, stmt)
     }
 }
 
