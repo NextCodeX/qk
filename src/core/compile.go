@@ -1,432 +1,133 @@
 package core
 
 import (
-    "fmt"
-    "strconv"
+    "bytes"
 )
 
-var (
-    funcList = make(map[string]*Function)
-    mainFunc = newFunc()
+type StatementType int
+
+const (
+    ExpressionStatement StatementType = 1 << iota
+    IfStatement
+    ForStatement
+    SwitchStatement
+    ReturnStatement
 )
 
 
-func Compile(fn *Function, ts []Token) {
-    if fn.compiled {
-        return
-    }else {
-        fn.compiled = true
-    }
-    extractStatement(fn, ts)
-    parseStatement(fn)
-
-    for _, customFunc := range funcList {
-        Compile(customFunc, customFunc.ts)
-    }
+type Statement struct {
+    t StatementType
+    tmpcount int
+    exprs []*Expression
+    preExpr *Expression
+    condition *Expression
+    postExpr *Expression
+    raw []Token // token列表
 }
 
-func extractStatement(fn *Function, ts []Token) {
-    fn.ts = ts
-    for i := 0; i < len(ts); {
-        t := ts[i]
-        var endIndex int
-        var stmt *Statement
-
-        if !t.isIdentifier() && !t.isComplex() {
-            goto next_loop
-        }
-        switch t.str {
-        case "if":
-            stmt, endIndex = parseIfStatement(i, ts)
-        case "for":
-            stmt, endIndex = parseForStatement(i, ts)
-        case "switch":
-        default:
-            if t.isFdef() {
-                f, endIndex1 := parseFunction(i, ts)
-                funcList[f.name] = f
-                i = endIndex1
-                goto next_loop
-            }
-            endIndex = nextBoundary(i, ts)
-            if endIndex > 0 {
-                stmt = newStatement(ExpressionStatement, ts[i:endIndex])
-            }
-        }
-        if endIndex > 0 {
-            fn.addStatement(stmt)
-            i = endIndex
-        }
-
-    next_loop:
-        i++
-    }
+func (s *Statement) setHeaderInfo(exprs []*Expression) {
+    s.preExpr = exprs[0]
+    s.condition = exprs[1]
+    s.postExpr = exprs[2]
 }
 
-func parseFunction(currentIndex int, ts []Token) (*Function, int) {
-    var nextIndex int
-    f := newFunc()
-    f.name = ts[0].str
-    f.defToken = ts[0]
-    var blockTokens []Token
-    size := len(ts)
-    scopeOpenCount := 1
-    for i:=currentIndex+2; i<size; i++ {
-        token := ts[i]
-        if token.assertSymbol("{") {
-            scopeOpenCount ++
+func (s *Statement) addExpression(expr *Expression) {
+    if len(s.exprs)>0 && s.exprs[len(s.exprs)-1].isListExpression() && !(s.exprs[len(s.exprs)-1].listFinish) {
+        lastExpr := s.exprs[len(s.exprs)-1]
+        subExprs := &lastExpr.list
+
+        if expr.isListExpression() {
+            expr = expr.list[0]
         }
-        if token.assertSymbol("}") {
-            scopeOpenCount --
-            if scopeOpenCount == 0 {
-                nextIndex = i
-                break
-            }
-        }
-        blockTokens = append(blockTokens, token)
-    }
-    if scopeOpenCount > 0 {
-        panic("parse function statement exception!")
-    }
-    f.ts = blockTokens
-    return f, nextIndex
-}
 
-func parseIfStatement(currentIndex int, ts []Token) (*Statement, int) {
-    stmt := &Statement{t:IfStatement}
+        *subExprs = append(*subExprs, expr)
 
-    index := nextSymbol(currentIndex, ts, "{")
-    stmt.condition = &Expression{
-        t:     BinaryExpression,
-        raw:   ts[currentIndex+1:index],
-    }
-
-    scopeOpenCount := 1
-    var endIndex int
-    for i:=index+1; i<=len(ts); i++ {
-        t := ts[i]
-        if t.str == "{" {
-            scopeOpenCount++
-        }
-        if t.str == "}" {
-            scopeOpenCount--
-            endIndex = i
-            if scopeOpenCount == 0 {
-                break
-            }
-        }
-        stmt.raw = append(stmt.raw, t)
-    }
-    return stmt, endIndex
-}
-
-func parseForStatement(currentIndex int, ts []Token) (*Statement, int) {
-    stmt := &Statement{t:IfStatement}
-    index := nextSymbol(currentIndex, ts, "{")
-    exprs := splitExpression(ts[currentIndex+1:index])
-    stmt.setHeaderInfo(exprs)
-    scopeOpenCount := 1
-    var endIndex int
-    for i:=index+1; i<=len(ts); i++ {
-        t := ts[i]
-        if t.str == "{" {
-            scopeOpenCount++
-        }
-        if t.str == "}" {
-            scopeOpenCount--
-            endIndex = i
-            if scopeOpenCount == 0 {
-                break
-            }
-        }
-        stmt.raw = append(stmt.raw, t)
-    }
-    return stmt, endIndex
-}
-
-func splitExpression(ts []Token) []*Expression {
-    res := make([]*Expression, 3)
-    size := len(ts)
-    // for语句没用";"分隔，表达式即为condition expression
-    if !hasSymbol(ts, ";") {
-        res[1] = &Expression{
-            t:     BinaryExpression,
-            raw:   ts,
-        }
-        return res
-    }
-
-    //for 语句存在";"分隔符时
-    // extract initialize expression
-    index := nextSymbol(0, ts, ";")
-    if index > 2 {
-        res[0] = &Expression{
-            t:     BinaryExpression,
-            raw:   ts[:index],
-        }
-    }
-
-    // extract condition expression
-    preIndex := index+1
-    index = nextSymbol(preIndex, ts, ";")
-    if index - preIndex > 2 {
-        res[1] = &Expression{
-            t:     BinaryExpression,
-            raw:   ts[preIndex:index],
-        }
-    } else if preIndex<size && !hasSymbol(ts[preIndex:], ";") {
-        res[1] = &Expression{
-            t:     BinaryExpression,
-            raw:   ts[preIndex:],
-        }
-        index = size
-    }
-
-    // extract post expression
-    preIndex = index+1
-    if preIndex < size {
-        res[2] = &Expression{
-            t:     BinaryExpression,
-            raw:   ts[preIndex:],
-        }
-    }
-    return res
-}
-
-
-func nextBoundary(currentIndex int, ts []Token) int {
-    return nextSymbol(currentIndex, ts, ";")
-}
-
-func nextSymbol(currentIndex int, ts []Token, s string) int {
-    for i:=currentIndex; i<len(ts); i++ {
-        t := ts[i]
-        if t.assertSymbol(s) {
-            return i
-        }
-    }
-    return -1
-}
-
-func hasSymbol(ts []Token, s string) bool {
-    for i:=0; i<len(ts); i++ {
-        t := ts[i]
-        if t.assertSymbol(s) {
-            return true
-        }
-    }
-    return false
-}
-
-
-func parseStatement(fn *Function) {
-    for _, stmt := range fn.block {
-        //ts := stmt.raw
-        switch {
-        case stmt.isExpressionStatement():
-            //parseExpressionStatement(ts, stmt)
-
-        case stmt.isIfStatement():
-        case stmt.isForStatement():
-        case stmt.isSwitchStatement():
-        case stmt.isReturnStatement():
-        }
-    }
-}
-
-func parseExpressionStatement(ts []Token, stmt *Statement) {
-    var expr *Expression
-    tlen := len(ts)
-    if tlen < 2 {
-        return
-    }
-    if tlen == 2 {
-        if ts[0].isIdentifier() && (ts[1].str=="++" || ts[1].str=="--") {
-
+        if !expr.isTmpExpression() {
+            lastExpr.listFinish = true
         }
         return
     }
-
-    // 去括号
-    if ts[0].str == "(" && ts[tlen-1].str == ")" {
-        ts = ts[1:tlen-1]
-    }
-    tlen = len(ts)
-
-    // 处理基本表达式
-    if tlen == 3 {
-        expr = parseTerm(ts)
-        if expr != nil {
-            stmt.addExpression(expr)
-        }
-        return
-    }
-
-    // 处理多维表达式
-    expr, next := parseListExpression(ts, stmt)
-    if expr != nil {
-        stmt.addExpression(expr)
-    }
-    if next != nil {
-        parseExpressionStatement(next, stmt)
-    }
+    s.exprs = append(s.exprs, expr)
 }
 
-func parseListExpression(ts []Token, stmt *Statement) (*Expression, []Token) {
-    first := ts[0]
-    mid := ts[1]
-    third := ts[2]
-    fourth := ts[3]
-    var expr *Expression
-    if first.isIdentifier() && mid.str == "=" {
-        if first.isTmp() && len(ts) == 5 {
-            fifth := ts[4]
-            exprType := getExpressionType(fourth.str)
-            expr = &Expression{
-                t:          exprType,
-                left:       parsePrimaryExpression(&third),
-                right:      parsePrimaryExpression(&fifth),
-                tmpname:    first.str,
-            }
-            return expr, nil
-        }
-
-        expr = newListExpression()
-        tmp := &Expression{
-            t:     AssignExpression | TmpExpression,
-            left:  PrimaryExpr{t: Varname, name: first.str},
-            right: PrimaryExpr{t: Fill},
-        }
-        expr.list = append(expr.list, tmp)
-
-        return expr, ts[3:]
-    }
-    b11 := isMulDiv(mid.str)
-    b12 := isAddSub(mid.str) && isAddSub(fourth.str)
-    if b11 || b12 {
-        exprType := getExpressionType(mid.str)
-        tmpname := getTmpname(stmt)
-        expr = &Expression{
-            t:          TmpExpression | exprType,
-            left:       parsePrimaryExpression(&first),
-            right:      parsePrimaryExpression(&third),
-            tmpname:    tmpname,
-        }
-        head := tmpToken(tmpname)
-        next := insert(head, ts[3:])
-        return expr, next
-    }
-    if isAddSub(mid.str) && isMulDiv(fourth.str) {
-        exprType := getExpressionType(mid.str)
-        tmpname := getTmpname(stmt)
-        tail := tmpToken(tmpname)
-        expr = &Expression{
-            t:          TmpExpression | exprType,
-            left:       parsePrimaryExpression(&first),
-            right:      parsePrimaryExpression(&tail),
-        }
-        assignToken := symbolToken("=")
-        next := insert2(tail, assignToken, ts[2:])
-        return expr, next
-    }
-    return nil, nil
+func (s *Statement) isExpressionStatement() bool {
+    return (s.t & ExpressionStatement) == ExpressionStatement
 }
 
-func isAddSub(op string) bool {
-    return op == "+" || op == "-"
+func (s *Statement) isIfStatement() bool {
+    return (s.t & IfStatement) == IfStatement
 }
 
-func isMulDiv(op string) bool {
-    return op == "*" || op == "/"
+func (s *Statement) isForStatement() bool {
+    return (s.t & ForStatement) == ForStatement
 }
 
-func getTmpname(stmt *Statement) string {
-    name := fmt.Sprintf("tmp.%v", stmt.tmpcount)
-    stmt.tmpcount++
-    return name
+func (s *Statement) isSwitchStatement() bool {
+    return (s.t & SwitchStatement) == SwitchStatement
 }
 
-func parseTerm(ts []Token) *Expression{
-    first := ts[0]
-    mid := ts[1]
-    third := ts[2]
-    left := parsePrimaryExpression(&first)
-    right := parsePrimaryExpression(&third)
-    var exprType ExpressionType
-    switch {
-    case  first.isIdentifier() && mid.str == "=":
-        exprType = AssignExpression
-
-    case mid.str == "+":
-        exprType = AddExpression
-
-    case mid.str == "-":
-        exprType = SubExpression
-
-    case mid.str == "*":
-        exprType = MulExpression
-
-    case mid.str == "/":
-        exprType = DivExpression
-
-    default:
-        return nil
-    }
-
-    expr := &Expression{
-        t:     exprType,
-        left:  left,
-        right: right,
-    }
-    return expr
+func (s *Statement) isReturnStatement() bool {
+    return (s.t & ReturnStatement) == ReturnStatement
 }
 
-func getExpressionType(op string) ExpressionType {
-    switch op {
-    case "+": return AddExpression
-    case "-": return SubExpression
-    case "*": return MulExpression
-    case "/": return DivExpression
+func (s *Statement) execute(super, local Variables) *StatementResultType {
 
-    default:
-        return -1
-    }
-}
 
-func parsePrimaryExpression(t *Token) PrimaryExpr {
-    v := tokenToValue(t)
-    var res PrimaryExpr
-    if v == nil {
-        res = PrimaryExpr{t: Varname, name: t.str}
-    } else {
-        res = PrimaryExpr{t: Const, result: v}
-    }
-    return res
-}
-
-func tokenToValue(t *Token) *Value {
-    var v Value
-    if t.isFloat() {
-        f, err := strconv.ParseFloat(t.str, 64)
-        exitOnError(err)
-        v = newVal(f)
-        return &v
-    }
-    if t.isInt() {
-        i, err := strconv.Atoi(t.str)
-        exitOnError(err)
-        v = newVal(i)
-        return &v
-    }
-    if t.isStr() {
-        v = newVal(fmt.Sprintf("%v", t.str))
-        return &v
-    }
-    if t.str == "true" || t.str == "false" {
-        b, err := strconv.ParseBool(t.str)
-        exitOnError(err)
-        v = newVal(b)
-        return &v
-    }
     return nil
 }
+
+func (s *Statement) String() string {
+    var res bytes.Buffer
+    for _, t := range s.raw {
+        res.WriteString(t.String())
+        res.WriteString(" ")
+    }
+    if (s.t & IfStatement) == IfStatement {
+        res.WriteString("condition:")
+        res.WriteString(s.condition.String())
+        res.WriteString(" ")
+    }
+    if (s.t & ForStatement) == ForStatement {
+        res.WriteString("header:")
+        res.WriteString(s.preExpr.String())
+        res.WriteString("; ")
+        res.WriteString(s.condition.String())
+        res.WriteString("; ")
+        res.WriteString(s.postExpr.String())
+        res.WriteString(" ")
+    }
+    return res.String()
+}
+
+func newStatement(t StatementType, ts []Token) *Statement {
+    return &Statement{
+        t:     t,
+        exprs: nil,
+        raw:   ts,
+    }
+}
+
+type Function struct {
+    super Variables // 父作用域的变量列表
+    local Variables // 当前作用域的变量列表
+    params []Value // 参数
+    res []Value // 返回值
+    block []*Statement // 执行语句
+    name string
+    defToken Token
+    ts []Token // token列表
+    compiled bool
+}
+
+
+func newFunc() *Function {
+    return &Function{local:newVariables()}
+}
+
+func (f *Function) addStatement(stm *Statement) {
+    f.block = append(f.block, stm)
+}
+
+
+
+
