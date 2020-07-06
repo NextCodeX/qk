@@ -11,9 +11,23 @@ var (
 )
 
 
-func Compile(ts []Token) {
-    mainFunc.raw = ts
-    for i:=0; i<len(ts); {
+func Compile(fn *Function, ts []Token) {
+    if fn.compiled {
+        return
+    }else {
+        fn.compiled = true
+    }
+    extractStatement(fn, ts)
+    parseStatement(fn)
+
+    for _, customFunc := range funcList {
+        Compile(customFunc, customFunc.ts)
+    }
+}
+
+func extractStatement(fn *Function, ts []Token) {
+    fn.ts = ts
+    for i := 0; i < len(ts); {
         t := ts[i]
         var endIndex int
         var stmt *Statement
@@ -23,9 +37,9 @@ func Compile(ts []Token) {
         }
         switch t.str {
         case "if":
-           stmt, endIndex = parseIfStatement(i, ts)
+            stmt, endIndex = parseIfStatement(i, ts)
         case "for":
-           stmt, endIndex = parseForStatement(i, ts)
+            stmt, endIndex = parseForStatement(i, ts)
         case "switch":
         default:
             if t.isFdef() {
@@ -35,17 +49,16 @@ func Compile(ts []Token) {
                 goto next_loop
             }
             endIndex = nextBoundary(i, ts)
-            if endIndex>0 {
+            if endIndex > 0 {
                 stmt = newStatement(ExpressionStatement, ts[i:endIndex])
             }
         }
-        if endIndex>0 {
-            parseStatement(stmt)
-            mainFunc.addStatement(stmt)
+        if endIndex > 0 {
+            fn.addStatement(stmt)
             i = endIndex
         }
 
-        next_loop:
+    next_loop:
         i++
     }
 }
@@ -55,7 +68,7 @@ func parseFunction(currentIndex int, ts []Token) (*Function, int) {
     f := newFunc()
     f.name = ts[0].str
     f.defToken = ts[0]
-    var block []Token
+    var blockTokens []Token
     size := len(ts)
     scopeOpenCount := 1
     for i:=currentIndex+2; i<size; i++ {
@@ -70,11 +83,12 @@ func parseFunction(currentIndex int, ts []Token) (*Function, int) {
                 break
             }
         }
-        block = append(block, token)
+        blockTokens = append(blockTokens, token)
     }
     if scopeOpenCount > 0 {
         panic("parse function statement exception!")
     }
+    f.ts = blockTokens
     return f, nextIndex
 }
 
@@ -205,19 +219,19 @@ func hasSymbol(ts []Token, s string) bool {
 }
 
 
-func parseStatement(stmt *Statement) {
-    //ts := stmt.raw
+func parseStatement(fn *Function) {
+    for _, stmt := range fn.block {
+        //ts := stmt.raw
+        switch {
+        case stmt.isExpressionStatement():
+            //parseExpressionStatement(ts, stmt)
 
-    switch {
-    case stmt.isExpressionStatement():
-        //parseExpressionStatement(ts, stmt)
-
-    case stmt.isIfStatement():
-    case stmt.isForStatement():
-    case stmt.isSwitchStatement():
-    case stmt.isReturnStatement():
+        case stmt.isIfStatement():
+        case stmt.isForStatement():
+        case stmt.isSwitchStatement():
+        case stmt.isReturnStatement():
+        }
     }
-
 }
 
 func parseExpressionStatement(ts []Token, stmt *Statement) {
