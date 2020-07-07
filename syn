@@ -39,13 +39,27 @@ import (
 
 var (
     funcList = make(map[string]*Function)
-    mainFunc = newFunc()
+    mainFunc = newFunc("main")
 )
 
 
-func Compile(ts []Token) {
-    mainFunc.raw = ts
-    for i:=0; i<len(ts); {
+func Compile(fn *Function, ts []Token) {
+    if fn.compiled {
+        return
+    }else {
+        fn.compiled = true
+    }
+    extractStatement(fn, ts)
+    parseStatement(fn)
+
+    for _, customFunc := range funcList {
+        Compile(customFunc, customFunc.ts)
+    }
+}
+
+func extractStatement(fn *Function, ts []Token) {
+    fn.ts = ts
+    for i := 0; i < len(ts); {
         t := ts[i]
         var endIndex int
         var stmt *Statement
@@ -55,10 +69,12 @@ func Compile(ts []Token) {
         }
         switch t.str {
         case "if":
-           stmt, endIndex = parseIfStatement(i, ts)
+            stmt, endIndex = parseIfStatement(i, ts)
         case "for":
-           stmt, endIndex = parseForStatement(i, ts)
+            stmt, endIndex = parseForStatement(i, ts)
         case "switch":
+        case "return":
+            stmt, endIndex = parseReturnStatement(i, ts)
         default:
             if t.isFdef() {
                 f, endIndex1 := parseFunction(i, ts)
@@ -67,27 +83,45 @@ func Compile(ts []Token) {
                 goto next_loop
             }
             endIndex = nextBoundary(i, ts)
-            if endIndex>0 {
+            if endIndex > 0 {
                 stmt = newStatement(ExpressionStatement, ts[i:endIndex])
             }
         }
-        if endIndex>0 {
-            parseStatement(stmt)
-            mainFunc.addStatement(stmt)
+        if endIndex > 0 {
+            fn.addStatement(stmt)
             i = endIndex
         }
 
-        next_loop:
+    next_loop:
         i++
     }
 }
 
+func parseReturnStatement(currentIndex int, ts []Token) (*Statement, int) {
+    stmt := &Statement{t:ReturnStatement}
+    size := len(ts)
+    var endIndex int
+    for i:=currentIndex+1; i<size; i++ {
+        t := ts[i]
+        if t.assertSymbols("}", ";") {
+            endIndex = i
+            break
+        }
+
+        stmt.raw = append(stmt.raw, t)
+
+        if i==size-1 {
+            endIndex = i
+        }
+    }
+    return stmt, endIndex
+}
+
 func parseFunction(currentIndex int, ts []Token) (*Function, int) {
     var nextIndex int
-    f := newFunc()
-    f.name = ts[0].str
-    f.defToken = ts[0]
-    var block []Token
+    f := newFunc(ts[currentIndex].str)
+    f.defToken = ts[currentIndex]
+    var blockTokens []Token
     size := len(ts)
     scopeOpenCount := 1
     for i:=currentIndex+2; i<size; i++ {
@@ -102,11 +136,12 @@ func parseFunction(currentIndex int, ts []Token) (*Function, int) {
                 break
             }
         }
-        block = append(block, token)
+        blockTokens = append(blockTokens, token)
     }
     if scopeOpenCount > 0 {
         panic("parse function statement exception!")
     }
+    f.ts = blockTokens
     return f, nextIndex
 }
 
@@ -121,15 +156,15 @@ func parseIfStatement(currentIndex int, ts []Token) (*Statement, int) {
 
     scopeOpenCount := 1
     var endIndex int
-    for i:=index+1; i<=len(ts); i++ {
+    for i:=index+1; i<len(ts); i++ {
         t := ts[i]
-        if t.str == "{" {
+        if t.assertSymbol("{") {
             scopeOpenCount++
         }
-        if t.str == "}" {
+        if t.assertSymbol("}") {
             scopeOpenCount--
-            endIndex = i
             if scopeOpenCount == 0 {
+                endIndex = i
                 break
             }
         }
@@ -145,15 +180,15 @@ func parseForStatement(currentIndex int, ts []Token) (*Statement, int) {
     stmt.setHeaderInfo(exprs)
     scopeOpenCount := 1
     var endIndex int
-    for i:=index+1; i<=len(ts); i++ {
+    for i:=index+1; i<len(ts); i++ {
         t := ts[i]
-        if t.str == "{" {
+        if t.assertSymbol("{") {
             scopeOpenCount++
         }
-        if t.str == "}" {
+        if t.assertSymbol("}") {
             scopeOpenCount--
-            endIndex = i
             if scopeOpenCount == 0 {
+                endIndex = i
                 break
             }
         }
@@ -164,6 +199,7 @@ func parseForStatement(currentIndex int, ts []Token) (*Statement, int) {
 
 func splitExpression(ts []Token) []*Expression {
     res := make([]*Expression, 3)
+    size := len(ts)
     // for语句没用";"分隔，表达式即为condition expression
     if !hasSymbol(ts, ";") {
         res[1] = &Expression{
@@ -191,16 +227,17 @@ func splitExpression(ts []Token) []*Expression {
             t:     BinaryExpression,
             raw:   ts[preIndex:index],
         }
-    } else if !hasSymbol(ts[preIndex:], ";") {
+    } else if preIndex<size && !hasSymbol(ts[preIndex:], ";") {
         res[1] = &Expression{
             t:     BinaryExpression,
             raw:   ts[preIndex:],
         }
+        index = size
     }
 
     // extract post expression
     preIndex = index+1
-    if preIndex < len(ts) {
+    if preIndex < size {
         res[2] = &Expression{
             t:     BinaryExpression,
             raw:   ts[preIndex:],
@@ -235,19 +272,19 @@ func hasSymbol(ts []Token, s string) bool {
 }
 
 
-func parseStatement(stmt *Statement) {
-    //ts := stmt.raw
+func parseStatement(fn *Function) {
+    for _, stmt := range fn.block {
+        //ts := stmt.raw
+        switch {
+        case stmt.isExpressionStatement():
+            //parseExpressionStatement(ts, stmt)
 
-    switch {
-    case stmt.isExpressionStatement():
-        //parseExpressionStatement(ts, stmt)
-
-    case stmt.isIfStatement():
-    case stmt.isForStatement():
-    case stmt.isSwitchStatement():
-    case stmt.isReturnStatement():
+        case stmt.isIfStatement():
+        case stmt.isForStatement():
+        case stmt.isSwitchStatement():
+        case stmt.isReturnStatement():
+        }
     }
-
 }
 
 func parseExpressionStatement(ts []Token, stmt *Statement) {
@@ -614,13 +651,21 @@ func Run() {
     bs, _ := ioutil.ReadFile("demo.qk")
     ts := Parse(bs)
     //printTokens(ts)
-    Compile(ts)
-    printMainFunc()
+    Compile(mainFunc, ts)
+    printFunc()
 }
 
-func printMainFunc() {
-    for i, stmt := range mainFunc.block {
-        fmt.Printf("line %v: [%v] \n", i, stmt)
+func printFunc() {
+    doPrintFunc(mainFunc)
+    for _, fn := range funcList {
+        doPrintFunc(fn)
+    }
+}
+
+func doPrintFunc(fn *Function) {
+    fmt.Println("######################", fn.name, len(fn.block))
+    for i, stmt := range fn.block {
+        fmt.Printf("line %v: \n %v \n", i, stmt)
     }
 }
 
@@ -1532,9 +1577,45 @@ func (vs *Variables) get(name string) *Variable {
 #####src\core\object_test.go#####package core
 
 import (
+    "bufio"
+    "bytes"
     "fmt"
+    "os"
+    "regexp"
+    "strings"
     "testing"
 )
+
+
+func Test_clone(t *testing.T) {
+    f, _ := os.Open("d:/raw.txt")
+    scanner := bufio.NewScanner(f)
+    for scanner.Scan() {
+        line := strings.TrimSpace(scanner.Text())
+        if !strings.HasPrefix(line, "private") {
+            continue
+        }
+        re := regexp.MustCompile("private\\s+\\w+\\s+(\\w+);")
+        res := re.FindAllStringSubmatch(line, -1)
+        fname := res[0][1]
+        mt := strings.ToUpper(fname[:1]) + fname[1:]
+        fmt.Printf("obj.set%v(this.%v);\n", mt, fname)
+    }
+}
+
+func Test_fields(t *testing.T) {
+    f, _ := os.Open("d:/raw.txt")
+    scanner := bufio.NewScanner(f)
+    var buf bytes.Buffer
+    for scanner.Scan() {
+        line := strings.TrimSpace(scanner.Text())
+        re := regexp.MustCompile("`(\\w+)`")
+        res := re.FindAllStringSubmatch(line, -1)
+        buf.WriteString(res[0][1])
+        buf.WriteString(", ")
+    }
+    fmt.Println(buf.String())
+}
 
 func Test_swi(t *testing.T) {
     a := 3
@@ -1649,6 +1730,9 @@ func (s *Statement) execute(super, local Variables) *StatementResultType {
 
 func (s *Statement) String() string {
     var res bytes.Buffer
+    if s.isReturnStatement() {
+        res.WriteString(" return: ")
+    }
     for _, t := range s.raw {
         res.WriteString(t.String())
         res.WriteString(" ")
@@ -1686,12 +1770,13 @@ type Function struct {
     block []*Statement // 执行语句
     name string
     defToken Token
-    raw []Token // token列表
+    ts []Token // token列表
+    compiled bool
 }
 
 
-func newFunc() *Function {
-    return &Function{local:newVariables()}
+func newFunc(name string) *Function {
+    return &Function{local:newVariables(), name:name}
 }
 
 func (f *Function) addStatement(stm *Statement) {
