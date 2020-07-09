@@ -30,7 +30,7 @@ println("user name:", obj["name"])
 
 
 ~~~~~~~~~~~~~~~~~~~~
-#####expr.qk#####a = b + 3 * 9~~~~~~~~~~~~~~~~~~~~
+#####expr.qk#####println("hello world3334")~~~~~~~~~~~~~~~~~~~~
 #####src\core\compile.go#####package core
 
 import (
@@ -283,7 +283,8 @@ func parseStatement(stmt *Statement) {
     ts := stmt.raw
     switch {
     case stmt.isExpressionStatement():
-        parseExpressionStatement(ts, stmt)
+        expr := parseExpressionStatement(ts)
+        stmt.addExpression(expr)
 
     case stmt.isIfStatement():
     case stmt.isForStatement():
@@ -292,7 +293,7 @@ func parseStatement(stmt *Statement) {
     }
 }
 
-func parseExpressionStatement(ts []Token, stmt *Statement) {
+func parseExpressionStatement(ts []Token) *Expression {
     var expr *Expression
     tlen := len(ts)
     // 去括号
@@ -301,34 +302,35 @@ func parseExpressionStatement(ts []Token, stmt *Statement) {
     }
     tlen = len(ts)
     if tlen < 1 {
-        return
+        return expr
     }
     switch {
     case tlen == 1:
-        parseUnaryExpression(ts)
+        return parseUnaryExpression(ts)
     case tlen == 2:
         if !ts[0].isIdentifier() {
-            return
+            return expr
         }
         parseUnaryPlusExpression(ts)
 
     case tlen == 3:
         expr = parseBinaryExpression(ts)
         if expr != nil {
-            stmt.addExpression(expr)
+            //stmt.addExpression(expr)
         }
     case tlen == 5:
         parseTernaryExpression(ts)
     default:
         // 处理多维表达式
-        expr, next := parseMultivariateExpression(ts, stmt)
-        if expr != nil {
-            stmt.addExpression(expr)
-        }
-        if next != nil {
-            parseExpressionStatement(next, stmt)
-        }
+        //expr, next := parseMultivariateExpression(ts, stmt)
+        //if expr != nil {
+            //stmt.addExpression(expr)
+        //}
+        //if next != nil {
+        //    parseExpressionStatement(next, stmt)
+        //}
     }
+    return expr
 }
 
 func parseTernaryExpression(ts []Token) {
@@ -343,8 +345,25 @@ func parseUnaryPlusExpression(ts []Token) {
     }
 }
 
-func parseUnaryExpression(ts []Token) {
-    
+func parseUnaryExpression(ts []Token) *Expression {
+    fmt.Println("do parseUnaryExpression: ")
+    expr := &Expression{}
+    token := ts[0]
+    fmt.Println(token.String(), ":", token.isFcall())
+    if token.isStr() {
+        expr.t = StringExpression | ConstExpression
+        primaryExpr := parsePrimaryExpression(&token)
+        expr.left = primaryExpr
+        return expr
+    }
+    if token.isFcall() {
+        expr.t = FunctionCallExpression
+        primaryExpr := parsePrimaryExpression(&token)
+        expr.left = primaryExpr
+        return expr
+    }
+    //primaryExpr :=
+    return nil
 }
 
 func parseMultivariateExpression(ts []Token, stmt *Statement) (*Expression, []Token) {
@@ -366,11 +385,11 @@ func parseMultivariateExpression(ts []Token, stmt *Statement) (*Expression, []To
             return expr, nil
         }
 
-        expr = newListExpression()
+        expr = newMultiExpression()
         tmp := &Expression{
-            t:     AssignExpression | TmpExpression,
-            left:  PrimaryExpr{t: Varname, name: first.str},
-            right: PrimaryExpr{t: Fill},
+            t:     TmpExpression,
+            left:  &PrimaryExpr{},
+            right: &PrimaryExpr{},
         }
         expr.list = append(expr.list, tmp)
 
@@ -428,21 +447,22 @@ func parseBinaryExpression(ts []Token) *Expression {
     left := parsePrimaryExpression(&first)
     right := parsePrimaryExpression(&third)
     var exprType ExpressionType
+    var op OperationType
     switch {
     case  first.isIdentifier() && mid.str == "=":
-        exprType = AssignExpression
+        op = Opassign
 
     case mid.str == "+":
-        exprType = AddExpression
+        op = Opadd
 
     case mid.str == "-":
-        exprType = SubExpression
+        op = Opsub
 
     case mid.str == "*":
-        exprType = MulExpression
+        op = Opmul
 
     case mid.str == "/":
-        exprType = DivExpression
+        op = Opdiv
 
     default:
         return nil
@@ -450,6 +470,7 @@ func parseBinaryExpression(ts []Token) *Expression {
 
     expr := &Expression{
         t:     exprType,
+        op:    op,
         left:  left,
         right: right,
     }
@@ -458,23 +479,36 @@ func parseBinaryExpression(ts []Token) *Expression {
 
 func getExpressionType(op string) ExpressionType {
     switch op {
-    case "+": return AddExpression
-    case "-": return SubExpression
-    case "*": return MulExpression
-    case "/": return DivExpression
 
     default:
         return -1
     }
 }
 
-func parsePrimaryExpression(t *Token) PrimaryExpr {
+func parsePrimaryExpression(t *Token) *PrimaryExpr {
     v := tokenToValue(t)
-    var res PrimaryExpr
-    if v == nil {
-        res = PrimaryExpr{t: Varname, name: t.str}
+    var res *PrimaryExpr
+    if v != nil {
+        res = &PrimaryExpr{res:v}
+    } else if t.isFcall() {
+        exprs := getArgsFromToken(t.ts)
+        res = &PrimaryExpr{name:t.str, args: exprs}
     } else {
-        res = PrimaryExpr{t: Const, res: v}
+        res = &PrimaryExpr{name:t.str}
+    }
+    return res
+}
+
+func getArgsFromToken(ts []Token) []*Expression {
+    var res []*Expression
+    size := len(ts)
+    if size < 1 {
+        return res
+    }
+    if size == 1 {
+        expr := parseExpressionStatement(ts)
+        res = append(res, expr)
+        return res
     }
     return res
 }
@@ -520,16 +554,11 @@ const (
     BooleanExpression
     StringExpression
     ConstExpression
-    IdentifierExpression
-    AddExpression
-    SubExpression
-    MulExpression
-    DivExpression
-    AssignExpression
+    VarExpression
     FunctionCallExpression
     MethodCallExpression
     BinaryExpression
-    ListExpression
+    MultiExpression
     TmpExpression
 )
 
@@ -541,25 +570,29 @@ const (
     Oplt
     Opge
     Ople
+    Opadd
+    Opsub
+    Opmul
+    Opdiv
     Opassign
 )
 
 
 type Expression struct {
     t ExpressionType
-    raw []Token
+    op OperationType
+    left *PrimaryExpr
+    right *PrimaryExpr
     list []*Expression
     listFinish bool
-    left PrimaryExpr
-    op OperationType
-    right PrimaryExpr
-    result *Value
+    raw []Token
+    res *Value
     tmpname string
 }
 
-func newListExpression() *Expression {
+func newMultiExpression() *Expression {
     return &Expression{
-        t:          ListExpression,
+        t:          MultiExpression,
         listFinish: false,
     }
 }
@@ -584,39 +617,23 @@ func (this *Expression) isConstExpression() bool {
     return (this.t & ConstExpression) == ConstExpression
 }
 
-func (this *Expression) isIdentifierExpression() bool {
-    return (this.t & IdentifierExpression) == IdentifierExpression
-}
-
-func (this *Expression) isAssignExpression() bool {
-    return (this.t & AssignExpression) == AssignExpression
-}
-
 func (this *Expression) isFunctionCallExpression() bool {
     return (this.t & FunctionCallExpression) == FunctionCallExpression
-}
-
-func (this *Expression) isMethodCallExpression() bool {
-    return (this.t & MethodCallExpression) == MethodCallExpression
 }
 
 func (this *Expression) isBinaryExpression() bool {
     return (this.t & BinaryExpression) == BinaryExpression
 }
 
-func (this *Expression) isListExpression() bool {
-    return (this.t & ListExpression) == ListExpression
+func (this *Expression) isMultiExpression() bool {
+    return (this.t & MultiExpression) == MultiExpression
 }
 
 func (this *Expression) isTmpExpression() bool {
     return (this.t & TmpExpression) == TmpExpression
 }
 
-func (s *Expression) execute(super, local Variables) *StatementResultType {
 
-
-    return nil
-}
 
 func (expr *Expression) String() string {
     if expr == nil {
@@ -631,31 +648,18 @@ func (expr *Expression) String() string {
 }
 
 type PrimaryExpressionType int
-
 const (
-    Varname PrimaryExpressionType = 1 << iota
-    Expr
-    Const
-    Fill
+    VarPrimaryExpressionType PrimaryExpressionType = 1 << iota
+    ConstPrimaryExpressionType
+    OtherPrimaryExpressionType PrimaryExpressionType = 0
 )
 
 type PrimaryExpr struct {
     t PrimaryExpressionType
-    name string
-    args []Expression
-    res *Value
-}
-
-func (this *PrimaryExpr) isVarname() bool {
-    return (this.t & Varname) == Varname
-}
-
-func (this *PrimaryExpr) isExpr() bool {
-    return (this.t & Expr) == Expr
-}
-
-func (this *PrimaryExpr) isConst() bool {
-    return (this.t & Const) == Const
+    caller string // 调用者名称
+    name string  // 变量名或者函数名称
+    args []*Expression // 参数变量名
+    res *Value  // 常量值
 }
 
 ~~~~~~~~~~~~~~~~~~~~
@@ -677,6 +681,8 @@ func Run() {
     printTokens(ts)
     Compile(mainFunc, ts)
     printFunc()
+    fmt.Println("================")
+    Interpret()
 }
 
 func printFunc() {
@@ -689,7 +695,7 @@ func printFunc() {
 func doPrintFunc(fn *Function) {
     fmt.Println("######################", fn.name, len(fn.block))
     for i, stmt := range fn.block {
-        fmt.Printf("line %v: \n %v \n", i, stmt)
+        fmt.Printf("num: %v line %v: \n %v \n", len(stmt.raw), i, stmt)
     }
 }
 
@@ -715,9 +721,51 @@ func getCmdDir() string {
 ~~~~~~~~~~~~~~~~~~~~
 #####src\core\interpreter.go#####package core
 
+import "fmt"
 
-func Interpret(ts []Token) {
+func Interpret() {
+    for _, stmt := range mainFunc.block {
+        executeStatement(stmt, nil, newVariables())
+    }
+}
 
+func executeStatement(stmt *Statement, super, local Variables) *StatementResultType {
+    if stmt.isExpressionStatement() {
+        for _, expr := range stmt.exprs {
+            executeExpression(expr, super, local)
+        }
+    }
+
+    return nil
+}
+
+func executeExpression(expr *Expression, super, local Variables) *Value {
+    if expr.isConstExpression() {
+        return expr.left.res
+    }
+    if expr.isFunctionCallExpression() {
+        functionName := expr.left.name
+        args := expr.left.args
+        if functionName == "println" {
+            argVals := toGoTypeValues(args, super, local)
+            if len(argVals) < 1 {
+                fmt.Println()
+            }else{
+                fmt.Println(argVals...)
+            }
+        }
+    }
+
+    return nil
+}
+
+func toGoTypeValues(exprs []*Expression, super, local Variables) []interface{} {
+    var res []interface{}
+    for _, expr := range exprs {
+        v := executeExpression(expr, super, local).val()
+        res = append(res, v)
+    }
+    return res
 }
 
 ~~~~~~~~~~~~~~~~~~~~
@@ -1503,6 +1551,19 @@ func newVal(rawVal interface{}) Value {
     return val
 }
 
+func (v *Value) val() interface{} {
+    switch {
+    case v.isIntValue(): return v.int_value
+    case v.isFloatValue(): return v.float_value
+    case v.isBooleanValue(): return v.bool_value
+    case v.isStringValue(): return v.str_value
+    case v.isArrayValue(): return v.arr_value
+    case v.isObjectValue(): return v.obj_value
+    case v.isAnyValue(): return v.any_value
+    }
+    return nil
+}
+
 func (v *Value) isIntValue() bool {
     return (v.t & IntValue) == IntValue
 }
@@ -1736,11 +1797,11 @@ func (s *Statement) setHeaderInfo(exprs []*Expression) {
 }
 
 func (s *Statement) addExpression(expr *Expression) {
-    if len(s.exprs)>0 && s.exprs[len(s.exprs)-1].isListExpression() && !(s.exprs[len(s.exprs)-1].listFinish) {
+    if len(s.exprs)>0 && s.exprs[len(s.exprs)-1].isMultiExpression() && !(s.exprs[len(s.exprs)-1].listFinish) {
         lastExpr := s.exprs[len(s.exprs)-1]
         subExprs := &lastExpr.list
 
-        if expr.isListExpression() {
+        if expr.isMultiExpression() {
             expr = expr.list[0]
         }
 
@@ -1774,10 +1835,6 @@ func (s *Statement) isReturnStatement() bool {
     return (s.t & ReturnStatement) == ReturnStatement
 }
 
-func (s *Statement) execute(super, local Variables) *StatementResultType {
-
-    return nil
-}
 
 func (s *Statement) String() string {
     var res bytes.Buffer
@@ -1929,6 +1986,12 @@ import (
 )
 
 func Test_compile(t *testing.T) {
+    var res []interface{}
+    res = append(res, 3)
+    res = append(res, false)
+    res = append(res, "test")
+    fmt.Println(res)
+    fmt.Println(res...)
     fmt.Println("successfully!")
 }
 
