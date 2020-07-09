@@ -30,7 +30,8 @@ println("user name:", obj["name"])
 
 
 ~~~~~~~~~~~~~~~~~~~~
-#####expr.qk#####println("hello world3334")~~~~~~~~~~~~~~~~~~~~
+#####expr.qk#####a = 9
+println(a)~~~~~~~~~~~~~~~~~~~~
 #####src\core\compile.go#####package core
 
 import (
@@ -315,9 +316,7 @@ func parseExpressionStatement(ts []Token) *Expression {
 
     case tlen == 3:
         expr = parseBinaryExpression(ts)
-        if expr != nil {
-            //stmt.addExpression(expr)
-        }
+
     case tlen == 5:
         parseTernaryExpression(ts)
     default:
@@ -347,19 +346,34 @@ func parseUnaryPlusExpression(ts []Token) {
 
 func parseUnaryExpression(ts []Token) *Expression {
     fmt.Println("do parseUnaryExpression: ")
-    expr := &Expression{}
+
     token := ts[0]
     fmt.Println(token.String(), ":", token.isFcall())
+    expr := &Expression{}
+    primaryExpr := parsePrimaryExpression(&token)
+    expr.left = primaryExpr
     if token.isStr() {
         expr.t = StringExpression | ConstExpression
-        primaryExpr := parsePrimaryExpression(&token)
-        expr.left = primaryExpr
+        return expr
+    }
+    if token.isInt() {
+        expr.t = IntExpression | ConstExpression
+        return expr
+    }
+    if token.isFloat() {
+        expr.t = FloatExpression | ConstExpression
+        return expr
+    }
+    if token.isIdentifier() {
+        if primaryExpr.isVar() {
+            expr.t = VarExpression
+        } else {
+            expr.t = BooleanExpression
+        }
         return expr
     }
     if token.isFcall() {
         expr.t = FunctionCallExpression
-        primaryExpr := parsePrimaryExpression(&token)
-        expr.left = primaryExpr
         return expr
     }
     //primaryExpr :=
@@ -446,10 +460,9 @@ func parseBinaryExpression(ts []Token) *Expression {
     third := ts[2]
     left := parsePrimaryExpression(&first)
     right := parsePrimaryExpression(&third)
-    var exprType ExpressionType
     var op OperationType
     switch {
-    case  first.isIdentifier() && mid.str == "=":
+    case  first.isIdentifier() && mid.assertSymbol("="):
         op = Opassign
 
     case mid.str == "+":
@@ -469,7 +482,7 @@ func parseBinaryExpression(ts []Token) *Expression {
     }
 
     expr := &Expression{
-        t:     exprType,
+        t:     BinaryExpression,
         op:    op,
         left:  left,
         right: right,
@@ -494,7 +507,7 @@ func parsePrimaryExpression(t *Token) *PrimaryExpr {
         exprs := getArgsFromToken(t.ts)
         res = &PrimaryExpr{name:t.str, args: exprs}
     } else {
-        res = &PrimaryExpr{name:t.str}
+        res = &PrimaryExpr{t:VarPrimaryExpressionType, name:t.str}
     }
     return res
 }
@@ -590,6 +603,10 @@ type Expression struct {
     tmpname string
 }
 
+func (this *Expression) isAssign() bool {
+    return (this.op & Opassign) == Opassign
+}
+
 func newMultiExpression() *Expression {
     return &Expression{
         t:          MultiExpression,
@@ -615,6 +632,10 @@ func (this *Expression) isStringExpression() bool {
 
 func (this *Expression) isConstExpression() bool {
     return (this.t & ConstExpression) == ConstExpression
+}
+
+func (this *Expression) isVarExpression() bool {
+    return (this.t & VarExpression) == VarExpression
 }
 
 func (this *Expression) isFunctionCallExpression() bool {
@@ -660,6 +681,14 @@ type PrimaryExpr struct {
     name string  // 变量名或者函数名称
     args []*Expression // 参数变量名
     res *Value  // 常量值
+}
+
+func (this *PrimaryExpr) isVar() bool {
+    return (this.t & VarPrimaryExpressionType) == VarPrimaryExpressionType
+}
+
+func (this *PrimaryExpr) isOther() bool {
+    return (this.t & OtherPrimaryExpressionType) == OtherPrimaryExpressionType
 }
 
 ~~~~~~~~~~~~~~~~~~~~
@@ -725,44 +754,85 @@ import "fmt"
 
 func Interpret() {
     for _, stmt := range mainFunc.block {
-        executeStatement(stmt, nil, newVariables())
+        local := newVariables()
+        executeStatement(stmt, newVarScope(nil, &local))
     }
 }
 
-func executeStatement(stmt *Statement, super, local Variables) *StatementResultType {
+func executeStatement(stmt *Statement, vars *VarScope) *StatementResultType {
     if stmt.isExpressionStatement() {
         for _, expr := range stmt.exprs {
-            executeExpression(expr, super, local)
+            executeExpression(expr, vars)
         }
     }
 
     return nil
 }
 
-func executeExpression(expr *Expression, super, local Variables) *Value {
+func executeExpression(expr *Expression, vars *VarScope) (res *Value) {
     if expr.isConstExpression() {
         return expr.left.res
     }
+    if expr.isVarExpression() {
+        varname := expr.left.name
+
+        variable := searchVariable(varname, vars)
+        fmt.Println("after searchVariable:", variable)
+
+        //return &(variable.val)
+    }
+    if expr.isBinaryExpression() {
+        return executeBinaryExpression(expr, vars)
+    }
     if expr.isFunctionCallExpression() {
-        functionName := expr.left.name
-        args := expr.left.args
-        if functionName == "println" {
-            argVals := toGoTypeValues(args, super, local)
-            if len(argVals) < 1 {
-                fmt.Println()
-            }else{
-                fmt.Println(argVals...)
-            }
-        }
+        return executeFunctionCallExpression(expr, vars)
     }
 
+    return
+}
+
+func executeFunctionCallExpression(expr *Expression, vars *VarScope) (res *Value) {
+    functionName := expr.left.name
+    args := expr.left.args
+    if functionName == "println" {
+        argVals := toGoTypeValues(args, vars)
+        if len(argVals) < 1 {
+            fmt.Println()
+        }else{
+            fmt.Println(argVals...)
+        }
+    }
     return nil
 }
 
-func toGoTypeValues(exprs []*Expression, super, local Variables) []interface{} {
+func executeBinaryExpression(expr *Expression, vars *VarScope) (res *Value) {
+    switch {
+    case expr.isAssign():
+        varname := expr.left.name
+        val := expr.right.res
+        variable := toVar(varname, *val)
+        vars.local.add(variable)
+    }
+    return nil
+}
+
+func searchVariable(name string, vars *VarScope) *Variable {
+    fmt.Println("searchVariable:", name, vars.local.isEmpty())
+    res := vars.local.get(name)
+    if res != nil {
+        return res
+    }
+    res = vars.super.get(name)
+    if res != nil {
+        return res
+    }
+    return nil
+}
+
+func toGoTypeValues(exprs []*Expression, vars *VarScope) []interface{} {
     var res []interface{}
     for _, expr := range exprs {
-        v := executeExpression(expr, super, local).val()
+        v := executeExpression(expr, vars).val()
         res = append(res, v)
     }
     return res
@@ -1651,12 +1721,35 @@ func newVariables() Variables {
     return make(map[string]*Variable)
 }
 
+func (vs *Variables) isEmpty() bool {
+    return vs == nil || len(*vs) < 1
+}
+
 func (vs *Variables) add(v *Variable) {
     (*vs)[v.name] = v
 }
 
 func (vs *Variables) get(name string) *Variable {
-    return (*vs)[name]
+    if vs.isEmpty() {
+        return nil
+    }
+    res, ok := (*vs)[name]
+    if ok {
+        return res
+    }
+    return nil
+}
+
+type VarScope struct {
+    super *Variables
+    local *Variables
+}
+
+func newVarScope(super, local *Variables) *VarScope {
+    return &VarScope{
+        super: super,
+        local: local,
+    }
 }
 ~~~~~~~~~~~~~~~~~~~~
 #####src\core\object_test.go#####package core
