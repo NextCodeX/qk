@@ -30,8 +30,8 @@ println("user name:", obj["name"])
 
 
 ~~~~~~~~~~~~~~~~~~~~
-#####expr.qk#####a = 9
-println(a)~~~~~~~~~~~~~~~~~~~~
+#####expr.qk#####a = 9 + 3
+println(a, 2, true, "joker")~~~~~~~~~~~~~~~~~~~~
 #####src\core\compile.go#####package core
 
 import (
@@ -318,22 +318,22 @@ func parseExpressionStatement(ts []Token) *Expression {
         expr = parseBinaryExpression(ts)
 
     case tlen == 5:
-        parseTernaryExpression(ts)
+        expr = parseTernaryExpression(ts)
     default:
         // 处理多维表达式
-        //expr, next := parseMultivariateExpression(ts, stmt)
-        //if expr != nil {
-            //stmt.addExpression(expr)
-        //}
-        //if next != nil {
-        //    parseExpressionStatement(next, stmt)
-        //}
+        expr = parseMultivariateExpression(ts)
     }
     return expr
 }
 
-func parseTernaryExpression(ts []Token) {
-    
+func parseTernaryExpression(ts []Token) (expr *Expression) {
+    if !ts[0].isIdentifier() || !ts[1].assertSymbol("=") {
+        return
+    }
+    expr = parseBinaryExpression(ts[2:])
+    expr.tmpname = ts[0].str
+    expr.t = expr.t | TmpExpression
+    return expr
 }
 
 func parseUnaryPlusExpression(ts []Token) {
@@ -345,10 +345,7 @@ func parseUnaryPlusExpression(ts []Token) {
 }
 
 func parseUnaryExpression(ts []Token) *Expression {
-    fmt.Println("do parseUnaryExpression: ")
-
     token := ts[0]
-    fmt.Println(token.String(), ":", token.isFcall())
     expr := &Expression{}
     primaryExpr := parsePrimaryExpression(&token)
     expr.left = primaryExpr
@@ -368,7 +365,7 @@ func parseUnaryExpression(ts []Token) *Expression {
         if primaryExpr.isVar() {
             expr.t = VarExpression
         } else {
-            expr.t = BooleanExpression
+            expr.t = BooleanExpression | ConstExpression
         }
         return expr
     }
@@ -380,64 +377,37 @@ func parseUnaryExpression(ts []Token) *Expression {
     return nil
 }
 
-func parseMultivariateExpression(ts []Token, stmt *Statement) (*Expression, []Token) {
-    first := ts[0]
-    mid := ts[1]
-    third := ts[2]
-    fourth := ts[3]
-    var expr *Expression
-    if first.isIdentifier() && mid.str == "=" {
-        if first.isTmp() && len(ts) == 5 {
-            fifth := ts[4]
-            exprType := getExpressionType(fourth.str)
-            expr = &Expression{
-                t:          exprType,
-                left:       parsePrimaryExpression(&third),
-                right:      parsePrimaryExpression(&fifth),
-                tmpname:    first.str,
-            }
-            return expr, nil
+func parseMultivariateExpression(ts []Token) (expr *Expression) {
+    var resVarToken *Token
+    var multiExprTokens []Token
+    if ts[1].assertSymbol("=") {
+        resVarToken = &(ts[0])
+        multiExprTokens = ts[2:]
+    } else {
+        multiExprTokens = ts
+    }
+    var exprTokensList [][]Token
+    var tmpTokens []Token
+    for i:=0; i<len(multiExprTokens); i++ {
+        size := len(multiExprTokens)
+        tmpSize := len(tmpTokens)
+        token := multiExprTokens[i]
+        cond1 := tmpSize == 2 && i<size-1 && last(tmpTokens).lower(next(multiExprTokens,i))
+        if cond1 {
+
         }
 
-        expr = newMultiExpression()
-        tmp := &Expression{
-            t:     TmpExpression,
-            left:  &PrimaryExpr{},
-            right: &PrimaryExpr{},
-        }
-        expr.list = append(expr.list, tmp)
+        tmpTokens = append(tmpTokens, token)
+    }
+    return
+}
 
-        return expr, ts[3:]
-    }
-    b11 := isMulDiv(mid.str)
-    b12 := isAddSub(mid.str) && isAddSub(fourth.str)
-    if b11 || b12 {
-        exprType := getExpressionType(mid.str)
-        tmpname := getTmpname(stmt)
-        expr = &Expression{
-            t:          TmpExpression | exprType,
-            left:       parsePrimaryExpression(&first),
-            right:      parsePrimaryExpression(&third),
-            tmpname:    tmpname,
-        }
-        head := tmpToken(tmpname)
-        next := insert(head, ts[3:])
-        return expr, next
-    }
-    if isAddSub(mid.str) && isMulDiv(fourth.str) {
-        exprType := getExpressionType(mid.str)
-        tmpname := getTmpname(stmt)
-        tail := tmpToken(tmpname)
-        expr = &Expression{
-            t:          TmpExpression | exprType,
-            left:       parsePrimaryExpression(&first),
-            right:      parsePrimaryExpression(&tail),
-        }
-        assignToken := symbolToken("=")
-        next := insert2(tail, assignToken, ts[2:])
-        return expr, next
-    }
-    return nil, nil
+func last(ts []Token) Token {
+    return ts[len(ts)-1]
+}
+
+func next(ts []Token, i int) Token {
+    return ts[i+1]
 }
 
 func isAddSub(op string) bool {
@@ -465,16 +435,16 @@ func parseBinaryExpression(ts []Token) *Expression {
     case  first.isIdentifier() && mid.assertSymbol("="):
         op = Opassign
 
-    case mid.str == "+":
+    case mid.assertSymbol("+"):
         op = Opadd
 
-    case mid.str == "-":
+    case mid.assertSymbol("-"):
         op = Opsub
 
-    case mid.str == "*":
+    case mid.assertSymbol("*"):
         op = Opmul
 
-    case mid.str == "/":
+    case mid.assertSymbol("/"):
         op = Opdiv
 
     default:
@@ -490,24 +460,17 @@ func parseBinaryExpression(ts []Token) *Expression {
     return expr
 }
 
-func getExpressionType(op string) ExpressionType {
-    switch op {
-
-    default:
-        return -1
-    }
-}
 
 func parsePrimaryExpression(t *Token) *PrimaryExpr {
     v := tokenToValue(t)
     var res *PrimaryExpr
     if v != nil {
-        res = &PrimaryExpr{res:v}
+        res = &PrimaryExpr{res:v, t:ConstPrimaryExpressionType}
     } else if t.isFcall() {
         exprs := getArgsFromToken(t.ts)
-        res = &PrimaryExpr{name:t.str, args: exprs}
+        res = &PrimaryExpr{name:t.str, args: exprs, t:OtherPrimaryExpressionType}
     } else {
-        res = &PrimaryExpr{t:VarPrimaryExpressionType, name:t.str}
+        res = &PrimaryExpr{name:t.str, t:VarPrimaryExpressionType}
     }
     return res
 }
@@ -518,37 +481,59 @@ func getArgsFromToken(ts []Token) []*Expression {
     if size < 1 {
         return res
     }
-    if size == 1 {
+    if size == 1 || !hasSymbol(ts, ",") {
         expr := parseExpressionStatement(ts)
         res = append(res, expr)
         return res
     }
+    var exprTokens []Token
+    var nextIndex int
+    for nextIndex >= 0 {
+        exprTokens, nextIndex = extractExpressionByComma(nextIndex, ts)
+        expr := parseExpressionStatement(exprTokens)
+        res = append(res, expr)
+    }
     return res
 }
 
-func tokenToValue(t *Token) *Value {
-    var v Value
+func extractExpressionByComma(currentIndex int, ts []Token) (exprTokens []Token, nextIndex int) {
+    size := len(ts)
+    for i:=currentIndex; i<size; i++ {
+        token := ts[i]
+        if token.assertSymbol(",") {
+            nextIndex = i+1
+            break
+        }
+        exprTokens = append(exprTokens, token)
+        if i == size - 1 {
+            nextIndex = -1
+        }
+    }
+    return exprTokens, nextIndex
+}
+
+func tokenToValue(t *Token) (v *Value) {
     if t.isFloat() {
         f, err := strconv.ParseFloat(t.str, 64)
         exitOnError(err)
         v = newVal(f)
-        return &v
+        return
     }
     if t.isInt() {
         i, err := strconv.Atoi(t.str)
         exitOnError(err)
         v = newVal(i)
-        return &v
+        return
     }
     if t.isStr() {
         v = newVal(fmt.Sprintf("%v", t.str))
-        return &v
+        return
     }
-    if t.str == "true" || t.str == "false" {
+    if t.isIdentifier() && (t.str == "true" || t.str == "false") {
         b, err := strconv.ParseBool(t.str)
         exitOnError(err)
         v = newVal(b)
-        return &v
+        return
     }
     return nil
 }
@@ -557,6 +542,7 @@ func tokenToValue(t *Token) *Value {
 
 import (
     "bytes"
+    "strings"
 )
 
 type ExpressionType int
@@ -576,7 +562,6 @@ const (
 )
 
 type OperationType int
-
 const (
     Opeq OperationType = 1 << iota
     Opgt
@@ -590,8 +575,8 @@ const (
     Opassign
 )
 
-
 type Expression struct {
+    vars *VarScope
     t ExpressionType
     op OperationType
     left *PrimaryExpr
@@ -605,6 +590,10 @@ type Expression struct {
 
 func (this *Expression) isAssign() bool {
     return (this.op & Opassign) == Opassign
+}
+
+func (this *Expression) isAdd() bool {
+    return (this.op & Opadd) == Opadd
 }
 
 func newMultiExpression() *Expression {
@@ -642,6 +631,10 @@ func (this *Expression) isFunctionCallExpression() bool {
     return (this.t & FunctionCallExpression) == FunctionCallExpression
 }
 
+func (this *Expression) isMethodCallExpression() bool {
+    return (this.t & MethodCallExpression) == MethodCallExpression
+}
+
 func (this *Expression) isBinaryExpression() bool {
     return (this.t & BinaryExpression) == BinaryExpression
 }
@@ -654,7 +647,103 @@ func (this *Expression) isTmpExpression() bool {
     return (this.t & TmpExpression) == TmpExpression
 }
 
+func (expr *Expression) searchVariable(name string) *Variable {
+    res := expr.vars.local.get(name)
+    if res != nil {
+        return res
+    }
+    if expr.vars.super == nil {
+        return nil
+    }
+    res = expr.vars.super.get(name)
+    if res != nil {
+        return res
+    }
+    return nil
+}
 
+func (expr *Expression) addVariable(vr *Variable)  {
+    expr.vars.local.add(vr)
+}
+
+func (expr *Expression) addVar(name string, val *Value)  {
+    variable := toVar(name,  val)
+    expr.vars.local.add(variable)
+}
+
+func (expr *Expression) leftVal() *Value {
+    if expr.left == nil {
+        return NULL
+    }
+    if expr.left.isConst() {
+        return expr.left.res
+    }
+    if expr.left.isVar() {
+        varname := expr.left.name
+        variable := expr.searchVariable(varname)
+        if variable == nil {
+            return NULL
+        }
+        return variable.val
+    }
+    return NULL
+}
+
+func (expr *Expression) rightVal() *Value {
+    if expr.right == nil {
+        return NULL
+    }
+    if expr.right.isConst() {
+        return expr.right.res
+    }
+    if expr.right.isVar() {
+        varname := expr.right.name
+        variable := expr.searchVariable(varname)
+        if variable == nil {
+            return NULL
+        }
+        return variable.val
+    }
+    return NULL
+}
+
+func (expr *Expression) TypeString() string {
+    if expr == nil {
+        return ""
+    }
+    var res bytes.Buffer
+    if expr.isIntExpression() {
+        res.WriteString("int expression, ")
+    }
+    if expr.isBooleanExpression() {
+        res.WriteString("bool expression, ")
+    }
+    if expr.isStringExpression() {
+        res.WriteString("string expression, ")
+    }
+    if expr.isConstExpression() {
+        res.WriteString("const expression, ")
+    }
+    if expr.isVarExpression() {
+        res.WriteString("var expression, ")
+    }
+    if expr.isFunctionCallExpression() {
+        res.WriteString("function call expression, ")
+    }
+    if expr.isMethodCallExpression() {
+        res.WriteString("method call expression, ")
+    }
+    if expr.isBinaryExpression() {
+        res.WriteString("binary expression, ")
+    }
+    if expr.isMultiExpression() {
+        res.WriteString("multi expression, ")
+    }
+    if expr.isTmpExpression() {
+        res.WriteString("tmp expression, ")
+    }
+    return strings.Trim(strings.TrimSpace(res.String()), ",")
+}
 
 func (expr *Expression) String() string {
     if expr == nil {
@@ -685,6 +774,10 @@ type PrimaryExpr struct {
 
 func (this *PrimaryExpr) isVar() bool {
     return (this.t & VarPrimaryExpressionType) == VarPrimaryExpressionType
+}
+
+func (this *PrimaryExpr) isConst() bool {
+    return (this.t & ConstPrimaryExpressionType) == ConstPrimaryExpressionType
 }
 
 func (this *PrimaryExpr) isOther() bool {
@@ -752,9 +845,14 @@ func getCmdDir() string {
 
 import "fmt"
 
+
 func Interpret() {
+    local := newVariables()
+    executeStatementList(local)
+}
+
+func executeStatementList(local Variables) {
     for _, stmt := range mainFunc.block {
-        local := newVariables()
         executeStatement(stmt, newVarScope(nil, &local))
     }
 }
@@ -762,40 +860,33 @@ func Interpret() {
 func executeStatement(stmt *Statement, vars *VarScope) *StatementResultType {
     if stmt.isExpressionStatement() {
         for _, expr := range stmt.exprs {
-            executeExpression(expr, vars)
+            expr.vars = vars
+            executeExpression(expr)
         }
     }
 
     return nil
 }
 
-func executeExpression(expr *Expression, vars *VarScope) (res *Value) {
-    if expr.isConstExpression() {
-        return expr.left.res
-    }
-    if expr.isVarExpression() {
-        varname := expr.left.name
-
-        variable := searchVariable(varname, vars)
-        fmt.Println("after searchVariable:", variable)
-
-        //return &(variable.val)
+func executeExpression(expr *Expression) (res *Value) {
+    if expr.isConstExpression() || expr.isVarExpression() {
+        return expr.leftVal()
     }
     if expr.isBinaryExpression() {
-        return executeBinaryExpression(expr, vars)
+        return executeBinaryExpression(expr)
     }
     if expr.isFunctionCallExpression() {
-        return executeFunctionCallExpression(expr, vars)
+        return executeFunctionCallExpression(expr)
     }
 
     return
 }
 
-func executeFunctionCallExpression(expr *Expression, vars *VarScope) (res *Value) {
+func executeFunctionCallExpression(expr *Expression) (res *Value) {
     functionName := expr.left.name
     args := expr.left.args
     if functionName == "println" {
-        argVals := toGoTypeValues(args, vars)
+        argVals := toGoTypeValues(args, expr.vars)
         if len(argVals) < 1 {
             fmt.Println()
         }else{
@@ -805,34 +896,43 @@ func executeFunctionCallExpression(expr *Expression, vars *VarScope) (res *Value
     return nil
 }
 
-func executeBinaryExpression(expr *Expression, vars *VarScope) (res *Value) {
+func executeBinaryExpression(expr *Expression) (res *Value) {
     switch {
     case expr.isAssign():
         varname := expr.left.name
-        val := expr.right.res
-        variable := toVar(varname, *val)
-        vars.local.add(variable)
+        res = expr.right.res
+        expr.addVar(varname, res)
+
+    case expr.isAdd():
+        res = evalAddBinaryExpression(expr)
     }
-    return nil
+    if expr.isTmpExpression() {
+        if res == nil {
+            res = NULL
+        }
+        expr.addVar(expr.tmpname, res)
+    }
+    return res
 }
 
-func searchVariable(name string, vars *VarScope) *Variable {
-    fmt.Println("searchVariable:", name, vars.local.isEmpty())
-    res := vars.local.get(name)
-    if res != nil {
-        return res
+func evalAddBinaryExpression(expr *Expression) (res *Value) {
+    left := expr.leftVal()
+    right := expr.rightVal()
+    switch {
+    case left.isIntValue() && right.isIntValue():
+        tmpVal := left.int_value + right.int_value
+        res = newVal(tmpVal)
     }
-    res = vars.super.get(name)
-    if res != nil {
-        return res
-    }
-    return nil
+    return
 }
+
 
 func toGoTypeValues(exprs []*Expression, vars *VarScope) []interface{} {
     var res []interface{}
     for _, expr := range exprs {
-        v := executeExpression(expr, vars).val()
+        expr.vars = vars
+        goValue := executeExpression(expr)
+        v := goValue.val()
         res = append(res, v)
     }
     return res
@@ -967,6 +1067,52 @@ func (this *Token) assertSymbols(ss ...string) bool {
         }
     }
     return false
+}
+
+// 获取运算符优先级
+// （注：运算符的优先级，值越小，优先级越高）
+func (this *Token) priority() int {
+    var res int
+    switch {
+    case this.assertSymbols("(", ")", "[","]", "."):
+        res = 1
+    case this.assertSymbols("!", "+", "-", " ", "++", "--"):
+        //! +(正)  -(负)   ++ -- , 结合性：从右向左
+        res = 2
+    case this.assertSymbols("*", "/", "%"):
+        res = 3
+    case this.assertSymbols("+", "-"):
+        // +(加) -(减)
+        res = 4
+    case this.assertSymbols("<<", ">>", ">>>"):
+        res = 5
+    case this.assertSymbols("<", "<=", ">", ">="):
+        res = 6
+    case this.assertSymbols("==", "!="):
+        res = 7
+    case this.assertSymbols("&"):
+        // (按位与)
+        res = 8
+    case this.assertSymbols("^"):
+        res = 9
+    case this.assertSymbols("|"):
+        res = 10
+    case this.assertSymbols("&&"):
+        res = 11
+    case this.assertSymbols("||"):
+        res = 12
+    case this.assertSymbols("?:"):
+        //  结合性：从右向左
+        res = 13
+    case this.assertSymbols("=", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", " =", "<<=", ">>=", ">>>="):
+        // 结合性：从右向左
+        res = 14
+    }
+    return res
+}
+
+func (this *Token) lower(t Token) bool {
+    return this.priority() > t.priority()
 }
 
 func (this *Token) String() string {
@@ -1585,7 +1731,13 @@ const (
     AnyValue
     ArrayValue
     ObjectValue
+    NULLValue
 )
+
+// 空值
+var NULL = &Value{
+    t:           NULLValue,
+}
 
 type Value struct {
     t ValueType
@@ -1598,28 +1750,29 @@ type Value struct {
     obj_value map[string]interface{}
 }
 
-func newVal(rawVal interface{}) Value {
-    var val Value
+func newVal(rawVal interface{}) *Value {
+    var val *Value
     switch v := rawVal.(type) {
     case int:
-        val = Value{t: IntValue, int_value: v}
+        val = &Value{t: IntValue, int_value: v}
     case float64:
-        val = Value{t: FloatValue, float_value: v}
+        val = &Value{t: FloatValue, float_value: v}
     case float32:
-        val = Value{t: FloatValue, float_value: float64(v)}
+        val = &Value{t: FloatValue, float_value: float64(v)}
     case bool:
-        val = Value{t: BooleanValue, bool_value: v}
+        val = &Value{t: BooleanValue, bool_value: v}
     case string:
-        val = Value{t: StringValue, str_value: v}
+        val = &Value{t: StringValue, str_value: v}
     case []interface{}:
-        val = Value{t: ArrayValue, arr_value: v}
+        val = &Value{t: ArrayValue, arr_value: v}
     case map[string]interface{}:
-        val = Value{t: ObjectValue, obj_value: v}
+        val = &Value{t: ObjectValue, obj_value: v}
     default:
         panic(fmt.Sprintln("unknow exception when newVal:", rawVal))
     }
     return val
 }
+
 
 func (v *Value) val() interface{} {
     switch {
@@ -1632,6 +1785,10 @@ func (v *Value) val() interface{} {
     case v.isAnyValue(): return v.any_value
     }
     return nil
+}
+
+func (v *Value) isNULL() bool {
+    return (v.t & NULLValue) == NULLValue
 }
 
 func (v *Value) isIntValue() bool {
@@ -1694,7 +1851,7 @@ func (this *StatementResult) isStatementNormal() bool {
 
 type Variable struct{
     name string
-    val Value
+    val *Value
 }
 
 func newVar(name string, rawVal interface{}) *Variable {
@@ -1706,7 +1863,7 @@ func newVar(name string, rawVal interface{}) *Variable {
     return res
 }
 
-func toVar(name string, rawVal Value) *Variable {
+func toVar(name string, rawVal *Value) *Variable {
     res := &Variable{
         name: name,
         val:  rawVal,
@@ -1764,6 +1921,45 @@ import (
     "testing"
 )
 
+func Test_totoken(t *testing.T) {
+    token := newToken("true", Identifier)
+    value := tokenToValue(&token)
+    fmt.Println(value.bool_value)
+}
+
+func Test_map1(t *testing.T) {
+    nv := newVariables()
+    addVar(&nv)
+    printVar(&nv)
+}
+
+func printVar(nv *Variables) {
+    vr := nv.get("tk")
+    fmt.Println(vr)
+}
+
+func addVar(nv *Variables) {
+    nv.add(newVar("tk", "unique"))
+}
+
+type Obj struct {
+    val string
+}
+
+func Test_map(t *testing.T) {
+
+    m := make(map[string]*Obj)
+    change(m)
+    fetch(m)
+}
+
+func fetch(m map[string]*Obj) {
+    fmt.Println(m["name"])
+}
+
+func change(m map[string]*Obj) {
+    m["name"] = &Obj{"changlie"}
+}
 
 func Test_clone(t *testing.T) {
     f, _ := os.Open("d:/raw.txt")
