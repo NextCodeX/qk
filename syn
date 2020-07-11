@@ -1,4 +1,4 @@
-#####demo.qk#####println("hi, \"joker\" \n")
+#####/demo.qk#####println("hi, \"joker\" \n")
 
 a = 1
 b = 3
@@ -30,19 +30,22 @@ println("user name:", obj["name"])
 
 
 ~~~~~~~~~~~~~~~~~~~~
-#####expr.qk#####a = 9 + 3
+#####/expr.qk#####a + 5 * c
 println(a, 2, true, "joker")~~~~~~~~~~~~~~~~~~~~
-#####src\core\compile.go#####package core
+#####/src/core/compile.go#####package core
 
 import (
     "fmt"
     "strconv"
+    "bytes"
 )
 
 var (
     funcList = make(map[string]*Function)
     mainFunc = newFunc("main")
 )
+
+var tmpcount int
 
 
 func Compile(stmts StatementList, ts []Token) {
@@ -263,12 +266,14 @@ func nextSymbol(currentIndex int, ts []Token, s string) int {
     return -1
 }
 
-func hasSymbol(ts []Token, s string) bool {
+func hasSymbol(ts []Token, ss ...string) bool {
     for i:=0; i<len(ts); i++ {
         t := ts[i]
-        if t.assertSymbol(s) {
-            return true
-        }
+        for _, s := range ss {
+			if t.assertSymbol(s) {
+				return true
+			}
+		}
     }
     return false
 }
@@ -296,53 +301,70 @@ func parseStatement(stmt *Statement) {
 
 func parseExpressionStatement(ts []Token) *Expression {
     var expr *Expression
-    tlen := len(ts)
+
     // 去括号
-    if tlen >= 3 && ts[0].assertSymbol("(") && ts[tlen-1].assertSymbol(")")  {
-        ts = ts[1:tlen-1]
-    }
-    tlen = len(ts)
-    if tlen < 1 {
-        return expr
-    }
-    switch {
-    case tlen == 1:
-        return parseUnaryExpression(ts)
-    case tlen == 2:
-        if !ts[0].isIdentifier() {
-            return expr
-        }
-        parseUnaryPlusExpression(ts)
+	ts = clearParentheses(ts)
 
-    case tlen == 3:
-        expr = parseBinaryExpression(ts)
+	tlen := len(ts)
 
-    case tlen == 5:
-        expr = parseTernaryExpression(ts)
-    default:
-        // 处理多维表达式
-        expr = parseMultivariateExpression(ts)
-    }
-    return expr
+	if tlen % 2 == 0 {
+		runtimeExcption("error expression:", tokensString(ts))
+	}
+
+	if tlen < 1 {
+		return expr
+	}
+	switch {
+	case tlen == 1:
+		return parseUnaryExpression(ts)
+	//case tlen == 2:
+	//	if !ts[0].isIdentifier() {
+	//		return expr
+	//	}
+	//	parseUnaryPlusExpression(ts)
+
+	case tlen == 3:
+		expr = parseBinaryExpression(ts)
+
+	//case tlen == 5:
+	//	expr = parseTernaryExpression(ts)
+	default:
+		// 处理多维表达式
+		expr = parseMultivariateExpression(ts)
+	}
+	if expr == nil {
+		runtimeExcption("parseExpressionStatement Exception:", tokensString(ts))
+	}
+	expr.raw = ts
+	return expr
 }
 
-func parseTernaryExpression(ts []Token) (expr *Expression) {
-    if !ts[0].isIdentifier() || !ts[1].assertSymbol("=") {
-        return
-    }
-    expr = parseBinaryExpression(ts[2:])
-    expr.tmpname = ts[0].str
-    expr.t = expr.t | TmpExpression
-    return expr
+// 消除括号
+func clearParentheses(ts []Token) []Token {
+	tlen := len(ts)
+	if tlen >= 3 && ts[0].assertSymbol("(") && ts[tlen-1].assertSymbol(")") {
+		ts = ts[1 : tlen-1]
+	}
+	return ts
 }
 
-func parseUnaryPlusExpression(ts []Token) {
-    if ts[1].assertSymbol("++") {
+//func parseTernaryExpression(ts []Token) (expr *Expression) {
+//    if !ts[0].isIdentifier() || !ts[1].assertSymbol("=") {
+//        return
+//    }
+//    expr = parseBinaryExpression(ts[2:])
+//    expr.tmpname = ts[0].str
+//    expr.t = expr.t | TmpExpression
+//    return expr
+//}
 
-    }else if ts[2].assertSymbol("--") {
-
-    }
-}
+//func parseUnaryPlusExpression(ts []Token) {
+//    if ts[1].assertSymbol("++") {
+//
+//    }else if ts[2].assertSymbol("--") {
+//
+//    }
+//}
 
 func parseUnaryExpression(ts []Token) *Expression {
     token := ts[0]
@@ -378,36 +400,271 @@ func parseUnaryExpression(ts []Token) *Expression {
 }
 
 func parseMultivariateExpression(ts []Token) (expr *Expression) {
+    fmt.Println("parseMultivariateExpression:", tokensString(ts))
     var resVarToken *Token
     var multiExprTokens []Token
     if ts[1].assertSymbol("=") {
-        resVarToken = &(ts[0])
-        multiExprTokens = ts[2:]
+       resVarToken = &(ts[0])
+       multiExprTokens = ts[2:]
     } else {
-        multiExprTokens = ts
+       multiExprTokens = ts
     }
     var exprTokensList [][]Token
-    var tmpTokens []Token
-    for i:=0; i<len(multiExprTokens); i++ {
-        size := len(multiExprTokens)
-        tmpSize := len(tmpTokens)
-        token := multiExprTokens[i]
-        cond1 := tmpSize == 2 && i<size-1 && last(tmpTokens).lower(next(multiExprTokens,i))
-        if cond1 {
+    reduceTokensForExpression(resVarToken, multiExprTokens, &exprTokensList)
+    printExprs(exprTokensList)
 
-        }
+	//exprTokensList = resortExprTokensList(exprTokensList, resVarToken)
+	//fmt.Println("after resortExprTokensList:=========================")
+	//printExprs(exprTokensList)
 
-        tmpTokens = append(tmpTokens, token)
+	exprs := generateExprs(exprTokensList)
+	finalExpr := getFinalExpr(exprs, resVarToken)
+	fmt.Println("finalExpr: ", finalExpr)
+
+    expr = &Expression{
+       t:MultiExpression,
+       list:exprs,
+       finalExpr:finalExpr,
     }
-    return
+    return expr
 }
 
-func last(ts []Token) Token {
-    return ts[len(ts)-1]
+func getFinalExpr(exprs []*Expression, resVarToken *Token) *Expression {
+	var finalExprTokens *Expression
+	isAssignExpr := resVarToken != nil
+	for _, expr := range exprs {
+		if isAssignExpr && expr.tmpname == resVarToken.str {
+			finalExprTokens = expr
+			break
+		}
+		if !isAssignExpr && expr.tmpname == "" {
+			finalExprTokens = expr
+			break
+		}
+	}
+	if finalExprTokens == nil {
+		runtimeExcption("failed to getFinalExpr resortExprTokensList")
+	}
+	return finalExprTokens
 }
 
-func next(ts []Token, i int) Token {
-    return ts[i+1]
+func generateExprs(exprTokensList [][]Token) []*Expression {
+	var res []*Expression
+	for _, tokens := range exprTokensList {
+		var expr *Expression
+		if len(tokens) == 4 {
+			expr = parseExpressionStatement(tokens[:3])
+			expr.setTmpname(tokens[3].str)
+		} else {
+			expr = parseExpressionStatement(tokens)
+		}
+		res = append(res, expr)
+	}
+	return res
+}
+
+//func resortExprTokensList(exprTokensList [][]Token, resVarToken *Token) [][]Token {
+//	size := len(exprTokensList)
+//	res := make([][]Token, size, size)
+//	var finalExprTokens []Token
+	//isAssignExpr := resVarToken != nil
+	//for _, tokens := range exprTokensList {
+	//	if isAssignExpr && tokens[3].str == resVarToken.str {
+	//		finalExprTokens = tokens
+	//		break
+	//	}
+	//	if !isAssignExpr && len(tokens) == 3 {
+	//		finalExprTokens = tokens
+	//		break
+	//	}
+	//}
+	//if finalExprTokens == nil {
+	//	runtimeExcption("resortExprTokensList Exception")
+	//}
+//
+//
+//	return res
+//}
+
+func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token) {
+	fmt.Println("new reduceTokensForExpression:###########################")
+	fmt.Println("reduceTokensForExpression###args ts:", tokensString(ts))
+	var exprTokens []Token
+
+	ts = clearParentheses(ts)
+
+	size := len(ts)
+	if size < 3 {
+		runtimeExcption("reduceTokensForExpression Exception:", tokensString(ts))
+	}
+
+	// 处理括号是第一个token的情况
+	if ts[0].assertSymbol("(") {
+		leftTokens, nextIndex := extractTokensByParentheses(ts)
+		tmpvarToken := getTmpVarToken()
+		if !hasSymbol(leftTokens, "(") && len(leftTokens) == 3 {
+			// 左处理
+			exprTokens = append(leftTokens, tmpvarToken)
+			*exprTokensList = append(*exprTokensList, exprTokens)
+
+			// 右处理
+			nextTokens := insert(tmpvarToken, ts[nextIndex:])
+			reduceTokensForExpression(res, nextTokens, exprTokensList)
+			return
+		} else {
+			// 左处理
+			reduceTokensForExpression(&tmpvarToken, leftTokens, exprTokensList)
+
+			// 右处理
+			nextTokens := insert(tmpvarToken, ts[nextIndex:])
+			reduceTokensForExpression(res, nextTokens, exprTokensList)
+			return
+		}
+	}
+
+	for i:=0; i<size; i++ {
+		fmt.Println("new iterator:------------------------")
+		fmt.Println("multiExprTokens size", size)
+		tmpSize := len(exprTokens)
+		fmt.Println("tmpTokens size", tmpSize)
+		token := ts[i]
+
+		condBoundry := tmpSize == 2
+		condFinish := condBoundry && i==size-1
+		preCond1 := condBoundry && i<size-1
+		if preCond1 {
+			fmt.Printf("pre.priority:  %v:%v; next.priority: %v:%v \n", last(exprTokens).str, last(exprTokens).priority(), next(ts, i).str, next(ts, i).priority() )
+		}
+		// 处理根据运算符优先级, 左向归约的情况
+		condShiftLeft1 := preCond1 && last(exprTokens).equal(next(ts,i))
+		condShiftLeft2 := preCond1 && last(exprTokens).lower(next(ts,i))
+		fmt.Printf("condFinish: %v, preCond1: %v, condShiftLeft1: %v, condShiftLeft2: %v\n", condFinish, preCond1, condShiftLeft1, condShiftLeft2)
+		if condShiftLeft1 || condShiftLeft2 || condFinish {
+			exprTokens = append(exprTokens, token)
+			if !condFinish {
+				tmpVarToken := getTmpVarToken()
+				nextTokens := insert(tmpVarToken, ts[i+1:])
+				exprTokens = append(exprTokens, tmpVarToken)
+				reduceTokensForExpression(res, nextTokens, exprTokensList)
+			}
+			break
+		}
+
+
+		// 处理括号不是第一个token的情况
+		condRightParentheses := preCond1 && token.assertSymbol("(")
+		fmt.Printf("condRightParentheses: %v; \n", condRightParentheses)
+		if condRightParentheses {
+			rightTokens, nextIndex := extractTokensByParentheses(ts[i:])
+			nextIndex  = i+nextIndex // 转换回切片ts的相应索引
+			if nextIndex < size - 1 {
+				// 因为括号圈的不是右边整个表达式, 故先求括号值, 再通过运算符优先级求值
+				tmpVarToken1 := getTmpVarToken() // 括号内的中间临时值
+				reduceTokensForExpression(&tmpVarToken1, rightTokens, exprTokensList)
+
+				// 运算符优先级的不同tmpVarToken2可能是左边表达式的或者右边表达式的中间临时值
+				tmpVarToken2 := getTmpVarToken()
+
+				nextToken := ts[nextIndex]
+				if last(exprTokens).equal(&nextToken) || last(exprTokens).lower(&nextToken) {
+					// 左优先
+					exprTokens = append(exprTokens, tmpVarToken1) // interval tmp result
+					exprTokens = append(exprTokens, tmpVarToken2) // left expr result.
+
+					nextTokens2 := insert(tmpVarToken2, ts[nextIndex:]) //
+					reduceTokensForExpression(res, nextTokens2, exprTokensList)
+				}else {
+					// 右优先
+					exprTokens = append(exprTokens, tmpVarToken2) // rigtht expr result.
+
+
+					nextTokens3 := insert(tmpVarToken1, ts[nextIndex:])
+					reduceTokensForExpression(&tmpVarToken2, nextTokens3, exprTokensList)
+				}
+				break
+			}
+
+			// 因为括号圈的是右边整个表达式时
+			tmpVarToken3 := getTmpVarToken()
+			exprTokens = append(exprTokens, tmpVarToken3)
+
+			nextTokens := ts[i:]
+			reduceTokensForExpression(&tmpVarToken3, nextTokens, exprTokensList)
+			break
+		}
+
+		// 处理根据运算符优先级, 右向归约的情况
+		condShiftRight1 := preCond1 && last(exprTokens).upper(next(ts,i))
+		fmt.Printf("condShiftRight1: %v; \n", condShiftRight1)
+		if  condShiftRight1 {
+			tmpVarToken := getTmpVarToken()
+			nextTokens := ts[i:]
+			exprTokens = append(exprTokens, tmpVarToken)
+			fmt.Println("after shift right:", tokensString(exprTokens))
+			reduceTokensForExpression(&tmpVarToken, nextTokens, exprTokensList)
+			break
+		}
+
+		exprTokens = append(exprTokens, token)
+	}
+
+	if res != nil && len(exprTokens) == 3 {
+		exprTokens = append(exprTokens, *res)
+	}
+
+	*exprTokensList = append(*exprTokensList, exprTokens)
+}
+
+func extractTokensByParentheses(ts []Token) (res []Token, nextIndex int) {
+	scopeOpen := 0
+	for i, token := range ts {
+		if token.assertSymbol("(") {
+			scopeOpen ++
+		}
+		if token.assertSymbol(")") {
+			scopeOpen --
+			if scopeOpen == 0 {
+				res = ts[1:i]
+				nextIndex = i+1
+				break
+			}
+		}
+	}
+	if scopeOpen != 0 {
+		runtimeExcption("extractTokensByParentheses Exception:", tokensString(ts))
+	}
+	return res, nextIndex
+}
+
+func getTmpVarToken() Token {
+	tmpname := getTmpname()
+	return varToken(tmpname)
+}
+
+func printExprs(exprTokensList [][]Token) {
+    var buf bytes.Buffer
+    for _, ts := range exprTokensList {
+		buf.WriteString(tokensString(ts))
+		buf.WriteString("\n")
+	}
+	fmt.Println(buf.String())
+}
+
+type ReduceState int
+
+const (
+    LeftReduce ReduceState = 1 << iota
+    RightReduce
+    FinalReduce
+    NormalReduce
+)
+
+func last(ts []Token) *Token {
+    return &ts[len(ts)-1]
+}
+
+func next(ts []Token, i int) *Token {
+    return &ts[i+1]
 }
 
 func isAddSub(op string) bool {
@@ -418,9 +675,9 @@ func isMulDiv(op string) bool {
     return op == "*" || op == "/"
 }
 
-func getTmpname(stmt *Statement) string {
-    name := fmt.Sprintf("tmp.%v", stmt.tmpcount)
-    stmt.tmpcount++
+func getTmpname() string {
+    name := fmt.Sprintf("tmp.%v", tmpcount)
+    tmpcount++
     return name
 }
 
@@ -538,7 +795,7 @@ func tokenToValue(t *Token) (v *Value) {
     return nil
 }
 ~~~~~~~~~~~~~~~~~~~~
-#####src\core\expression.go#####package core
+#####/src/core/expression.go#####package core
 
 import (
     "bytes"
@@ -582,6 +839,7 @@ type Expression struct {
     left *PrimaryExpr
     right *PrimaryExpr
     list []*Expression
+    finalExpr *Expression
     listFinish bool
     raw []Token
     res *Value
@@ -594,6 +852,18 @@ func (this *Expression) isAssign() bool {
 
 func (this *Expression) isAdd() bool {
     return (this.op & Opadd) == Opadd
+}
+
+func (this *Expression) isSub() bool {
+    return (this.op & Opsub) == Opsub
+}
+
+func (this *Expression) isMul() bool {
+    return (this.op & Opmul) == Opmul
+}
+
+func (this *Expression) isDiv() bool {
+    return (this.op & Opdiv) == Opdiv
 }
 
 func newMultiExpression() *Expression {
@@ -707,6 +977,12 @@ func (expr *Expression) rightVal() *Value {
     return NULL
 }
 
+func (expr *Expression) setTmpname(name string) {
+    expr.t = expr.t | TmpExpression
+    expr.tmpname = name
+}
+
+
 func (expr *Expression) TypeString() string {
     if expr == nil {
         return ""
@@ -785,7 +1061,7 @@ func (this *PrimaryExpr) isOther() bool {
 }
 
 ~~~~~~~~~~~~~~~~~~~~
-#####src\core\index.go#####package core
+#####/src/core/index.go#####package core
 
 import (
     "fmt"
@@ -800,11 +1076,11 @@ func Run() {
     qkfile := "expr.qk"
     bs, _ := ioutil.ReadFile(qkfile)
     ts := Parse(bs)
-    printTokens(ts)
+    printTokensByLine(ts)
     Compile(mainFunc, ts)
     printFunc()
     fmt.Println("================")
-    Interpret()
+    //Interpret()
 }
 
 func printFunc() {
@@ -821,7 +1097,7 @@ func doPrintFunc(fn *Function) {
     }
 }
 
-func printTokens(tokens []Token) {
+func printTokensByLine(tokens []Token) {
     for i, token := range tokens {
         fmt.Printf("line %v: [%v] -> %v \n", i, token.String(), token.TokenTypeName())
     }
@@ -841,7 +1117,7 @@ func getCmdDir() string {
 
 
 ~~~~~~~~~~~~~~~~~~~~
-#####src\core\interpreter.go#####package core
+#####/src/core/interpreter.go#####package core
 
 import "fmt"
 
@@ -878,8 +1154,20 @@ func executeExpression(expr *Expression) (res *Value) {
     if expr.isFunctionCallExpression() {
         return executeFunctionCallExpression(expr)
     }
+    if expr.isMultiExpression() {
+    	return executeMultiExpression(expr)
+	}
 
     return
+}
+
+func executeMultiExpression(expr *Expression) (res *Value) {
+	for _, subExpr := range expr.list {
+		subExpr.vars = expr.vars
+		res = executeBinaryExpression(subExpr)
+		fmt.Println("executeMultiExpression: ", res.int_value)
+	}
+	return res
 }
 
 func executeFunctionCallExpression(expr *Expression) (res *Value) {
@@ -897,6 +1185,10 @@ func executeFunctionCallExpression(expr *Expression) (res *Value) {
 }
 
 func executeBinaryExpression(expr *Expression) (res *Value) {
+	if expr.res != nil && expr.left.isConst() && expr.right.isConst() {
+		return expr.res
+	}
+
     switch {
     case expr.isAssign():
         varname := expr.left.name
@@ -905,6 +1197,13 @@ func executeBinaryExpression(expr *Expression) (res *Value) {
 
     case expr.isAdd():
         res = evalAddBinaryExpression(expr)
+	case expr.isSub():
+		res = evalSubBinaryExpression(expr)
+	case expr.isMul():
+		res = evalMulBinaryExpression(expr)
+	case expr.isDiv():
+		res = evalDivBinaryExpression(expr)
+
     }
     if expr.isTmpExpression() {
         if res == nil {
@@ -912,18 +1211,141 @@ func executeBinaryExpression(expr *Expression) (res *Value) {
         }
         expr.addVar(expr.tmpname, res)
     }
+    // 常量折叠
+    if expr.left.isConst() && expr.right.isConst() {
+    	expr.res = res
+	}
     return res
 }
 
 func evalAddBinaryExpression(expr *Expression) (res *Value) {
     left := expr.leftVal()
     right := expr.rightVal()
+	var tmpVal interface{}
     switch {
-    case left.isIntValue() && right.isIntValue():
-        tmpVal := left.int_value + right.int_value
-        res = newVal(tmpVal)
+	case left.isIntValue() && right.isIntValue():
+		tmpVal = left.int_value + right.int_value
+
+	case left.isFloatValue() && right.isFloatValue():
+		tmpVal = left.float_value + right.float_value
+
+	case left.isFloatValue() && right.isIntValue():
+		tmpVal = left.float_value + float64(right.int_value)
+
+	case left.isIntValue() && right.isFloatValue():
+		tmpVal = float64(left.int_value) + right.float_value
+
+	case left.isIntValue() && right.isStringValue():
+		tmpVal = fmt.Sprintf("%v%v", left.int_value, right.str_value)
+	case left.isFloatValue() && right.isStringValue():
+		tmpVal = fmt.Sprintf("%v%v", left.float_value, right.str_value)
+	case left.isBooleanValue() && right.isStringValue():
+		tmpVal = fmt.Sprintf("%v%v", left.bool_value, right.str_value)
+
+	case left.isStringValue() && right.isIntValue():
+		tmpVal = fmt.Sprintf("%v%v", left.str_value, right.int_value)
+	case left.isStringValue() && right.isFloatValue():
+		tmpVal = fmt.Sprintf("%v%v", left.str_value, right.float_value)
+	case left.isStringValue() && right.isBooleanValue():
+		tmpVal = fmt.Sprintf("%v%v", left.str_value, right.bool_value)
+
+	case left.isStringValue() && right.isStringValue():
+		tmpVal = fmt.Sprintf("%v%v", left.str_value, right.str_value)
+
+	default:
+		runtimeExcption("unknow operation:", left.val(), "+", right.val())
     }
-    return
+
+	res = newVal(tmpVal)
+    return res
+}
+
+func evalSubBinaryExpression(expr *Expression) (res *Value) {
+	left := expr.leftVal()
+	right := expr.rightVal()
+	var tmpVal interface{}
+	switch {
+	case left.isIntValue() && right.isIntValue():
+		tmpVal = left.int_value - right.int_value
+
+	case left.isFloatValue() && right.isFloatValue():
+		tmpVal = left.float_value - right.float_value
+
+	case left.isFloatValue() && right.isIntValue():
+		tmpVal = left.float_value - float64(right.int_value)
+
+	case left.isIntValue() && right.isFloatValue():
+		tmpVal = float64(left.int_value) - right.float_value
+
+	default:
+		runtimeExcption("unknow operation:", left.val(), "-", right.val())
+	}
+	res = newVal(tmpVal)
+	return res
+}
+
+func evalMulBinaryExpression(expr *Expression) (res *Value) {
+	left := expr.leftVal()
+	right := expr.rightVal()
+	var tmpVal interface{}
+	switch {
+	case left.isIntValue() && right.isIntValue():
+		tmpVal = left.int_value * right.int_value
+
+	case left.isFloatValue() && right.isFloatValue():
+		tmpVal = left.float_value * right.float_value
+
+	case left.isFloatValue() && right.isIntValue():
+		tmpVal = left.float_value * float64(right.int_value)
+
+	case left.isIntValue() && right.isFloatValue():
+		tmpVal = float64(left.int_value) * right.float_value
+
+	default:
+		runtimeExcption("unknow operation:", left.val(), "*", right.val())
+	}
+	res = newVal(tmpVal)
+	return res
+}
+
+func evalDivBinaryExpression(expr *Expression) (res *Value) {
+	left := expr.leftVal()
+	right := expr.rightVal()
+
+	checkDivZeroOperation(right)
+
+	var tmpVal interface{}
+	switch {
+	case left.isIntValue() && right.isIntValue():
+		tmpVal = left.int_value / right.int_value
+
+	case left.isFloatValue() && right.isFloatValue():
+		tmpVal = left.float_value / right.float_value
+
+	case left.isFloatValue() && right.isIntValue():
+		tmpVal = left.float_value / float64(right.int_value)
+
+	case left.isIntValue() && right.isFloatValue():
+		tmpVal = float64(left.int_value) / right.float_value
+
+	default:
+		runtimeExcption("unknow operation:", left.val(), "/", right.val())
+	}
+	res = newVal(tmpVal)
+	return res
+}
+
+func checkDivZeroOperation(val *Value) {
+	var flag bool
+	if val.isIntValue() {
+		flag = val.int_value == 0
+	}
+	if val.isFloatValue() {
+		flag = val.float_value == 0
+	}
+	if flag {
+		runtimeExcption("Invalid Operation: divide zero")
+	}
 }
 
 
@@ -939,7 +1361,7 @@ func toGoTypeValues(exprs []*Expression, vars *VarScope) []interface{} {
 }
 
 ~~~~~~~~~~~~~~~~~~~~
-#####src\core\lex.go#####package core
+#####/src/core/lex.go#####package core
 
 import (
     "bytes"
@@ -991,6 +1413,10 @@ func newToken(raw string, t TokenType) Token {
 
 func symbolToken(s string) Token {
     return Token{str:s, t:Symbol}
+}
+
+func varToken(s string) Token {
+    return Token{str:s, t:Identifier}
 }
 
 func tmpToken(raw string) Token {
@@ -1072,13 +1498,18 @@ func (this *Token) assertSymbols(ss ...string) bool {
 // 获取运算符优先级
 // （注：运算符的优先级，值越小，优先级越高）
 func (this *Token) priority() int {
-    var res int
+    res := -1
+
+    if !this.isSymbol() {
+        return res
+    }
+
     switch {
-    case this.assertSymbols("(", ")", "[","]", "."):
-        res = 1
-    case this.assertSymbols("!", "+", "-", " ", "++", "--"):
+    //case this.assertSymbols("(", ")", "[","]", "."):
+    //    res = 1
+    //case this.assertSymbols("!", "+", "-", " ", "++", "--"):
         //! +(正)  -(负)   ++ -- , 结合性：从右向左
-        res = 2
+        //res = 2
     case this.assertSymbols("*", "/", "%"):
         res = 3
     case this.assertSymbols("+", "-"):
@@ -1111,8 +1542,23 @@ func (this *Token) priority() int {
     return res
 }
 
-func (this *Token) lower(t Token) bool {
-    return this.priority() > t.priority()
+func isValidPriorityCompared(t1, t2 *Token) bool {
+    if t1.priority() == -1 || t2.priority() == -1 {
+        return false
+    }
+    return true
+}
+
+func (this *Token) equal(t *Token) bool {
+    return isValidPriorityCompared(this,t) && this.priority() == t.priority()
+}
+
+func (this *Token) lower(t *Token) bool {
+    return isValidPriorityCompared(this,t) && this.priority() < t.priority()
+}
+
+func (this *Token) upper(t *Token) bool {
+    return isValidPriorityCompared(this,t) && this.priority() > t.priority()
 }
 
 func (this *Token) String() string {
@@ -1250,6 +1696,14 @@ func toString4Tokens(ts []Token, start, end int) string {
     for i:=start; i<=end; i++ {
         token := ts[i]
         buf.WriteString(token.String()+" ")
+    }
+    return buf.String()
+}
+
+func tokensString(ts []Token) string {
+    var buf bytes.Buffer
+    for _, t := range ts {
+        buf.WriteString(t.String() + "  ")
     }
     return buf.String()
 }
@@ -1717,7 +2171,7 @@ func isSymbol(b byte) bool {
 
 
 ~~~~~~~~~~~~~~~~~~~~
-#####src\core\object.go#####package core
+#####/src/core/object.go#####package core
 
 import "fmt"
 
@@ -1909,7 +2363,7 @@ func newVarScope(super, local *Variables) *VarScope {
     }
 }
 ~~~~~~~~~~~~~~~~~~~~
-#####src\core\object_test.go#####package core
+#####/src/core/object_test.go#####package core
 
 import (
     "bufio"
@@ -2024,7 +2478,7 @@ func Test_obj(t *testing.T) {
     fmt.Println("v2:", v2)
 }
 ~~~~~~~~~~~~~~~~~~~~
-#####src\core\statement.go#####package core
+#####/src/core/statement.go#####package core
 
 import (
     "bytes"
@@ -2214,9 +2668,12 @@ func (f *Function) setCompiled(flag bool) {
 
 
 ~~~~~~~~~~~~~~~~~~~~
-#####src\core\util.go#####package core
+#####/src/core/util.go#####package core
 
-import "fmt"
+import (
+    "fmt"
+    "os"
+)
 
 func match(src string, targets ...string) bool {
     for _, target := range targets {
@@ -2227,11 +2684,17 @@ func match(src string, targets ...string) bool {
     return false
 }
 
-func exitOnError(err error, a ...string) {
+func exitOnError(err error, a ...interface{}) {
     if err != nil {
-        fmt.Println(a)
-        panic(err)
+        fmt.Println(err.Error())
+        fmt.Println(a...)
+        os.Exit(1)
     }
+}
+
+func runtimeExcption(msg ...interface{}){
+    fmt.Println(msg...)
+    os.Exit(2)
 }
 
 func insert(h Token, ts []Token) []Token {
@@ -2253,7 +2716,28 @@ func insert2(t1, t2 Token, ts []Token) []Token {
     return res
 }
 ~~~~~~~~~~~~~~~~~~~~
-#####src\qk\main.go#####package main
+#####/src/core/util_test.go#####package core
+
+import (
+	"testing"
+	"fmt"
+)
+
+func TestNum(t *testing.T)  {
+	fmt.Println(1%2)
+	fmt.Println(2%2)
+	fmt.Println(3%2)
+	fmt.Println(4%2)
+	fmt.Println(5%2)
+}
+
+func TestRuntimeException(t *testing.T)  {
+	fmt.Println("step1")
+	runtimeExcption("unknow operation:", "false", "-", "true")
+	fmt.Println("final")
+}
+~~~~~~~~~~~~~~~~~~~~
+#####/src/qk/main.go#####package main
 
 import "core"
 
@@ -2263,7 +2747,7 @@ func main()  {
 
 
 ~~~~~~~~~~~~~~~~~~~~
-#####src\qk\main_test.go#####package main
+#####/src/qk/main_test.go#####package main
 
 import (
     "bufio"
@@ -2406,7 +2890,7 @@ return res
 }
 
 ~~~~~~~~~~~~~~~~~~~~
-#####start#####
+#####/start#####
 export GOPATH=`pwd`
 
 go install qk~~~~~~~~~~~~~~~~~~~~

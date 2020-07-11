@@ -3,33 +3,22 @@ package main
 import (
     "bufio"
     "fmt"
-    "github.com/Luxurioust/excelize"
     "os"
     "regexp"
     "strings"
     "testing"
 )
 
-func Test_excels(t *testing.T) {
-    xlsx, err := excelize.OpenFile("d:/data.xlsx")
-    if err != nil {
-        fmt.Println(err)
-        os.Exit(1)
-    }
-
-    // Get all the rows in a sheet.
-    rows, _ := xlsx.GetRows("eBod实时" )
-    for i, row := range rows {
-        for _, colCell := range row {
-            fmt.Print(colCell, "\t")
-        }
-        fmt.Println()
-        if i>15 {
-            break
-        }
-    }
-    //os.MkdirAll("d:/software/golangLocalRepo/src/github.com/Luxurioust/excelize", os.ModePerm)
+func Test_compile(t *testing.T) {
+    var res []interface{}
+    res = append(res, 3)
+    res = append(res, false)
+    res = append(res, "test")
+    fmt.Println(res)
+    fmt.Println(res...)
+    fmt.Println("successfully!")
 }
+
 
 
 func Test_fhandle2(t *testing.T) {

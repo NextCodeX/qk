@@ -12,7 +12,13 @@ const (
     AnyValue
     ArrayValue
     ObjectValue
+    NULLValue
 )
+
+// 空值
+var NULL = &Value{
+    t:           NULLValue,
+}
 
 type Value struct {
     t ValueType
@@ -25,27 +31,45 @@ type Value struct {
     obj_value map[string]interface{}
 }
 
-func newVal(rawVal interface{}) Value {
-    var val Value
+func newVal(rawVal interface{}) *Value {
+    var val *Value
     switch v := rawVal.(type) {
     case int:
-        val = Value{t: IntValue, int_value: v}
+        val = &Value{t: IntValue, int_value: v}
     case float64:
-        val = Value{t: FloatValue, float_value: v}
+        val = &Value{t: FloatValue, float_value: v}
     case float32:
-        val = Value{t: FloatValue, float_value: float64(v)}
+        val = &Value{t: FloatValue, float_value: float64(v)}
     case bool:
-        val = Value{t: BooleanValue, bool_value: v}
+        val = &Value{t: BooleanValue, bool_value: v}
     case string:
-        val = Value{t: StringValue, str_value: v}
+        val = &Value{t: StringValue, str_value: v}
     case []interface{}:
-        val = Value{t: ArrayValue, arr_value: v}
+        val = &Value{t: ArrayValue, arr_value: v}
     case map[string]interface{}:
-        val = Value{t: ObjectValue, obj_value: v}
+        val = &Value{t: ObjectValue, obj_value: v}
     default:
         panic(fmt.Sprintln("unknow exception when newVal:", rawVal))
     }
     return val
+}
+
+
+func (v *Value) val() interface{} {
+    switch {
+    case v.isIntValue(): return v.int_value
+    case v.isFloatValue(): return v.float_value
+    case v.isBooleanValue(): return v.bool_value
+    case v.isStringValue(): return v.str_value
+    case v.isArrayValue(): return v.arr_value
+    case v.isObjectValue(): return v.obj_value
+    case v.isAnyValue(): return v.any_value
+    }
+    return nil
+}
+
+func (v *Value) isNULL() bool {
+    return (v.t & NULLValue) == NULLValue
 }
 
 func (v *Value) isIntValue() bool {
@@ -108,7 +132,7 @@ func (this *StatementResult) isStatementNormal() bool {
 
 type Variable struct{
     name string
-    val Value
+    val *Value
 }
 
 func newVar(name string, rawVal interface{}) *Variable {
@@ -120,7 +144,7 @@ func newVar(name string, rawVal interface{}) *Variable {
     return res
 }
 
-func toVar(name string, rawVal Value) *Variable {
+func toVar(name string, rawVal *Value) *Variable {
     res := &Variable{
         name: name,
         val:  rawVal,
@@ -135,10 +159,33 @@ func newVariables() Variables {
     return make(map[string]*Variable)
 }
 
+func (vs *Variables) isEmpty() bool {
+    return vs == nil || len(*vs) < 1
+}
+
 func (vs *Variables) add(v *Variable) {
     (*vs)[v.name] = v
 }
 
 func (vs *Variables) get(name string) *Variable {
-    return (*vs)[name]
+    if vs.isEmpty() {
+        return nil
+    }
+    res, ok := (*vs)[name]
+    if ok {
+        return res
+    }
+    return nil
+}
+
+type VarScope struct {
+    super *Variables
+    local *Variables
+}
+
+func newVarScope(super, local *Variables) *VarScope {
+    return &VarScope{
+        super: super,
+        local: local,
+    }
 }

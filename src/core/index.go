@@ -9,11 +9,15 @@ import (
 )
 
 func Run() {
-    bs, _ := ioutil.ReadFile("demo.qk")
+    //qkfile := "demo.qk"
+    qkfile := "expr.qk"
+    bs, _ := ioutil.ReadFile(qkfile)
     ts := Parse(bs)
-    //printTokens(ts)
+    printTokensByLine(ts)
     Compile(mainFunc, ts)
     printFunc()
+    fmt.Println("================")
+    //Interpret()
 }
 
 func printFunc() {
@@ -24,12 +28,13 @@ func printFunc() {
 }
 
 func doPrintFunc(fn *Function) {
+    fmt.Println("######################", fn.name, len(fn.block))
     for i, stmt := range fn.block {
-        fmt.Printf("line %v: \n %v \n", i, stmt)
+        fmt.Printf("num: %v line %v: \n %v \n", len(stmt.raw), i, stmt)
     }
 }
 
-func printTokens(tokens []Token) {
+func printTokensByLine(tokens []Token) {
     for i, token := range tokens {
         fmt.Printf("line %v: [%v] -> %v \n", i, token.String(), token.TokenTypeName())
     }

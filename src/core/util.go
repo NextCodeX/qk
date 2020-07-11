@@ -1,6 +1,9 @@
 package core
 
-import "fmt"
+import (
+    "fmt"
+    "os"
+)
 
 func match(src string, targets ...string) bool {
     for _, target := range targets {
@@ -11,11 +14,17 @@ func match(src string, targets ...string) bool {
     return false
 }
 
-func exitOnError(err error, a ...string) {
+func exitOnError(err error, a ...interface{}) {
     if err != nil {
-        fmt.Println(a)
-        panic(err)
+        fmt.Println(err.Error())
+        fmt.Println(a...)
+        os.Exit(1)
     }
+}
+
+func runtimeExcption(msg ...interface{}){
+    fmt.Println(msg...)
+    os.Exit(2)
 }
 
 func insert(h Token, ts []Token) []Token {

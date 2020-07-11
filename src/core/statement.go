@@ -22,8 +22,36 @@ type Statement struct {
     preExpr *Expression
     condition *Expression
     postExpr *Expression
+    block []*Statement
     raw []Token // token列表
+    compiled bool
 }
+
+
+func (stmt *Statement) addStatement(stm *Statement) {
+    stmt.block = append(stmt.block, stm)
+}
+
+func (stmt *Statement) stmts() []*Statement {
+    return stmt.block
+}
+
+func (stmt *Statement) getRaw() []Token {
+    return stmt.raw
+}
+
+func (stmt *Statement) setRaw(ts []Token) {
+    stmt.raw = ts
+}
+
+func (stmt *Statement) isCompiled() bool {
+    return stmt.compiled
+}
+
+func (stmt *Statement) setCompiled(flag bool) {
+    stmt.compiled = flag
+}
+
 
 func (s *Statement) setHeaderInfo(exprs []*Expression) {
     s.preExpr = exprs[0]
@@ -32,11 +60,11 @@ func (s *Statement) setHeaderInfo(exprs []*Expression) {
 }
 
 func (s *Statement) addExpression(expr *Expression) {
-    if len(s.exprs)>0 && s.exprs[len(s.exprs)-1].isListExpression() && !(s.exprs[len(s.exprs)-1].listFinish) {
+    if len(s.exprs)>0 && s.exprs[len(s.exprs)-1].isMultiExpression() && !(s.exprs[len(s.exprs)-1].listFinish) {
         lastExpr := s.exprs[len(s.exprs)-1]
         subExprs := &lastExpr.list
 
-        if expr.isListExpression() {
+        if expr.isMultiExpression() {
             expr = expr.list[0]
         }
 
@@ -70,14 +98,12 @@ func (s *Statement) isReturnStatement() bool {
     return (s.t & ReturnStatement) == ReturnStatement
 }
 
-func (s *Statement) execute(super, local Variables) *StatementResultType {
-
-
-    return nil
-}
 
 func (s *Statement) String() string {
     var res bytes.Buffer
+    if s.isReturnStatement() {
+        res.WriteString(" return: ")
+    }
     for _, t := range s.raw {
         res.WriteString(t.String())
         res.WriteString(" ")
@@ -107,6 +133,15 @@ func newStatement(t StatementType, ts []Token) *Statement {
     }
 }
 
+type StatementList interface {
+    stmts() []*Statement
+    addStatement(*Statement)
+    getRaw() []Token
+    setRaw([]Token)
+    isCompiled() bool
+    setCompiled(bool)
+}
+
 type Function struct {
     super Variables // 父作用域的变量列表
     local Variables // 当前作用域的变量列表
@@ -116,15 +151,37 @@ type Function struct {
     name string
     defToken Token
     raw []Token // token列表
+    compiled bool
 }
 
+//func newFunc(name string)
 
-func newFunc() *Function {
-    return &Function{local:newVariables()}
+func newFunc(name string) *Function {
+    return &Function{local:newVariables(), name:name}
 }
 
 func (f *Function) addStatement(stm *Statement) {
     f.block = append(f.block, stm)
+}
+
+func (f *Function) stmts() []*Statement {
+    return f.block
+}
+
+func (f *Function) getRaw() []Token {
+    return f.raw
+}
+
+func (f *Function) setRaw(ts []Token) {
+    f.raw = ts
+}
+
+func (f *Function) isCompiled() bool {
+    return f.compiled
+}
+
+func (f *Function) setCompiled(flag bool) {
+    f.compiled = flag
 }
 
 

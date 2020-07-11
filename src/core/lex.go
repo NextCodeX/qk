@@ -52,6 +52,10 @@ func symbolToken(s string) Token {
     return Token{str:s, t:Symbol}
 }
 
+func varToken(s string) Token {
+    return Token{str:s, t:Identifier}
+}
+
 func tmpToken(raw string) Token {
     return Token{str:raw, t:Tmp | Identifier}
 }
@@ -126,6 +130,72 @@ func (this *Token) assertSymbols(ss ...string) bool {
         }
     }
     return false
+}
+
+// 获取运算符优先级
+// （注：运算符的优先级，值越小，优先级越高）
+func (this *Token) priority() int {
+    res := -1
+
+    if !this.isSymbol() {
+        return res
+    }
+
+    switch {
+    //case this.assertSymbols("(", ")", "[","]", "."):
+    //    res = 1
+    //case this.assertSymbols("!", "+", "-", " ", "++", "--"):
+        //! +(正)  -(负)   ++ -- , 结合性：从右向左
+        //res = 2
+    case this.assertSymbols("*", "/", "%"):
+        res = 3
+    case this.assertSymbols("+", "-"):
+        // +(加) -(减)
+        res = 4
+    case this.assertSymbols("<<", ">>", ">>>"):
+        res = 5
+    case this.assertSymbols("<", "<=", ">", ">="):
+        res = 6
+    case this.assertSymbols("==", "!="):
+        res = 7
+    case this.assertSymbols("&"):
+        // (按位与)
+        res = 8
+    case this.assertSymbols("^"):
+        res = 9
+    case this.assertSymbols("|"):
+        res = 10
+    case this.assertSymbols("&&"):
+        res = 11
+    case this.assertSymbols("||"):
+        res = 12
+    case this.assertSymbols("?:"):
+        //  结合性：从右向左
+        res = 13
+    case this.assertSymbols("=", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", " =", "<<=", ">>=", ">>>="):
+        // 结合性：从右向左
+        res = 14
+    }
+    return res
+}
+
+func isValidPriorityCompared(t1, t2 *Token) bool {
+    if t1.priority() == -1 || t2.priority() == -1 {
+        return false
+    }
+    return true
+}
+
+func (this *Token) equal(t *Token) bool {
+    return isValidPriorityCompared(this,t) && this.priority() == t.priority()
+}
+
+func (this *Token) lower(t *Token) bool {
+    return isValidPriorityCompared(this,t) && this.priority() < t.priority()
+}
+
+func (this *Token) upper(t *Token) bool {
+    return isValidPriorityCompared(this,t) && this.priority() > t.priority()
 }
 
 func (this *Token) String() string {
@@ -263,6 +333,14 @@ func toString4Tokens(ts []Token, start, end int) string {
     for i:=start; i<=end; i++ {
         token := ts[i]
         buf.WriteString(token.String()+" ")
+    }
+    return buf.String()
+}
+
+func tokensString(ts []Token) string {
+    var buf bytes.Buffer
+    for _, t := range ts {
+        buf.WriteString(t.String() + "  ")
     }
     return buf.String()
 }
@@ -654,7 +732,7 @@ func preparse(bs []byte) []Token {
 
         }
     }
-
+    longTokenSave('\n', state, &tmp, &tokens)
     addBoundry(&tokens)
 
     return tokens
