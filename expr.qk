@@ -1,7 +1,7 @@
 a = [1,false,"tts"]
-println("a[2]:", a[2])
-a[2] = "TaKI"
-println("a[2]:", a[2])
+println("a[1]:", a[1])
+a[1] = "TaKI"
+println("a[1]:", a[1])
 
 a = 2
 a++
