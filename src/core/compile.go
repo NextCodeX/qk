@@ -401,7 +401,7 @@ func parseMultivariateExpression(ts []Token) (expr *Expression) {
     }
     var exprTokensList [][]Token
     reduceTokensForExpression(resVarToken, multiExprTokens, &exprTokensList)
-    printExprs(exprTokensList)
+    //printExprTokens(exprTokensList)
 
 	exprs := generateBinaryExprs(exprTokensList)
 	finalExpr := getFinalExpr(exprs, resVarToken)
@@ -606,7 +606,7 @@ func extractTokensByParentheses(ts []Token) (res []Token, nextIndex int) {
 
 
 
-func printExprs(exprTokensList [][]Token) {
+func printExprTokens(exprTokensList [][]Token) {
     var buf bytes.Buffer
     for _, ts := range exprTokensList {
 		buf.WriteString(tokensString(ts))
@@ -722,7 +722,6 @@ func getArgsFromToken(ts []Token) []*Expression {
     }
     if size == 1 || !hasSymbol(ts, ",") {
     	ts = parse4ComplexTokens(ts)
-    	fmt.Println("getArgsFromToken: ", ts[0].TokenTypeName())
         expr := parseExpressionStatement(ts)
         res = append(res, expr)
         return res
@@ -731,9 +730,7 @@ func getArgsFromToken(ts []Token) []*Expression {
     var nextIndex int
     for nextIndex >= 0 {
         exprTokens, nextIndex = extractExpressionByComma(nextIndex, ts)
-		fmt.Println("before getArgsFromToken multi: ", tokensString(exprTokens))
 		exprTokens = parse4ComplexTokens(exprTokens)
-		fmt.Println("getArgsFromToken multi: ", tokensString(exprTokens), exprTokens[0].TokenTypeName())
         expr := parseExpressionStatement(exprTokens)
         res = append(res, expr)
     }
