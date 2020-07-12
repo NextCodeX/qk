@@ -378,6 +378,10 @@ func parseUnaryExpression(ts []Token) *Expression {
 		expr.t = ElementExpression
 		return expr
 	}
+	if token.isAttribute() {
+		expr.t = AttributeExpression
+		return expr
+	}
     if token.isFcall() {
         expr.t = FunctionCallExpression
         return expr
@@ -697,6 +701,10 @@ func parsePrimaryExpression(t *Token) *PrimaryExpr {
     } else if t.isElement() {
 		exprs := getArgsFromToken(t.ts)
 		res = &PrimaryExpr{name:t.str, args: exprs, t:ElementPrimaryExpressionType}
+
+	} else if t.isAttribute() {
+		res = &PrimaryExpr{name:t.str, caller:t.caller, t:AttibutePrimaryExpressionType}
+
 	} else if t.isFcall() {
         exprs := getArgsFromToken(t.ts)
         res = &PrimaryExpr{name:t.str, args: exprs, t:OtherPrimaryExpressionType}
@@ -714,6 +722,7 @@ func getArgsFromToken(ts []Token) []*Expression {
     }
     if size == 1 || !hasSymbol(ts, ",") {
     	ts = parse4ComplexTokens(ts)
+    	fmt.Println("getArgsFromToken: ", ts[0].TokenTypeName())
         expr := parseExpressionStatement(ts)
         res = append(res, expr)
         return res
@@ -722,7 +731,9 @@ func getArgsFromToken(ts []Token) []*Expression {
     var nextIndex int
     for nextIndex >= 0 {
         exprTokens, nextIndex = extractExpressionByComma(nextIndex, ts)
+		fmt.Println("before getArgsFromToken multi: ", tokensString(exprTokens))
 		exprTokens = parse4ComplexTokens(exprTokens)
+		fmt.Println("getArgsFromToken multi: ", tokensString(exprTokens), exprTokens[0].TokenTypeName())
         expr := parseExpressionStatement(exprTokens)
         res = append(res, expr)
     }

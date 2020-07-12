@@ -257,6 +257,14 @@ func (this *Token) String() string {
         return fmt.Sprintf(`"%v"`, this.str)
     }
 
+    if this.isAddSelf() {
+        return fmt.Sprintf(`%v ++`, this.str)
+    }
+
+    if this.isSubSelf() {
+        return fmt.Sprintf(`%v --`, this.str)
+    }
+
     return this.str
 }
 
@@ -499,6 +507,7 @@ func parse4ComplexTokens(ts []Token) []Token {
             t, nextIndex = extractObjectLiteral(i+1, ts)
             if nextIndex > i {
                 res = append(res, t)
+                res = append(res, symbolToken(";"))
                 i = nextIndex
                 goto next_loop
             }
@@ -512,7 +521,7 @@ func parse4ComplexTokens(ts []Token) []Token {
         t, nextIndex = extractAttribute(i, ts)
         if nextIndex > i {
             // 捕获Mtcall类型token
-            if ts[nextIndex].assertSymbol("(") {
+            if nextIndex < size && ts[nextIndex].assertSymbol("(") {
                 t, nextIndex = extractMethodCall(i, ts)
             }
             res = append(res, t)
@@ -524,7 +533,7 @@ func parse4ComplexTokens(ts []Token) []Token {
         t, nextIndex = extractFunctionCall(i, ts)
         if nextIndex > i {
             // 标记Fdef类型token
-            if ts[nextIndex].assertSymbol("{") {
+            if nextIndex < size && ts[nextIndex].assertSymbol("{") {
                 t.t = Fdef | t.t
             }
             res = append(res, t)
@@ -532,7 +541,7 @@ func parse4ComplexTokens(ts []Token) []Token {
             goto next_loop
         }
 
-        // 捕获Attribute类型token
+        // 捕获Element类型token
         t, nextIndex = extractElement(i, ts)
         if nextIndex > i {
             res = append(res, t)

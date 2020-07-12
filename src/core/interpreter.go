@@ -26,9 +26,10 @@ func executeStatement(stmt *Statement, vars *VarScope) *StatementResultType {
 }
 
 func executeExpression(expr *Expression) (res *Value) {
-    if expr.isConstExpression() || expr.isVarExpression() || expr.isElementExpression() {
+    if expr.isConstExpression() || expr.isVarExpression() || expr.isElementExpression() || expr.isAttributeExpression() {
         return expr.leftVal()
     }
+
     if expr.isBinaryExpression() {
         return executeBinaryExpression(expr)
     }
@@ -40,6 +41,21 @@ func executeExpression(expr *Expression) (res *Value) {
 	}
 
     return
+}
+
+func executeAttributeExpression(expr *Expression) (res *Value) {
+	varname := expr.left.caller
+	attrname := expr.left.name
+	varVal := expr.searchVariable(varname)
+	if varVal == nil {
+		return NULL
+	}
+	varRawVal := varVal.val.val()
+	obj, ok := varRawVal.(map[string]interface{})
+	if !ok {
+		return NULL
+	}
+	return newVal(obj[attrname])
 }
 
 func executeElementExpression(expr *Expression) (res *Value) {
@@ -96,6 +112,7 @@ func getSubExprForMultiExpression(varname string, exprList []*Expression) *Expre
 }
 
 func executeFunctionCallExpression(expr *Expression) (res *Value) {
+	//fmt.Println("executeFunctionCallExpression", tokensString(expr.raw))
     functionName := expr.left.name
     args := expr.left.args
     if functionName == "println" {
@@ -337,6 +354,16 @@ func evalAssignBinaryExpression(expr *Expression) (res *Value) {
 
 		arrRawVal[argRawVals[0]] = res.val()
 		res = newVal(arrRawVal)
+	}else if primaryExpr.isAttibute() {
+		varname = primaryExpr.caller
+		attrname := primaryExpr.name
+		objVal := expr.searchVariable(varname)
+		objRawVal := objVal.val.val()
+		obj, ok := objRawVal.(map[string]interface{})
+		if ok {
+			obj[attrname] = res.val()
+			res = newVal(obj)
+		}
 	}
 
 
@@ -518,7 +545,11 @@ func getArrayIndexs(arrSize int, objs []interface{}) []int {
 func toGoTypeValues(exprs []*Expression, vars *VarScope) []interface{} {
     var res []interface{}
     for _, expr := range exprs {
-        expr.vars = vars
+    	//fmt.Println("expr:",expr==nil, expr,", vars:", vars, "< toGoTypeValues")
+        if expr == nil {
+        	continue
+		}
+    	expr.vars = vars
         goValue := executeExpression(expr)
         v := goValue.val()
         res = append(res, v)

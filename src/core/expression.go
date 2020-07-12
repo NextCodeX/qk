@@ -258,6 +258,9 @@ func evalPrimaryExpr(primaryExpr *PrimaryExpr, expr *Expression) *Value {
 	if primaryExpr.isElement() {
 		return executeElementExpression(expr)
 	}
+	if primaryExpr.isAttibute() {
+		return executeAttributeExpression(expr)
+	}
 	return NULL
 }
 

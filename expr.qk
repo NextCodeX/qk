@@ -1,7 +1,13 @@
-a = [1,false,"tts"]
-println("a[1]:", a[1])
-a[1] = "TaKI"
-println("a[1]:", a[1])
+arr = [1,false,"tts"]
+println("arr[1]:", arr[1])
+arr[1] = "TaKI"
+println("arr[1]:", arr[1])
+
+obj = {name:"changlie",age:18}
+println("obj.name:", obj.name, ", obj.age:", obj.age)
+obj.name = "tianyoushi"
+obj.age = 14
+println("obj.name:", obj.name, ", obj.age:", obj.age)
 
 a = 2
 a++
