@@ -23,6 +23,9 @@ const (
     Element // 元素，用于指示对象或数组的元素
     Complex // 用于标记复合类型token
 
+    AddSelf // 自增一
+    SubSelf // 自减一
+
     Tmp // 语法分析时，插入的临时变量名
 )
 
@@ -34,7 +37,7 @@ const (
     stateFloat
     stateSymbol
     stateSpace
-    normal
+    stateNormal
 )
 
 type Token struct {
@@ -54,10 +57,6 @@ func symbolToken(s string) Token {
 
 func varToken(s string) Token {
     return Token{str:s, t:Identifier}
-}
-
-func tmpToken(raw string) Token {
-    return Token{str:raw, t:Tmp | Identifier}
 }
 
 func (this *Token) isIdentifier() bool {
@@ -114,6 +113,14 @@ func (this *Token) isElement() bool {
 
 func (this *Token) isComplex() bool {
     return (this.t & Complex) == Complex
+}
+
+func (this *Token) isAddSelf() bool {
+    return (this.t & AddSelf) == AddSelf
+}
+
+func (this *Token) isSubSelf() bool {
+    return (this.t & SubSelf) == SubSelf
 }
 
 func (this *Token) assertSymbol(s string) bool {
@@ -199,36 +206,8 @@ func (this *Token) upper(t *Token) bool {
 }
 
 func (this *Token) String() string {
-    if this.isArrLiteral() {
-        var buf bytes.Buffer
-        buf.WriteString("[")
-        if this.ts != nil {
-            for _, token := range this.ts {
-                if token.isStr() {
-                    buf.WriteString(fmt.Sprintf(`"%v"`, token.str))
-                } else {
-                    buf.WriteString(token.str)
-                }
-            }
-        }
-        buf.WriteString("]")
-        return buf.String()
-    }
-
-    if this.isObjLiteral() {
-        var buf bytes.Buffer
-        buf.WriteString("{")
-        if this.ts != nil {
-            for _, token := range this.ts {
-                if token.isStr() || token.isIdentifier() {
-                    buf.WriteString(fmt.Sprintf(`"%v"`, token.str))
-                } else {
-                    buf.WriteString(token.str)
-                }
-            }
-        }
-        buf.WriteString("}")
-        return buf.String()
+    if this.isArrLiteral() || this.isObjLiteral() {
+        return this.toJSONString()
     }
 
     if this.isFcall() || this.isFdef() {
@@ -281,6 +260,41 @@ func (this *Token) String() string {
     return this.str
 }
 
+func (this *Token) toJSONString() string {
+    if this.isArrLiteral() {
+        var buf bytes.Buffer
+        buf.WriteString("[")
+        if this.ts != nil {
+            for _, token := range this.ts {
+                if token.isStr() {
+                    buf.WriteString(fmt.Sprintf(`"%v"`, token.str))
+                } else {
+                    buf.WriteString(token.str)
+                }
+            }
+        }
+        buf.WriteString("]")
+        return buf.String()
+    }
+
+    if this.isObjLiteral() {
+        var buf bytes.Buffer
+        buf.WriteString("{")
+        if this.ts != nil {
+            for _, token := range this.ts {
+                if token.isStr() || token.isIdentifier() {
+                    buf.WriteString(fmt.Sprintf(`"%v"`, token.str))
+                } else {
+                    buf.WriteString(token.str)
+                }
+            }
+        }
+        buf.WriteString("}")
+        return buf.String()
+    }
+    return ""
+}
+
 func (t *Token) TokenTypeName() string {
     var buf bytes.Buffer
     if t.isStr() {
@@ -322,6 +336,13 @@ func (t *Token) TokenTypeName() string {
     if t.isComplex() {
         buf.WriteString("complex, ")
     }
+
+    if t.isAddSelf() {
+        buf.WriteString("addself, ")
+    }
+    if t.isSubSelf() {
+        buf.WriteString("subself, ")
+    }
     if buf.Len() == 0 {
         return "undefined"
     }
@@ -358,16 +379,98 @@ func printCurrentPositionTokens(ts []Token, currentIndex int) string {
     return toString4Tokens(ts, start, end)
 }
 
-func Parse(bs []byte) []Token {
-    // token 初步处理
-    ts := preparse(bs)
+func ParseTokens(bs []byte) []Token {
+    // 提取原始token列表
+    ts := parse4PrimaryTokens(bs)
+    // 语法预处理
+    //ts := syntaxPreHandle(ts)
+    // 提取'++', '--'等运算符
+    ts = parse4OperatorTokens(ts)
     // 去掉无用的';', 合并token生成函数调用token(Fcall), 方法调用token(Mtcall)等复合token
-    ts = doparse(ts)
+    ts = parse4ComplexTokens(ts)
+    return ts
+}
+
+// 提取多符号运算符(>=, <=...)
+func parse4OperatorTokens(ts []Token) []Token {
+    var res []Token
+    for _, token := range ts {
+        last, lastExist := lastToken(res)
+
+        currentIsEqual := token.assertSymbol("=")
+        condEqualMerge := lastExist && last.assertSymbols("=", ">", "<", "+", "-", "*", "/", "%")
+        condEqual := currentIsEqual && condEqualMerge
+
+        currentIsOr := token.assertSymbol("|")
+        condOrMerge := lastExist && last.assertSymbols("|")
+        condOr := currentIsOr && condOrMerge
+
+        currentIsAnd := token.assertSymbol("&")
+        condAndMerge := lastExist && last.assertSymbols("&")
+        condAnd := currentIsAnd && condAndMerge
+
+        currentIsAdd := token.assertSymbol("+")
+        condAddMerge := lastExist && last.assertSymbols("+")
+        condAdd := currentIsAdd && condAddMerge
+
+        currentIsSub := token.assertSymbol("-")
+        condSubMerge := lastExist && last.assertSymbols("-")
+        condSub := currentIsSub && condSubMerge
+
+        if condEqual || condAnd || condOr || condAdd || condSub {
+            res = tailMerge(res, token)
+            if (condAdd || condSub) && canAddSubSelf(res) {
+                newTokenType := getTokenType(condAdd)
+                res = tailMerge2(res, newTokenType)
+            }
+            continue
+        }
+
+        res = append(res, token)
+    }
+    return res
+}
+
+func tailMerge2(ts []Token, tokenType TokenType) []Token {
+    size := len(ts)
+
+    tailIndex := size - 2
+    tail := ts[tailIndex]
+    tail.t = tail.t | tokenType
+
+    res := ts[:size-1]
+    res[tailIndex] = tail
+    return res
+}
+
+func getTokenType(condAdd bool) TokenType {
+    var newTokenType TokenType
+    if condAdd {
+        newTokenType = AddSelf
+    } else {
+        newTokenType = SubSelf
+    }
+    return newTokenType
+}
+
+func canAddSubSelf(ts []Token) bool {
+    size := len(ts)
+    if size>=2 && ts[size-2].isIdentifier() {
+        return true
+    }
+    return false
+}
+
+func tailMerge(ts []Token, t Token) []Token {
+    size := len(ts)
+    tail := ts[size-1]
+    tail.str = fmt.Sprintf("%v%v", tail.str, t.str)
+    ts[size - 1] = tail
     return ts
 }
 
 // 该函数用于： 去掉无用的';', 合并token生成函数调用token(Fcall), 方法调用token(Mtcall)等复合token
-func doparse(ts []Token) []Token {
+func parse4ComplexTokens(ts []Token) []Token {
     var res []Token
     size := len(ts)
     for i:=0; i<size; {
@@ -520,7 +623,7 @@ func extractElement(currentIndex int, ts []Token) (t Token, nextIndex int) {
 
     t = Token {
         str:    ts[currentIndex].str,
-        t:      Attribute | Complex,
+        t:      Element | Complex,
         ts:     indexs,
     }
     return t, nextIndex
@@ -544,7 +647,7 @@ func extractElementIndexTokens(currentIndex int, ts []Token, nextIndex *int, ind
     if scopeOpenCount > 0 {
         panic("extract element index Exception: no match final character \"]\"")
     }
-    if ts[*nextIndex].assertSymbol("[") {
+    if *nextIndex < size && ts[*nextIndex].assertSymbol("[") {
         *indexs = append(*indexs, symbolToken(","))
         extractElementIndexTokens(*nextIndex+1, ts, nextIndex, indexs)
     }
@@ -595,7 +698,8 @@ func getCallArgsTokens(currentIndex int, ts []Token) (args []Token, nextIndex in
             }
         }
         if isIllegalFcallArgsToken(token) {
-            panic("extract call args Exception, illegal character:"+token.str)
+            msg := printCurrentPositionTokens(ts, i)
+            panic("extract call args Exception, illegal character:"+msg)
         }
         args = append(args, token)
     }
@@ -638,6 +742,7 @@ func extractAttribute(currentIndex int, ts []Token) (t Token, nextIndex int) {
     if !ts[currentIndex+1].assertSymbol(".")  || !ts[currentIndex+2].isIdentifier() {
         return
     }
+
     token := Token{
         str:    ts[currentIndex+2].str,
         t:      Attribute | Complex,
@@ -668,10 +773,10 @@ func nextToken(currentIndex int, ts []Token) (t Token, ok bool) {
     return ts[currentIndex+1], true
 }
 
-func preparse(bs []byte) []Token {
+func parse4PrimaryTokens(bs []byte) []Token {
     var tokens []Token
     var tmp []byte
-    state := normal
+    state := stateNormal
     for _, b := range bs {
 
         if state == stateStrLiteral && b != '"' {
@@ -724,7 +829,7 @@ func preparse(bs []byte) []Token {
             } else {
                 if tmp[len(tmp)-1] != '\\' {
                     longTokenSave(b, state, &tmp, &tokens)
-                    state = normal
+                    state = stateNormal
                 } else {
                     tmp = append(tmp, b)
                 }

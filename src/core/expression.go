@@ -3,6 +3,7 @@ package core
 import (
     "bytes"
     "strings"
+	"fmt"
 )
 
 type ExpressionType int
@@ -14,6 +15,8 @@ const (
     StringExpression
     ConstExpression
     VarExpression
+    AttributeExpression
+    ElementExpression
     FunctionCallExpression
     MethodCallExpression
     BinaryExpression
@@ -23,16 +26,32 @@ const (
 
 type OperationType int
 const (
-    Opeq OperationType = 1 << iota
-    Opgt
-    Oplt
-    Opge
-    Ople
-    Opadd
-    Opsub
-    Opmul
-    Opdiv
-    Opassign
+
+    // 逻辑运算
+    Opeq OperationType = 1 << iota //等于 equal to
+    Opgt // 大于 greater than
+    Oplt // 小于 less than
+    Opge // 大于等于 greater than or equal to
+    Ople // 小于等于 less than or equal to
+
+    Opor // 逻辑或
+    Opand // 逻辑与
+
+    // 算术运算
+    Opadd // 相加
+    Opsub // 相减
+    Opmul // 相乘
+    Opdiv // 相除
+    Opmod // 求余(余数 remainder/残余数 modulo)
+
+    // 赋值运算
+    Opassign // 赋值
+    OpassignAfterAdd // 相加后赋值
+    OpassignAfterSub // 相减后赋值
+    OpassignAfterMul // 相乘后赋值
+    OpassignAfterDiv // 相除后赋值
+    OpassignAfterMod // 求余后赋值
+
 )
 
 type Expression struct {
@@ -52,6 +71,48 @@ type Expression struct {
 func (this *Expression) isAssign() bool {
     return (this.op & Opassign) == Opassign
 }
+func (this *Expression) isAssignAfterAdd() bool {
+    return (this.op & OpassignAfterAdd) == OpassignAfterAdd
+}
+func (this *Expression) isAssignAfterSub() bool {
+    return (this.op & OpassignAfterSub) ==OpassignAfterSub
+}
+func (this *Expression) isAssignAfterMul() bool {
+    return (this.op & OpassignAfterMul) ==OpassignAfterMul
+}
+func (this *Expression) isAssignAfterDiv() bool {
+    return (this.op & OpassignAfterDiv) ==OpassignAfterDiv
+}
+func (this *Expression) isAssignAfterMod() bool {
+    return (this.op & OpassignAfterMod) ==OpassignAfterMod
+}
+
+
+
+func (this *Expression) isEq() bool {
+    return (this.op & Opeq) ==Opeq
+}
+func (this *Expression) isGt() bool {
+    return (this.op & Opgt) ==Opgt
+}
+func (this *Expression) isLt() bool {
+    return (this.op & Oplt) ==Oplt
+}
+func (this *Expression) isGe() bool {
+    return (this.op & Opge) ==Opge
+}
+func (this *Expression) isLe() bool {
+    return (this.op & Ople) ==Ople
+}
+
+func (this *Expression) isOr() bool {
+    return (this.op & Opor) ==Opor
+}
+func (this *Expression) isAnd() bool {
+    return (this.op & Opand) ==Opand
+}
+
+
 
 func (this *Expression) isAdd() bool {
     return (this.op & Opadd) == Opadd
@@ -67,6 +128,9 @@ func (this *Expression) isMul() bool {
 
 func (this *Expression) isDiv() bool {
     return (this.op & Opdiv) == Opdiv
+}
+func (this *Expression) isMod() bool {
+    return (this.op & Opmod) ==Opmod
 }
 
 func newMultiExpression() *Expression {
@@ -100,6 +164,14 @@ func (this *Expression) isVarExpression() bool {
     return (this.t & VarExpression) == VarExpression
 }
 
+func (this *Expression) isAttributeExpression() bool {
+	return (this.t & AttributeExpression) == AttributeExpression
+}
+
+func (this *Expression) isElementExpression() bool {
+	return (this.t & ElementExpression) == ElementExpression
+}
+
 func (this *Expression) isFunctionCallExpression() bool {
     return (this.t & FunctionCallExpression) == FunctionCallExpression
 }
@@ -126,13 +198,29 @@ func (expr *Expression) searchVariable(name string) *Variable {
         return res
     }
     if expr.vars.super == nil {
+		//runtimeExcption("variable", name, "is undefined")
         return nil
     }
     res = expr.vars.super.get(name)
     if res != nil {
         return res
     }
+	//runtimeExcption("variable", name, "is undefined")
     return nil
+}
+
+func (expr *Expression) searchArrayVariable(varname string) []interface{} {
+	varObj := expr.searchVariable(varname)
+	varVal := varObj.val.val()
+
+	var ok bool
+	arrVal, ok := varVal.([]interface{})
+	if !ok {
+		varValType := fmt.Sprintf("%T", varVal)
+		runtimeExcption("error operator: ", varname, "is not a array", varValType, varVal)
+		return nil
+	}
+	return arrVal
 }
 
 func (expr *Expression) addVariable(vr *Variable)  {
@@ -145,39 +233,32 @@ func (expr *Expression) addVar(name string, val *Value)  {
 }
 
 func (expr *Expression) leftVal() *Value {
-    if expr.left == nil {
-        return NULL
-    }
-    if expr.left.isConst() {
-        return expr.left.res
-    }
-    if expr.left.isVar() {
-        varname := expr.left.name
-        variable := expr.searchVariable(varname)
-        if variable == nil {
-            return NULL
-        }
-        return variable.val
-    }
-    return NULL
+    return evalPrimaryExpr(expr.left, expr)
 }
 
 func (expr *Expression) rightVal() *Value {
-    if expr.right == nil {
-        return NULL
-    }
-    if expr.right.isConst() {
-        return expr.right.res
-    }
-    if expr.right.isVar() {
-        varname := expr.right.name
-        variable := expr.searchVariable(varname)
-        if variable == nil {
-            return NULL
-        }
-        return variable.val
-    }
-    return NULL
+    return evalPrimaryExpr(expr.right, expr)
+}
+
+func evalPrimaryExpr(primaryExpr *PrimaryExpr, expr *Expression) *Value {
+	if primaryExpr == nil {
+		return NULL
+	}
+	if primaryExpr.isConst() {
+		return primaryExpr.res
+	}
+	if primaryExpr.isVar() {
+		varname := primaryExpr.name
+		variable := expr.searchVariable(varname)
+		if variable == nil {
+			return NULL
+		}
+		return variable.val
+	}
+	if primaryExpr.isElement() {
+		return executeElementExpression(expr)
+	}
+	return NULL
 }
 
 func (expr *Expression) setTmpname(name string) {
@@ -206,6 +287,13 @@ func (expr *Expression) TypeString() string {
     if expr.isVarExpression() {
         res.WriteString("var expression, ")
     }
+	if expr.isAttributeExpression() {
+		res.WriteString("attribute expression, ")
+	}
+	if expr.isElementExpression() {
+		res.WriteString("element expression, ")
+	}
+
     if expr.isFunctionCallExpression() {
         res.WriteString("function call expression, ")
     }
@@ -240,6 +328,8 @@ type PrimaryExpressionType int
 const (
     VarPrimaryExpressionType PrimaryExpressionType = 1 << iota
     ConstPrimaryExpressionType
+    ElementPrimaryExpressionType
+    AttibutePrimaryExpressionType
     OtherPrimaryExpressionType PrimaryExpressionType = 0
 )
 
@@ -257,6 +347,14 @@ func (this *PrimaryExpr) isVar() bool {
 
 func (this *PrimaryExpr) isConst() bool {
     return (this.t & ConstPrimaryExpressionType) == ConstPrimaryExpressionType
+}
+
+func (this *PrimaryExpr) isElement() bool {
+	return (this.t & ElementPrimaryExpressionType) == ElementPrimaryExpressionType
+}
+
+func (this *PrimaryExpr) isAttibute() bool {
+	return (this.t & AttibutePrimaryExpressionType) == AttibutePrimaryExpressionType
 }
 
 func (this *PrimaryExpr) isOther() bool {

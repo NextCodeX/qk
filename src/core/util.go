@@ -23,6 +23,10 @@ func exitOnError(err error, a ...interface{}) {
 }
 
 func runtimeExcption(msg ...interface{}){
+    if DEBUG_MODE {
+        panic(fmt.Sprintln(msg...))
+        return
+    }
     fmt.Println(msg...)
     os.Exit(2)
 }

@@ -1,2 +1,15 @@
-a + 5 * c
-println(a, 2, true, "joker")
+a = [1,false,"tts"]
+println("a[2]:", a[2])
+a[2] = "TaKI"
+println("a[2]:", a[2])
+
+a = 2
+a++
+b = 3.5
+b--
+
+println("b 大于等于 0:", b >= 0)
+
+c = 3 + a * b
+c += 2
+println(a, b, c, a==b)

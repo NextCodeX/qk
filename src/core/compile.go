@@ -4,6 +4,7 @@ import (
     "fmt"
     "strconv"
     "bytes"
+	"encoding/json"
 )
 
 var (
@@ -332,8 +333,24 @@ func clearParentheses(ts []Token) []Token {
 //    }
 //}
 
+// 获取一元表达式
 func parseUnaryExpression(ts []Token) *Expression {
-    token := ts[0]
+	token := ts[0]
+
+	// 处理自增, 自减
+	if token.isAddSelf() || token.isSubSelf() {
+		op := symbolToken("+")
+		if token.isSubSelf() {
+			op = symbolToken("-")
+		}
+		var tmpTokens []Token
+		tmpTokens = append(tmpTokens, token)
+		tmpTokens = append(tmpTokens, op)
+		tmpTokens = append(tmpTokens, newToken("1", Int))
+		tmpTokens = append(tmpTokens, token)
+		return generateBinaryExpr(tmpTokens)
+	}
+
     expr := &Expression{}
     primaryExpr := parsePrimaryExpression(&token)
     expr.left = primaryExpr
@@ -357,16 +374,19 @@ func parseUnaryExpression(ts []Token) *Expression {
         }
         return expr
     }
+    if token.isElement() {
+		expr.t = ElementExpression
+		return expr
+	}
     if token.isFcall() {
         expr.t = FunctionCallExpression
         return expr
     }
-    //primaryExpr :=
+
     return nil
 }
 
 func parseMultivariateExpression(ts []Token) (expr *Expression) {
-    fmt.Println("parseMultivariateExpression:", tokensString(ts))
     var resVarToken *Token
     var multiExprTokens []Token
     if ts[1].assertSymbol("=") {
@@ -379,13 +399,8 @@ func parseMultivariateExpression(ts []Token) (expr *Expression) {
     reduceTokensForExpression(resVarToken, multiExprTokens, &exprTokensList)
     printExprs(exprTokensList)
 
-	//exprTokensList = resortExprTokensList(exprTokensList, resVarToken)
-	//fmt.Println("after resortExprTokensList:=========================")
-	//printExprs(exprTokensList)
-
-	exprs := generateExprs(exprTokensList)
+	exprs := generateBinaryExprs(exprTokensList)
 	finalExpr := getFinalExpr(exprs, resVarToken)
-	fmt.Println("finalExpr: ", finalExpr)
 
     expr = &Expression{
        t:MultiExpression,
@@ -414,47 +429,33 @@ func getFinalExpr(exprs []*Expression, resVarToken *Token) *Expression {
 	return finalExprTokens
 }
 
-func generateExprs(exprTokensList [][]Token) []*Expression {
+func generateBinaryExprs(exprTokensList [][]Token) []*Expression {
 	var res []*Expression
 	for _, tokens := range exprTokensList {
-		var expr *Expression
-		if len(tokens) == 4 {
-			expr = parseExpressionStatement(tokens[:3])
-			expr.setTmpname(tokens[3].str)
-		} else {
-			expr = parseExpressionStatement(tokens)
-		}
+		expr := generateBinaryExpr(tokens)
 		res = append(res, expr)
 	}
 	return res
 }
 
-//func resortExprTokensList(exprTokensList [][]Token, resVarToken *Token) [][]Token {
-//	size := len(exprTokensList)
-//	res := make([][]Token, size, size)
-//	var finalExprTokens []Token
-	//isAssignExpr := resVarToken != nil
-	//for _, tokens := range exprTokensList {
-	//	if isAssignExpr && tokens[3].str == resVarToken.str {
-	//		finalExprTokens = tokens
-	//		break
-	//	}
-	//	if !isAssignExpr && len(tokens) == 3 {
-	//		finalExprTokens = tokens
-	//		break
-	//	}
-	//}
-	//if finalExprTokens == nil {
-	//	runtimeExcption("resortExprTokensList Exception")
-	//}
-//
-//
-//	return res
-//}
+func generateBinaryExpr(ts []Token) *Expression {
+	size := len(ts)
+	if size < 3 || size > 4 {
+		runtimeExcption("generateBinaryExpr error args:", tokensString(ts))
+		return nil
+	}
+	var expr *Expression
+	if size == 4 {
+		expr = parseBinaryExpression(ts[:3])
+		expr.setTmpname(ts[3].str)
+	} else {
+		expr = parseBinaryExpression(ts)
+	}
+	return expr
+}
 
+// 分解多元表达式, 并把结果保存至exprTokensList *[][]Token
 func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token) {
-	fmt.Println("new reduceTokensForExpression:###########################")
-	fmt.Println("reduceTokensForExpression###args ts:", tokensString(ts))
 	var exprTokens []Token
 
 	ts = clearParentheses(ts)
@@ -489,22 +490,19 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 	}
 
 	for i:=0; i<size; i++ {
-		fmt.Println("new iterator:------------------------")
-		fmt.Println("multiExprTokens size", size)
 		tmpSize := len(exprTokens)
-		fmt.Println("tmpTokens size", tmpSize)
 		token := ts[i]
 
 		condBoundry := tmpSize == 2
 		condFinish := condBoundry && i==size-1
 		preCond1 := condBoundry && i<size-1
-		if preCond1 {
-			fmt.Printf("pre.priority:  %v:%v; next.priority: %v:%v \n", last(exprTokens).str, last(exprTokens).priority(), next(ts, i).str, next(ts, i).priority() )
-		}
+		//if preCond1 {
+		//	fmt.Printf("pre.priority:  %v:%v; next.priority: %v:%v \n", last(exprTokens).str, last(exprTokens).priority(), next(ts, i).str, next(ts, i).priority() )
+		//}
 		// 处理根据运算符优先级, 左向归约的情况
 		condShiftLeft1 := preCond1 && last(exprTokens).equal(next(ts,i))
 		condShiftLeft2 := preCond1 && last(exprTokens).lower(next(ts,i))
-		fmt.Printf("condFinish: %v, preCond1: %v, condShiftLeft1: %v, condShiftLeft2: %v\n", condFinish, preCond1, condShiftLeft1, condShiftLeft2)
+		//fmt.Printf("condFinish: %v, preCond1: %v, condShiftLeft1: %v, condShiftLeft2: %v\n", condFinish, preCond1, condShiftLeft1, condShiftLeft2)
 		if condShiftLeft1 || condShiftLeft2 || condFinish {
 			exprTokens = append(exprTokens, token)
 			if !condFinish {
@@ -519,7 +517,7 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 
 		// 处理括号不是第一个token的情况
 		condRightParentheses := preCond1 && token.assertSymbol("(")
-		fmt.Printf("condRightParentheses: %v; \n", condRightParentheses)
+		//fmt.Printf("condRightParentheses: %v; \n", condRightParentheses)
 		if condRightParentheses {
 			rightTokens, nextIndex := extractTokensByParentheses(ts[i:])
 			nextIndex  = i+nextIndex // 转换回切片ts的相应索引
@@ -528,7 +526,7 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 				tmpVarToken1 := getTmpVarToken() // 括号内的中间临时值
 				reduceTokensForExpression(&tmpVarToken1, rightTokens, exprTokensList)
 
-				// 运算符优先级的不同tmpVarToken2可能是左边表达式的或者右边表达式的中间临时值
+				// 根据运算符优先级的不同, tmpVarToken2可能是左边表达式的或者右边表达式的中间临时值
 				tmpVarToken2 := getTmpVarToken()
 
 				nextToken := ts[nextIndex]
@@ -561,12 +559,11 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 
 		// 处理根据运算符优先级, 右向归约的情况
 		condShiftRight1 := preCond1 && last(exprTokens).upper(next(ts,i))
-		fmt.Printf("condShiftRight1: %v; \n", condShiftRight1)
+		//fmt.Printf("condShiftRight1: %v; \n", condShiftRight1)
 		if  condShiftRight1 {
 			tmpVarToken := getTmpVarToken()
 			nextTokens := ts[i:]
 			exprTokens = append(exprTokens, tmpVarToken)
-			fmt.Println("after shift right:", tokensString(exprTokens))
 			reduceTokensForExpression(&tmpVarToken, nextTokens, exprTokensList)
 			break
 		}
@@ -581,6 +578,7 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 	*exprTokensList = append(*exprTokensList, exprTokens)
 }
 
+// 获取括号内的表达式token列表
 func extractTokensByParentheses(ts []Token) (res []Token, nextIndex int) {
 	scopeOpen := 0
 	for i, token := range ts {
@@ -602,10 +600,7 @@ func extractTokensByParentheses(ts []Token) (res []Token, nextIndex int) {
 	return res, nextIndex
 }
 
-func getTmpVarToken() Token {
-	tmpname := getTmpname()
-	return varToken(tmpname)
-}
+
 
 func printExprs(exprTokensList [][]Token) {
     var buf bytes.Buffer
@@ -616,15 +611,6 @@ func printExprs(exprTokensList [][]Token) {
 	fmt.Println(buf.String())
 }
 
-type ReduceState int
-
-const (
-    LeftReduce ReduceState = 1 << iota
-    RightReduce
-    FinalReduce
-    NormalReduce
-)
-
 func last(ts []Token) *Token {
     return &ts[len(ts)-1]
 }
@@ -633,12 +619,9 @@ func next(ts []Token, i int) *Token {
     return &ts[i+1]
 }
 
-func isAddSub(op string) bool {
-    return op == "+" || op == "-"
-}
-
-func isMulDiv(op string) bool {
-    return op == "*" || op == "/"
+func getTmpVarToken() Token {
+	tmpname := getTmpname()
+	return varToken(tmpname)
 }
 
 func getTmpname() string {
@@ -647,6 +630,7 @@ func getTmpname() string {
     return name
 }
 
+// 根据token列表获取二元表达式
 func parseBinaryExpression(ts []Token) *Expression {
     first := ts[0]
     mid := ts[1]
@@ -655,23 +639,44 @@ func parseBinaryExpression(ts []Token) *Expression {
     right := parsePrimaryExpression(&third)
     var op OperationType
     switch {
-    case  first.isIdentifier() && mid.assertSymbol("="):
-        op = Opassign
 
     case mid.assertSymbol("+"):
         op = Opadd
-
     case mid.assertSymbol("-"):
         op = Opsub
-
     case mid.assertSymbol("*"):
         op = Opmul
-
     case mid.assertSymbol("/"):
         op = Opdiv
+	case mid.assertSymbol("%"):
+		op = Opmod
+
+	case mid.assertSymbol(">"):
+		op = Opgt
+	case mid.assertSymbol(">="):
+		op = Opge
+	case mid.assertSymbol("<"):
+		op = Oplt
+	case mid.assertSymbol("<="):
+		op = Ople
+	case mid.assertSymbol("=="):
+		op = Opeq
+
+	case  mid.assertSymbol("="):
+		op = Opassign
+	case mid.assertSymbol("+="):
+		op = OpassignAfterAdd
+	case mid.assertSymbol("-="):
+		op = OpassignAfterSub
+	case mid.assertSymbol("*="):
+		op = OpassignAfterMul
+	case mid.assertSymbol("/="):
+		op = OpassignAfterDiv
+	case mid.assertSymbol("%="):
+		op = OpassignAfterMod
 
     default:
-        return nil
+       runtimeExcption("parseBinaryExpression Exception:", tokensString(ts))
     }
 
     expr := &Expression{
@@ -689,7 +694,10 @@ func parsePrimaryExpression(t *Token) *PrimaryExpr {
     var res *PrimaryExpr
     if v != nil {
         res = &PrimaryExpr{res:v, t:ConstPrimaryExpressionType}
-    } else if t.isFcall() {
+    } else if t.isElement() {
+		exprs := getArgsFromToken(t.ts)
+		res = &PrimaryExpr{name:t.str, args: exprs, t:ElementPrimaryExpressionType}
+	} else if t.isFcall() {
         exprs := getArgsFromToken(t.ts)
         res = &PrimaryExpr{name:t.str, args: exprs, t:OtherPrimaryExpressionType}
     } else {
@@ -705,6 +713,7 @@ func getArgsFromToken(ts []Token) []*Expression {
         return res
     }
     if size == 1 || !hasSymbol(ts, ",") {
+    	ts = parse4ComplexTokens(ts)
         expr := parseExpressionStatement(ts)
         res = append(res, expr)
         return res
@@ -713,6 +722,7 @@ func getArgsFromToken(ts []Token) []*Expression {
     var nextIndex int
     for nextIndex >= 0 {
         exprTokens, nextIndex = extractExpressionByComma(nextIndex, ts)
+		exprTokens = parse4ComplexTokens(exprTokens)
         expr := parseExpressionStatement(exprTokens)
         res = append(res, expr)
     }
@@ -736,6 +746,15 @@ func extractExpressionByComma(currentIndex int, ts []Token) (exprTokens []Token,
 }
 
 func tokenToValue(t *Token) (v *Value) {
+	if t.isArrLiteral() || t.isObjLiteral() {
+		jsonstr := t.toJSONString()
+		var v interface{}
+		err := json.Unmarshal([]byte(jsonstr), &v)
+		if err != nil {
+			runtimeExcption("failed to generate object:", t.String())
+		}
+		return newVal(v)
+	}
     if t.isFloat() {
         f, err := strconv.ParseFloat(t.str, 64)
         exitOnError(err)

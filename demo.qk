@@ -3,7 +3,7 @@ println("hi, \"joker\" \n")
 a = 1
 b = 3
 c = 7 + a * b
-if b > 0 {
+if b >= 0 {
     println("b 大于 0")
 }
 println("c:", c)

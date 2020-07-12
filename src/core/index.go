@@ -8,16 +8,18 @@ import (
     "strings"
 )
 
+const DEBUG_MODE = true
+
 func Run() {
     //qkfile := "demo.qk"
     qkfile := "expr.qk"
     bs, _ := ioutil.ReadFile(qkfile)
-    ts := Parse(bs)
+    ts := ParseTokens(bs)
     printTokensByLine(ts)
     Compile(mainFunc, ts)
     printFunc()
     fmt.Println("================")
-    //Interpret()
+    Interpret()
 }
 
 func printFunc() {
