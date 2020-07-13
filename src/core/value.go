@@ -100,92 +100,13 @@ func (v *Value) isObjectValue() bool {
     return (v.t & ObjectValue) == ObjectValue
 }
 
-type StatementResultType int
-
-const (
-    StatementReturn StatementResultType = 1 << iota
-    StatementContinue
-    StatementBreak
-    StatementNormal
-)
-
-type StatementResult struct {
-    t StatementResultType
-    val Value
-}
-
-func (this *StatementResult) isStatementReturn() bool {
-    return (this.t & StatementReturn) == StatementReturn
-}
-
-func (this *StatementResult) isStatementContinue() bool {
-    return (this.t & StatementContinue) == StatementContinue
-}
-
-func (this *StatementResult) isStatementBreak() bool {
-    return (this.t & StatementBreak) == StatementBreak
-}
-
-func (this *StatementResult) isStatementNormal() bool {
-    return (this.t & StatementNormal) == StatementNormal
-}
-
-type Variable struct{
-    name string
-    val *Value
-}
-
-func newVar(name string, rawVal interface{}) *Variable {
-    res := &Variable{
-        name: name,
-        val:  newVal(rawVal),
-    }
-
-    return res
-}
-
-func toVar(name string, rawVal *Value) *Variable {
-    res := &Variable{
-        name: name,
-        val:  rawVal,
-    }
-    return res
-}
 
 
-type Variables map[string]*Variable
 
-func newVariables() Variables {
-    return make(map[string]*Variable)
-}
 
-func (vs *Variables) isEmpty() bool {
-    return vs == nil || len(*vs) < 1
-}
 
-func (vs *Variables) add(v *Variable) {
-    (*vs)[v.name] = v
-}
 
-func (vs *Variables) get(name string) *Variable {
-    if vs.isEmpty() {
-        return nil
-    }
-    res, ok := (*vs)[name]
-    if ok {
-        return res
-    }
-    return nil
-}
 
-type VarScope struct {
-    super *Variables
-    local *Variables
-}
 
-func newVarScope(super, local *Variables) *VarScope {
-    return &VarScope{
-        super: super,
-        local: local,
-    }
-}
+
+
