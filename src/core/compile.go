@@ -3,7 +3,6 @@ package core
 import (
     "fmt"
     "strconv"
-    "bytes"
 	"encoding/json"
 )
 
@@ -401,9 +400,14 @@ func parseMultivariateExpression(ts []Token) (expr *Expression) {
     }
     var exprTokensList [][]Token
     reduceTokensForExpression(resVarToken, multiExprTokens, &exprTokensList)
-    //printExprTokens(exprTokensList)
+    printExprTokens(exprTokensList)
 
 	exprs := generateBinaryExprs(exprTokensList)
+	if len(exprs) == 1 {
+		// 只有一个表达式时,直接返回
+		return exprs[0]
+	}
+
 	finalExpr := getFinalExpr(exprs, resVarToken)
 
     expr = &Expression{
@@ -437,6 +441,7 @@ func generateBinaryExprs(exprTokensList [][]Token) []*Expression {
 	var res []*Expression
 	for _, tokens := range exprTokensList {
 		expr := generateBinaryExpr(tokens)
+		expr.raw = tokens
 		res = append(res, expr)
 	}
 	return res
@@ -604,17 +609,6 @@ func extractTokensByParentheses(ts []Token) (res []Token, nextIndex int) {
 	return res, nextIndex
 }
 
-
-
-func printExprTokens(exprTokensList [][]Token) {
-    var buf bytes.Buffer
-    for _, ts := range exprTokensList {
-		buf.WriteString(tokensString(ts))
-		buf.WriteString("\n")
-	}
-	fmt.Println(buf.String())
-}
-
 func last(ts []Token) *Token {
     return &ts[len(ts)-1]
 }
@@ -698,6 +692,7 @@ func parsePrimaryExpression(t *Token) *PrimaryExpr {
     var res *PrimaryExpr
     if v != nil {
         res = &PrimaryExpr{res:v, t:ConstPrimaryExpressionType}
+
     } else if t.isElement() {
 		exprs := getArgsFromToken(t.ts)
 		res = &PrimaryExpr{name:t.str, args: exprs, t:ElementPrimaryExpressionType}
@@ -708,6 +703,7 @@ func parsePrimaryExpression(t *Token) *PrimaryExpr {
 	} else if t.isFcall() {
         exprs := getArgsFromToken(t.ts)
         res = &PrimaryExpr{name:t.str, args: exprs, t:OtherPrimaryExpressionType}
+
     } else {
         res = &PrimaryExpr{name:t.str, t:VarPrimaryExpressionType}
     }
@@ -723,6 +719,7 @@ func getArgsFromToken(ts []Token) []*Expression {
     if size == 1 || !hasSymbol(ts, ",") {
     	ts = parse4ComplexTokens(ts)
         expr := parseExpressionStatement(ts)
+        assert(expr==nil, "failed to parse Expression:", tokensString(ts))
         res = append(res, expr)
         return res
     }
@@ -732,6 +729,7 @@ func getArgsFromToken(ts []Token) []*Expression {
         exprTokens, nextIndex = extractExpressionByComma(nextIndex, ts)
 		exprTokens = parse4ComplexTokens(exprTokens)
         expr := parseExpressionStatement(exprTokens)
+        assert(expr==nil, "failed to parse Expression:", tokensString(ts))
         res = append(res, expr)
     }
     return res
@@ -765,13 +763,13 @@ func tokenToValue(t *Token) (v *Value) {
 	}
     if t.isFloat() {
         f, err := strconv.ParseFloat(t.str, 64)
-        exitOnError(err)
+        assert(err!=nil, t.String(), "line:", t.lineIndex)
         v = newVal(f)
         return
     }
     if t.isInt() {
         i, err := strconv.Atoi(t.str)
-        exitOnError(err)
+        assert(err!=nil, t.String(), "line:", t.lineIndex)
         v = newVal(i)
         return
     }
@@ -781,7 +779,7 @@ func tokenToValue(t *Token) (v *Value) {
     }
     if t.isIdentifier() && (t.str == "true" || t.str == "false") {
         b, err := strconv.ParseBool(t.str)
-        exitOnError(err)
+        assert(err!=nil, t.String(), "line:", t.lineIndex)
         v = newVal(b)
         return
     }

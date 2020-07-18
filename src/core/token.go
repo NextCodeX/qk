@@ -29,18 +29,8 @@ const (
 	Tmp // 语法分析时，插入的临时变量名
 )
 
-const (
-	stateStr int = 1 << iota
-	stateStrLiteral
-	stateInt
-	stateDot
-	stateFloat
-	stateSymbol
-	stateSpace
-	stateNormal
-)
-
 type Token struct {
+	lineIndex int
 	str string
 	t TokenType
 	caller string

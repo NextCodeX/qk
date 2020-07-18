@@ -1,21 +1,29 @@
+// 数组test
 arr = [1,false,"tts"]
 println("arr[1]:", arr[1])
 arr[1] = "TaKI"
 println("arr[1]:", arr[1])
 
+// 对象测试
 obj = {name:"changlie",age:18}
 println("obj.name:", obj.name, ", obj.age:", obj.age)
 obj.name = "tianyoushi"
 obj.age = 14
 println("obj.name:", obj.name, ", obj.age:", obj.age)
 
-a = 2
+a = 10 / 5
 a++
 b = 3.5
 b--
-
+/**
+multi
+line
+comment
+测试
+*/
 println("b 大于等于 0:", b >= 0)
 
 c = 3 + a * b
+println("raw c :", c)
 c += 2
 println(a, b, c, a==b)

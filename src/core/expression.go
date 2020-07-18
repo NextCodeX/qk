@@ -3,7 +3,6 @@ package core
 import (
     "bytes"
     "strings"
-	"fmt"
 )
 
 type ExpressionType int
@@ -55,7 +54,6 @@ const (
 )
 
 type Expression struct {
-    vars *VarScope
     t ExpressionType
     op OperationType
     left *PrimaryExpr
@@ -192,78 +190,6 @@ func (this *Expression) isTmpExpression() bool {
     return (this.t & TmpExpression) == TmpExpression
 }
 
-func (expr *Expression) searchVariable(name string) *Variable {
-    res := expr.vars.local.get(name)
-    if res != nil {
-        return res
-    }
-    if expr.vars.super == nil {
-		//runtimeExcption("variable", name, "is undefined")
-        return nil
-    }
-    res = expr.vars.super.get(name)
-    if res != nil {
-        return res
-    }
-	//runtimeExcption("variable", name, "is undefined")
-    return nil
-}
-
-func (expr *Expression) searchArrayVariable(varname string) []interface{} {
-	varObj := expr.searchVariable(varname)
-	varVal := varObj.val.val()
-
-	var ok bool
-	arrVal, ok := varVal.([]interface{})
-	if !ok {
-		varValType := fmt.Sprintf("%T", varVal)
-		runtimeExcption("error operator: ", varname, "is not a array", varValType, varVal)
-		return nil
-	}
-	return arrVal
-}
-
-func (expr *Expression) addVariable(vr *Variable)  {
-    expr.vars.local.add(vr)
-}
-
-func (expr *Expression) addVar(name string, val *Value)  {
-    variable := toVar(name,  val)
-    expr.vars.local.add(variable)
-}
-
-func (expr *Expression) leftVal() *Value {
-    return evalPrimaryExpr(expr.left, expr)
-}
-
-func (expr *Expression) rightVal() *Value {
-    return evalPrimaryExpr(expr.right, expr)
-}
-
-func evalPrimaryExpr(primaryExpr *PrimaryExpr, expr *Expression) *Value {
-	if primaryExpr == nil {
-		return NULL
-	}
-	if primaryExpr.isConst() {
-		return primaryExpr.res
-	}
-	if primaryExpr.isVar() {
-		varname := primaryExpr.name
-		variable := expr.searchVariable(varname)
-		if variable == nil {
-			return NULL
-		}
-		return variable.val
-	}
-	if primaryExpr.isElement() {
-		return executeElementExpression(expr)
-	}
-	if primaryExpr.isAttibute() {
-		return executeAttributeExpression(expr)
-	}
-	return NULL
-}
-
 func (expr *Expression) setTmpname(name string) {
     expr.t = expr.t | TmpExpression
     expr.tmpname = name
@@ -325,4 +251,12 @@ func (expr *Expression) String() string {
         res.WriteString(" ")
     }
     return res.String()
+}
+
+
+func (expr *Expression) RawString() string {
+	if len(expr.raw) < 1 {
+		return "unrecod"
+	}
+	return tokensString(expr.raw)
 }

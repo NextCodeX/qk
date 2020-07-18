@@ -2,12 +2,26 @@ package main
 
 import (
     "bufio"
+    "bytes"
     "fmt"
     "os"
     "regexp"
     "strings"
     "testing"
 )
+
+func Test_insertsql(t *testing.T) {
+    fields := `taskId, taskName, sourceAppId, targetAppId, sourceDbType, targetDbType, taskStatus, taskGroup, description, ext, createdDate, createdBy, lastUpdateDate, lastUpdatedBy`
+    var sql bytes.Buffer
+    fs := strings.Split(fields, ",")
+    for _, f := range fs {
+        f := strings.TrimSpace(f)
+        sql.WriteString(fmt.Sprintf(`<if test='%v != null'>`, f)+"\n")
+        sql.WriteString(fmt.Sprintf(`and %v=#{%v}`, f, f)+"\n")
+        sql.WriteString("</if>\n")
+    }
+    fmt.Println(sql.String())
+}
 
 func Test_compile(t *testing.T) {
     var res []interface{}

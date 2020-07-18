@@ -38,7 +38,7 @@ func doPrintFunc(fn *Function) {
 
 func printTokensByLine(tokens []Token) {
     for i, token := range tokens {
-        fmt.Printf("line %v: [%v] -> %v \n", i, token.String(), token.TokenTypeName())
+        fmt.Printf("count %v-line:%v: [%v] -> %v \n", i, token.lineIndex, token.String(), token.TokenTypeName())
     }
 }
 
@@ -49,7 +49,7 @@ func getCmdDir() string {
         cmd = exec.Command("pwd")
     }
     d, err := cmd.CombinedOutput()
-    exitOnError(err)
+    assert(err!=nil, err, "failed to get personal work directory")
     pwd := strings.TrimSpace(string(d))
     return pwd
 }

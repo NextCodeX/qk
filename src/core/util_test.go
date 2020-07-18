@@ -5,6 +5,13 @@ import (
 	"fmt"
 )
 
+func TestNil(t *testing.T)  {
+	var obj interface{}
+	item, ok := obj.(error)
+	fmt.Println(item, " <= item")
+	fmt.Println(ok)
+}
+
 func TestNum(t *testing.T)  {
 	fmt.Println(1%2)
 	fmt.Println(2%2)
