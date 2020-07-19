@@ -31,7 +31,7 @@ func (executor *ExpressionExecutor) run() (res *Value) {
 	if expr.isMultiExpression() {
 		return executor.executeMultiExpression()
 	}
-	runtimeExcption("unknow expression.")
+	runtimeExcption("expression is not supported:", expr.RawString())
 	return nil
 }
 
@@ -43,22 +43,43 @@ func (executor *ExpressionExecutor) executeAttributeExpression() (res *Value) {
 	if varVal == nil {
 		return NULL
 	}
-	varRawVal := varVal.val.val()
-	obj, ok := varRawVal.(map[string]interface{})
-	if !ok {
-		return NULL
+
+	if varVal.val.isArrayValue() {
+		arr := varVal.val.arr_value
+		index := toIntValue(attrname)
+		return (*arr).get(index)
 	}
-	return newVal(obj[attrname])
+
+	if varVal.val.isObjectValue() {
+		obj := varVal.val.obj_value
+		return (*obj).get(attrname)
+	}
+
+	runtimeExcption("eval attribute exception:", expr.RawString())
+	return nil
 }
 
 func (executor *ExpressionExecutor) executeElementExpression() (res *Value) {
 	expr := executor.expr
 	varname := expr.left.name
-	arrRawVal := executor.searchArrayVariable(varname)
+	//arrRawVal := executor.searchArrayVariable(varname)
+	varVal := executor.searchVariable(varname)
 
-	argVals := executor.toGoTypeValues(expr.left.args)
-	argRawVals := executor.getArrayIndexs(len(arrRawVal), argVals)
-	return newVal(arrRawVal[argRawVals[0]])
+	argRawVals := executor.toGoTypeValues(expr.left.args)
+	if varVal.val.isArrayValue() {
+		arr := varVal.val.arr_value
+		index := toIntValue(argRawVals[0])
+		return (*arr).get(index)
+	}
+
+	if varVal.val.isObjectValue() {
+		obj := varVal.val.obj_value
+		key := toStringValue(argRawVals[0])
+		return (*obj).get(key)
+	}
+
+	runtimeExcption("eval element exception:", expr.RawString())
+	return nil
 }
 
 
@@ -357,22 +378,37 @@ func (executor *ExpressionExecutor) evalAssignBinaryExpression() (res *Value) {
 	res = executor.rightVal()
 
 	varname := primaryExpr.name
-	if primaryExpr.isElement() {
-		arrRawVal := executor.searchArrayVariable(varname)
-		argVals := executor.toGoTypeValues(primaryExpr.args)
-		argRawVals := executor.getArrayIndexs(len(arrRawVal), argVals)
 
-		arrRawVal[argRawVals[0]] = res.val()
-		res = newVal(arrRawVal)
+	if primaryExpr.isElement() {
+		varVal := executor.searchVariable(varname)
+		argRawVals := executor.toGoTypeValues(primaryExpr.args)
+		if varVal.val.isArrayValue() {
+			index := toIntValue(argRawVals[0])
+			arr := varVal.val.arr_value
+			(*arr).set(index, res)
+			return
+		}
+		if varVal.val.isObjectValue() {
+			key := toStringValue(argRawVals[0])
+			obj := varVal.val.obj_value
+			(*obj).put(key, res)
+			return
+		}
+
 	}else if primaryExpr.isAttibute() {
 		varname = primaryExpr.caller
 		attrname := primaryExpr.name
-		objVal := executor.searchVariable(varname)
-		objRawVal := objVal.val.val()
-		obj, ok := objRawVal.(map[string]interface{})
-		if ok {
-			obj[attrname] = res.val()
-			res = newVal(obj)
+		varVal := executor.searchVariable(varname)
+		if varVal.val.isObjectValue() {
+			obj := varVal.val.obj_value
+			(*obj).put(attrname, res)
+			return
+		}
+		if varVal.val.isArrayValue() {
+			index := toIntValue(attrname)
+			arr := varVal.val.arr_value
+			(*arr).set(index, res)
+			return
 		}
 	}
 
@@ -583,7 +619,14 @@ func (executor *ExpressionExecutor) evalPrimaryExpr(primaryExpr *PrimaryExpr) *V
 		return NULL
 	}
 	if primaryExpr.isConst() {
-		return primaryExpr.res
+		v := primaryExpr.res
+		if primaryExpr.isObject() {
+			executor.parseJSONObject(v.obj_value)
+		}
+		if primaryExpr.isArray() {
+			executor.parseJSONArray(v.arr_value)
+		}
+		return v
 	}
 	if primaryExpr.isVar() {
 		varname := primaryExpr.name
@@ -602,6 +645,49 @@ func (executor *ExpressionExecutor) evalPrimaryExpr(primaryExpr *PrimaryExpr) *V
 	return NULL
 }
 
+func (executor *ExpressionExecutor) parseJSONObject(obj *JSONObject) {
+	object := *obj
+	if object.parsed() {
+		return
+	}
+	object.init()
+	ts := clearBraces(object.tokens())
+	size := len(ts)
+	for i:=0; i<size; i++ {
+		token := ts[i]
+		nextCommaIndex := nextSymbolIndex(ts, i, ",")
+		if nextCommaIndex < 0 {
+			nextCommaIndex = size
+		}
+		keyname := token.str
+		exprTokens := ts[i+2:nextCommaIndex]
+		expr := extractExpression(exprTokens)
+		val := executor.evalNewExpression(expr)
+		object.put(keyname, val)
+		i = nextCommaIndex
+	}
+}
+
+func (executor *ExpressionExecutor) parseJSONArray(arr *JSONArray) {
+	array := *arr
+	if array.parsed() {
+		return
+	}
+	ts := clearBrackets(array.tokens())
+	size := len(ts)
+	for i:=0; i<size; i++ {
+		nextCommaIndex := nextSymbolIndex(ts, i, ",")
+		if nextCommaIndex < 0 {
+			nextCommaIndex = size
+		}
+		exprTokens := ts[i:nextCommaIndex]
+		expr := extractExpression(exprTokens)
+		val := executor.evalNewExpression(expr)
+		array.add(val)
+		i = nextCommaIndex
+	}
+	array.setParsed()
+}
 
 func (executor *ExpressionExecutor) searchVariable(name string) *Variable {
 	if executor.isTmpVar(name) {
@@ -615,19 +701,19 @@ func (executor *ExpressionExecutor) searchTmpVariable(name string) *Variable {
 	return executor.tmpVars.get(name)
 }
 
-func (executor *ExpressionExecutor) searchArrayVariable(varname string) []interface{} {
-	varObj := executor.searchVariable(varname)
-	varVal := varObj.val.val()
-
-	var ok bool
-	arrVal, ok := varVal.([]interface{})
-	if !ok {
-		varValType := fmt.Sprintf("%T", varVal)
-		runtimeExcption("error operator: ", varname, "is not a array", varValType, varVal)
-		return nil
-	}
-	return arrVal
-}
+//func (executor *ExpressionExecutor) searchArrayVariable(varname string) []interface{} {
+//	varObj := executor.searchVariable(varname)
+//	varVal := varObj.val.val()
+//
+//	var ok bool
+//	arrVal, ok := varVal.([]interface{})
+//	if !ok {
+//		varValType := fmt.Sprintf("%T", varVal)
+//		runtimeExcption("error operator: ", varname, "is not a array", varValType, varVal)
+//		return nil
+//	}
+//	return arrVal
+//}
 
 //func (executor *ExpressionExecutor) addVariable(vr *Variable)  {
 //	executor.stack.addLocalVariable(vr)

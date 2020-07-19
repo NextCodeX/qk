@@ -4,6 +4,7 @@ import (
     "fmt"
     "os"
     "bytes"
+	"strconv"
 )
 
 func match(src string, targets ...string) bool {
@@ -78,3 +79,85 @@ func nextToken(currentIndex int, ts []Token) (t Token, ok bool) {
     return ts[currentIndex+1], true
 }
 
+
+func last(ts []Token) *Token {
+    return &ts[len(ts)-1]
+}
+
+func next(ts []Token, i int) *Token {
+    return &ts[i+1]
+}
+
+
+func hasSymbol(ts []Token, ss ...string) bool {
+    for i:=0; i<len(ts); i++ {
+        t := ts[i]
+        for _, s := range ss {
+            if t.assertSymbol(s) {
+                return true
+            }
+        }
+    }
+    return false
+}
+
+func nextSymbolIndex(ts []Token, currentIndex int, s string) int {
+    for i:=currentIndex; i<len(ts); i++ {
+        t := ts[i]
+        if t.assertSymbol(s) {
+            return i
+        }
+    }
+    return -1
+}
+
+
+
+// 消除两边小括号token
+func clearParentheses(ts []Token) []Token {
+    size := len(ts)
+    if size >= 3 && ts[0].assertSymbol("(") && ts[size-1].assertSymbol(")") {
+        ts = ts[1 : size-1]
+    }
+    return ts
+}
+
+// 消除两边中括号token
+func clearBrackets(ts []Token) []Token {
+	size := len(ts)
+	if size >= 3 && ts[0].assertSymbol("(") && ts[size-1].assertSymbol(")") {
+		ts = ts[1 : size-1]
+	}
+	return ts
+}
+
+// 消除两边大括号token
+func clearBraces(ts []Token) []Token {
+    size := len(ts)
+    if size >= 3 && ts[0].assertSymbol("{") && ts[size-1].assertSymbol("}") {
+        ts = ts[1 : size-1]
+    }
+    return ts
+}
+
+func toIntValue(any interface{}) int {
+	switch v := any.(type) {
+	case int:
+		return v
+	case float32:
+		return int(v)
+	case float64:
+		return int(v)
+	case string:
+		i, err := strconv.Atoi(v)
+		assert(err!=nil, err, "failed to int value:", any)
+		return i
+	default:
+		runtimeExcption("failed to int value", any)
+	}
+	return -1
+}
+
+func toStringValue(any interface{}) string {
+	return fmt.Sprintf("%v", any)
+}

@@ -25,15 +25,16 @@ const (
 
 	AddSelf // 自增一
 	SubSelf // 自减一
-
-	Tmp // 语法分析时，插入的临时变量名
 )
 
 type Token struct {
-	lineIndex int
-	str string
-	t TokenType
-	caller string
+	lineIndex int // token的首行索引
+	endLineIndex int // 当token跨行时, 存的尾行索引
+	str string // token字符串值
+	t TokenType // 类型
+	caller string // token为方法, 属性类型时才有的调用者变量名
+	// token为元素, 函数调用, 函数定义类型时, 存的是参数   ;
+	// token为数组字面值, 对象字面值类型时, 存的是字面值内容
 	ts []Token
 }
 
@@ -43,6 +44,10 @@ func newToken(raw string, t TokenType) Token {
 
 func symbolToken(s string) Token {
 	return Token{str:s, t:Symbol}
+}
+
+func symbolTokenWithLineIndex(s string, lineIndex int) Token {
+	return Token{str:s, t:Symbol, lineIndex:lineIndex}
 }
 
 func varToken(s string) Token {
@@ -67,10 +72,6 @@ func (this *Token) isFloat() bool {
 
 func (this *Token) isSymbol() bool {
 	return (this.t & Symbol) == Symbol
-}
-
-func (this *Token) isTmp() bool {
-	return (this.t & Tmp) == Tmp
 }
 
 func (this *Token) isFdef() bool {
@@ -345,6 +346,17 @@ func (t *Token) TokenTypeName() string {
 		return "undefined"
 	}
 	return strings.TrimRight(strings.TrimSpace(buf.String()), ",")
+}
+
+func (t *Token) lineIndexString() string {
+	var res bytes.Buffer
+	res.WriteString("line: ")
+	res.WriteString(string(t.lineIndex))
+	if t.endLineIndex > t.lineIndex {
+		res.WriteString(", ")
+		res.WriteString(string(t.endLineIndex))
+	}
+	return res.String()
 }
 
 func toString4Tokens(ts []Token, start, end int) string {

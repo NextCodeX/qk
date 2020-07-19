@@ -12,6 +12,8 @@ const (
     FloatExpression
     BooleanExpression
     StringExpression
+    JSONObjectExpression
+    JSONArrayExpression
     ConstExpression
     VarExpression
     AttributeExpression
@@ -152,6 +154,14 @@ func (this *Expression) isBooleanExpression() bool {
 
 func (this *Expression) isStringExpression() bool {
     return (this.t & StringExpression) == StringExpression
+}
+
+func (this *Expression) isJSONObjectExpression() bool {
+    return (this.t & JSONObjectExpression) == JSONObjectExpression
+}
+
+func (this *Expression) isJSONArrayExpression() bool {
+    return (this.t & JSONArrayExpression) == JSONArrayExpression
 }
 
 func (this *Expression) isConstExpression() bool {

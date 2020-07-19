@@ -6,6 +6,8 @@ type PrimaryExpressionType int
 const (
 	VarPrimaryExpressionType PrimaryExpressionType = 1 << iota
 	ConstPrimaryExpressionType
+	ArrayPrimaryExpressionType
+	ObjectPrimaryExpressionType
 	ElementPrimaryExpressionType
 	AttibutePrimaryExpressionType
 	OtherPrimaryExpressionType PrimaryExpressionType = 0
@@ -25,6 +27,14 @@ func (this *PrimaryExpr) isVar() bool {
 
 func (this *PrimaryExpr) isConst() bool {
 	return (this.t & ConstPrimaryExpressionType) == ConstPrimaryExpressionType
+}
+
+func (this *PrimaryExpr) isArray() bool {
+	return (this.t & ArrayPrimaryExpressionType) == ArrayPrimaryExpressionType
+}
+
+func (this *PrimaryExpr) isObject() bool {
+	return (this.t & ObjectPrimaryExpressionType) == ObjectPrimaryExpressionType
 }
 
 func (this *PrimaryExpr) isElement() bool {

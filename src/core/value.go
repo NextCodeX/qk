@@ -27,8 +27,8 @@ type Value struct {
     bool_value bool
     str_value string
     any_value interface{}
-    arr_value []interface{}
-    obj_value map[string]interface{}
+    arr_value *JSONArray
+    obj_value *JSONObject
 }
 
 func newVal(rawVal interface{}) *Value {
@@ -44,10 +44,10 @@ func newVal(rawVal interface{}) *Value {
         val = &Value{t: BooleanValue, bool_value: v}
     case string:
         val = &Value{t: StringValue, str_value: v}
-    case []interface{}:
-        val = &Value{t: ArrayValue, arr_value: v}
-    case map[string]interface{}:
-        val = &Value{t: ObjectValue, obj_value: v}
+    case JSONArray:
+        val = &Value{t: ArrayValue, arr_value: &v}
+    case JSONObject:
+        val = &Value{t: ObjectValue, obj_value: &v}
     default:
         panic(fmt.Sprintln("unknow exception when newVal:", rawVal))
     }

@@ -37,7 +37,7 @@ type Lexer struct {
 }
 
 func newLexer(bs []byte) *Lexer {
-	return &Lexer{state:stateNormal, bs:bs}
+	return &Lexer{state:stateNormal, bs:bs, lineIndex:1}
 }
 
 func (lexer *Lexer) run() []Token {
@@ -184,7 +184,7 @@ func (lexer *Lexer) whenSpace() {
 
 	if lexer.currentByte == '\n' {
 		//fmt.Println("when space:", lexer.CurrentByteString(), lexer.CurrentStateName(), lexer.preState == stateMutliLineComment)
-		lexer.lineIndex++
+
 		if lexer.inStateSingleLineComment() {
 			// 结束状态机的单行注释状态
 			lexer.setState(stateNormal)
@@ -195,6 +195,7 @@ func (lexer *Lexer) whenSpace() {
 		}
 		//fmt.Println("before pushBoundryToken when space:", lexer.CurrentByteString(), lexer.CurrentStateName(), lexer.preState == stateMutliLineComment)
 		lexer.pushBoundryToken()
+		lexer.lineIndex++
 	}
 	lexer.setState(stateSpace)
 }
