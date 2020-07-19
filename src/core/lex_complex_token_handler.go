@@ -1,7 +1,5 @@
 package core
 
-
-
 // 该函数用于： 去掉无用的';', 合并token生成函数调用token(Fcall), 方法调用token(Mtcall)等复合token
 func parse4ComplexTokens(ts []Token) []Token {
 	var res []Token
@@ -274,10 +272,11 @@ func getCallArgsTokens(currentIndex int, ts []Token) (args []Token, nextIndex in
 
 func extractAttribute(currentIndex int, ts []Token) (t Token, nextIndex int) {
 	size := len(ts)
-	if size - currentIndex < 3 {
+	if  currentIndex + 2 >= size {
 		return
 	}
-	if !ts[currentIndex+1].assertSymbol(".")  || !ts[currentIndex+2].isIdentifier() {
+	third := ts[currentIndex+2]
+	if !ts[currentIndex+1].assertSymbol(".")  || (!third.isIdentifier() && !third.isInt()) {
 		return
 	}
 

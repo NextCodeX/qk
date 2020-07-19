@@ -1,15 +1,19 @@
 // 数组test
 arr = [1,false,"tts"]
-println("arr[1]:", arr[1])
+println("arr[1]:", arr[1], "arr.2:", arr.2)
 arr[1] = "TaKI"
 println("arr[1]:", arr[1])
 
+duty= "coding"
 // 对象测试
-obj = {name:"changlie",age:18}
-println("obj.name:", obj.name, ", obj.age:", obj.age)
+obj = {name:"changlie",age:18, var:duty}
+println("obj.name:", obj.name, ", obj.age:", obj.age, obj["age"])
 obj.name = "tianyoushi"
 obj.age = 14
 println("obj.name:", obj.name, ", obj.age:", obj.age)
+println("duty:", obj.var)
+obj["test"] = true
+println("obj.test:", obj.test)
 
 a = 10 / 5
 a++
