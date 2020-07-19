@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"strings"
 )
 
 type ExpressionExecutor struct {
@@ -47,12 +46,12 @@ func (executor *ExpressionExecutor) executeAttributeExpression() (res *Value) {
 	if varVal.val.isArrayValue() {
 		arr := varVal.val.arr_value
 		index := toIntValue(attrname)
-		return (*arr).get(index)
+		return arr.get(index)
 	}
 
 	if varVal.val.isObjectValue() {
 		obj := varVal.val.obj_value
-		return (*obj).get(attrname)
+		return obj.get(attrname)
 	}
 
 	runtimeExcption("eval attribute exception:", expr.RawString())
@@ -62,20 +61,19 @@ func (executor *ExpressionExecutor) executeAttributeExpression() (res *Value) {
 func (executor *ExpressionExecutor) executeElementExpression() (res *Value) {
 	expr := executor.expr
 	varname := expr.left.name
-	//arrRawVal := executor.searchArrayVariable(varname)
 	varVal := executor.searchVariable(varname)
 
 	argRawVals := executor.toGoTypeValues(expr.left.args)
 	if varVal.val.isArrayValue() {
 		arr := varVal.val.arr_value
 		index := toIntValue(argRawVals[0])
-		return (*arr).get(index)
+		return arr.get(index)
 	}
 
 	if varVal.val.isObjectValue() {
 		obj := varVal.val.obj_value
 		key := toStringValue(argRawVals[0])
-		return (*obj).get(key)
+		return obj.get(key)
 	}
 
 	runtimeExcption("eval element exception:", expr.RawString())
@@ -116,10 +114,6 @@ func (executor *ExpressionExecutor) checkValueExist(primaryExpr *PrimaryExpr, ex
 		runtimeExcption("executeMultiExpression Exception")
 	}
 	executor.recursiveEvalMultiExpression(nextExpr, exprList)
-}
-
-func (executor *ExpressionExecutor) isTmpVar(name string) bool {
-	return strings.HasPrefix(name, "tmp.")
 }
 
 func (executor *ExpressionExecutor) getNextExprForMultiExpression(varname string, exprList []*Expression) *Expression {
@@ -385,13 +379,13 @@ func (executor *ExpressionExecutor) evalAssignBinaryExpression() (res *Value) {
 		if varVal.val.isArrayValue() {
 			index := toIntValue(argRawVals[0])
 			arr := varVal.val.arr_value
-			(*arr).set(index, res)
+			arr.set(index, res)
 			return
 		}
 		if varVal.val.isObjectValue() {
 			key := toStringValue(argRawVals[0])
 			obj := varVal.val.obj_value
-			(*obj).put(key, res)
+			obj.put(key, res)
 			return
 		}
 
@@ -401,13 +395,13 @@ func (executor *ExpressionExecutor) evalAssignBinaryExpression() (res *Value) {
 		varVal := executor.searchVariable(varname)
 		if varVal.val.isObjectValue() {
 			obj := varVal.val.obj_value
-			(*obj).put(attrname, res)
+			obj.put(attrname, res)
 			return
 		}
 		if varVal.val.isArrayValue() {
 			index := toIntValue(attrname)
 			arr := varVal.val.arr_value
-			(*arr).set(index, res)
+			arr.set(index, res)
 			return
 		}
 	}
@@ -645,8 +639,7 @@ func (executor *ExpressionExecutor) evalPrimaryExpr(primaryExpr *PrimaryExpr) *V
 	return NULL
 }
 
-func (executor *ExpressionExecutor) parseJSONObject(obj *JSONObject) {
-	object := *obj
+func (executor *ExpressionExecutor) parseJSONObject(object JSONObject) {
 	if object.parsed() {
 		return
 	}
@@ -668,8 +661,7 @@ func (executor *ExpressionExecutor) parseJSONObject(obj *JSONObject) {
 	}
 }
 
-func (executor *ExpressionExecutor) parseJSONArray(arr *JSONArray) {
-	array := *arr
+func (executor *ExpressionExecutor) parseJSONArray(array JSONArray) {
 	if array.parsed() {
 		return
 	}
@@ -690,7 +682,7 @@ func (executor *ExpressionExecutor) parseJSONArray(arr *JSONArray) {
 }
 
 func (executor *ExpressionExecutor) searchVariable(name string) *Variable {
-	if executor.isTmpVar(name) {
+	if isTmpVar(name) {
 		return executor.searchTmpVariable(name)
 	}
 
@@ -701,26 +693,8 @@ func (executor *ExpressionExecutor) searchTmpVariable(name string) *Variable {
 	return executor.tmpVars.get(name)
 }
 
-//func (executor *ExpressionExecutor) searchArrayVariable(varname string) []interface{} {
-//	varObj := executor.searchVariable(varname)
-//	varVal := varObj.val.val()
-//
-//	var ok bool
-//	arrVal, ok := varVal.([]interface{})
-//	if !ok {
-//		varValType := fmt.Sprintf("%T", varVal)
-//		runtimeExcption("error operator: ", varname, "is not a array", varValType, varVal)
-//		return nil
-//	}
-//	return arrVal
-//}
-
-//func (executor *ExpressionExecutor) addVariable(vr *Variable)  {
-//	executor.stack.addLocalVariable(vr)
-//}
-
 func (executor *ExpressionExecutor) addVar(name string, val *Value)  {
-	if executor.isTmpVar(name) {
+	if isTmpVar(name) {
 		executor.addTmpVar(name, val)
 		return
 	}

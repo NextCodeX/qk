@@ -5,19 +5,6 @@ import (
 	"fmt"
 )
 
-// 用于统计临时变量名,或计算得到临时变量名
-var tmpcount int
-
-func getTmpVarToken() Token {
-	tmpname := getTmpname()
-	return varToken(tmpname)
-}
-
-func getTmpname() string {
-	name := fmt.Sprintf("tmp.%v", tmpcount)
-	tmpcount++
-	return name
-}
 
 func extractExpression(ts []Token) *Expression {
 	var expr *Expression
