@@ -38,7 +38,7 @@ func doPrintFunc(fn *Function) {
 
 func printTokensByLine(tokens []Token) {
     for i, token := range tokens {
-        fmt.Printf("count %v-line:%v: [%v] -> %v \n", i, token.lineIndexString(), token.String(), token.TokenTypeName())
+        fmt.Printf("count %v-%v: [%v] -> %v \n", i, token.lineIndexString(), token.String(), token.TokenTypeName())
     }
 }
 

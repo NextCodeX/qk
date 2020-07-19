@@ -128,7 +128,7 @@ func parseMultivariateExpression(ts []Token) (expr *Expression) {
 	}
 	var exprTokensList [][]Token
 	reduceTokensForExpression(resVarToken, multiExprTokens, &exprTokensList)
-	printExprTokens(exprTokensList)
+	//printExprTokens(exprTokensList)
 
 	exprs := generateBinaryExprs(exprTokensList)
 	if len(exprs) == 1 {

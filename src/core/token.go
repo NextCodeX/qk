@@ -350,11 +350,9 @@ func (t *Token) TokenTypeName() string {
 
 func (t *Token) lineIndexString() string {
 	var res bytes.Buffer
-	res.WriteString("line: ")
-	res.WriteString(string(t.lineIndex))
+	res.WriteString(fmt.Sprintf("line: %v", t.lineIndex))
 	if t.endLineIndex > t.lineIndex {
-		res.WriteString(", ")
-		res.WriteString(string(t.endLineIndex))
+		res.WriteString(fmt.Sprintf(", %v", t.endLineIndex))
 	}
 	return res.String()
 }
