@@ -100,7 +100,6 @@ func extractIfStatement(currentIndex int, ts []Token) (*Statement, int) {
 
 	index := nextSymbolIndex(ts, currentIndex,"{")
 	stmt.condition = &Expression{
-		t:     BinaryExpression,
 		raw:   ts[currentIndex+1:index],
 	}
 

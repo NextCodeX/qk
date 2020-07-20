@@ -34,9 +34,18 @@ func parseStatement(stmt *Statement) {
         stmt.addExpression(expr)
 
     case stmt.isIfStatement():
+        parseIfStatement(stmt)
+
     case stmt.isForStatement():
     case stmt.isSwitchStatement():
     case stmt.isReturnStatement():
     }
+}
+
+func parseIfStatement(stmt *Statement) {
+    condExpr := extractExpression(stmt.condition.raw)
+    stmt.condition = condExpr
+
+    Compile(stmt, stmt.raw)
 }
 
