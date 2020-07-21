@@ -46,10 +46,6 @@ func symbolToken(s string) Token {
 	return Token{str:s, t:Symbol}
 }
 
-func symbolTokenWithLineIndex(s string, lineIndex int) Token {
-	return Token{str:s, t:Symbol, lineIndex:lineIndex}
-}
-
 func varToken(s string) Token {
 	return Token{str:s, t:Identifier}
 }
@@ -112,6 +108,10 @@ func (this *Token) isAddSelf() bool {
 
 func (this *Token) isSubSelf() bool {
 	return (this.t & SubSelf) == SubSelf
+}
+
+func (this *Token) assertIdentifier(s string) bool {
+	return this.isIdentifier() && this.str == s
 }
 
 func (this *Token) assertSymbol(s string) bool {

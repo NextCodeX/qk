@@ -235,13 +235,12 @@ func (lexer *Lexer) pushSymbolToken() {
 
 func (lexer *Lexer) pushBoundryToken() {
 	size := len(lexer.ts)
-	//fmt.Println("pushBoundryToken:", lexer.CurrentByteString(), lexer.CurrentStateName(), size>0 && lexer.ts[size-1].assertSymbols("{", ",", "}"))
-	if size>0 && lexer.ts[size-1].assertSymbols("{", ",", "}") {
-		// 防止添加无用的";"
+	if size>0 && lexer.ts[size-1].assertSymbols("{", ",") {
+		// 防止添加无用的";",
+		// 前一个token为symbol"}", 因为要考虑json对象字面值的情况
 		return
 	}
 
-	//fmt.Println("before append pushBoundryToken:", lexer.CurrentByteString(), lexer.CurrentStateName(), size>0 && lexer.ts[size-1].assertSymbols("{", ",", "}"))
 	lexer.ts = append(lexer.ts, Token{
 		lineIndex: lexer.lineIndex,
 		str: ";",

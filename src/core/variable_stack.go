@@ -6,9 +6,7 @@ type VariableStack struct {
 }
 
 func newVariableStack() *VariableStack {
-	vars := newVariables()
 	varStack := &VariableStack{}
-	varStack.list = append(varStack.list, vars)
 	return varStack
 }
 
@@ -35,11 +33,11 @@ func (stack *VariableStack) clone() *VariableStack {
 	return &VariableStack{newStack}
 }
 
-func (stack *VariableStack) searchVariable(name string) *Variable {
+func (stack *VariableStack) searchVariable(name string) *Value {
 	for i:=len(stack.list)-1; i>=0; i-- {
 		vars := stack.list[i]
 		res := vars.get(name)
-		if res !=nil {
+		if res != nil {
 			return res
 		}
 	}
@@ -47,11 +45,11 @@ func (stack *VariableStack) searchVariable(name string) *Variable {
 	return nil
 }
 
-func (stack *VariableStack) addLocalVariable(vr *Variable) {
+func (stack *VariableStack) addLocalVariable(name string, val *Value) {
 	size := len(stack.list)
 	if size<1 {
 		runtimeExcption("stack is empty!")
 	}
 
-	stack.list[size-1].add(vr)
+	stack.list[size-1].add(name, val)
 }

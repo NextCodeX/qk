@@ -43,14 +43,14 @@ func (executor *ExpressionExecutor) executeAttributeExpression() (res *Value) {
 		return NULL
 	}
 
-	if varVal.val.isArrayValue() {
-		arr := varVal.val.arr_value
+	if varVal.isArrayValue() {
+		arr := varVal.arr_value
 		index := toIntValue(attrname)
 		return arr.get(index)
 	}
 
-	if varVal.val.isObjectValue() {
-		obj := varVal.val.obj_value
+	if varVal.isObjectValue() {
+		obj := varVal.obj_value
 		return obj.get(attrname)
 	}
 
@@ -64,14 +64,14 @@ func (executor *ExpressionExecutor) executeElementExpression() (res *Value) {
 	varVal := executor.searchVariable(varname)
 
 	argRawVals := executor.toGoTypeValues(expr.left.args)
-	if varVal.val.isArrayValue() {
-		arr := varVal.val.arr_value
+	if varVal.isArrayValue() {
+		arr := varVal.arr_value
 		index := toIntValue(argRawVals[0])
 		return arr.get(index)
 	}
 
-	if varVal.val.isObjectValue() {
-		obj := varVal.val.obj_value
+	if varVal.isObjectValue() {
+		obj := varVal.obj_value
 		key := toStringValue(argRawVals[0])
 		return obj.get(key)
 	}
@@ -376,15 +376,15 @@ func (executor *ExpressionExecutor) evalAssignBinaryExpression() (res *Value) {
 	if primaryExpr.isElement() {
 		varVal := executor.searchVariable(varname)
 		argRawVals := executor.toGoTypeValues(primaryExpr.args)
-		if varVal.val.isArrayValue() {
+		if varVal.isArrayValue() {
 			index := toIntValue(argRawVals[0])
-			arr := varVal.val.arr_value
+			arr := varVal.arr_value
 			arr.set(index, res)
 			return
 		}
-		if varVal.val.isObjectValue() {
+		if varVal.isObjectValue() {
 			key := toStringValue(argRawVals[0])
-			obj := varVal.val.obj_value
+			obj := varVal.obj_value
 			obj.put(key, res)
 			return
 		}
@@ -393,14 +393,14 @@ func (executor *ExpressionExecutor) evalAssignBinaryExpression() (res *Value) {
 		varname = primaryExpr.caller
 		attrname := primaryExpr.name
 		varVal := executor.searchVariable(varname)
-		if varVal.val.isObjectValue() {
-			obj := varVal.val.obj_value
+		if varVal.isObjectValue() {
+			obj := varVal.obj_value
 			obj.put(attrname, res)
 			return
 		}
-		if varVal.val.isArrayValue() {
+		if varVal.isArrayValue() {
 			index := toIntValue(attrname)
-			arr := varVal.val.arr_value
+			arr := varVal.arr_value
 			arr.set(index, res)
 			return
 		}
@@ -624,11 +624,11 @@ func (executor *ExpressionExecutor) evalPrimaryExpr(primaryExpr *PrimaryExpr) *V
 	}
 	if primaryExpr.isVar() {
 		varname := primaryExpr.name
-		variable := executor.searchVariable(varname)
-		if variable == nil {
+		varVal := executor.searchVariable(varname)
+		if varVal == nil {
 			return NULL
 		}
-		return variable.val
+		return varVal
 	}
 	if primaryExpr.isElement() {
 		return executor.executeElementExpression()
@@ -681,7 +681,7 @@ func (executor *ExpressionExecutor) parseJSONArray(array JSONArray) {
 	array.setParsed()
 }
 
-func (executor *ExpressionExecutor) searchVariable(name string) *Variable {
+func (executor *ExpressionExecutor) searchVariable(name string) *Value {
 	if isTmpVar(name) {
 		return executor.searchTmpVariable(name)
 	}
@@ -689,7 +689,7 @@ func (executor *ExpressionExecutor) searchVariable(name string) *Variable {
 	return executor.stack.searchVariable(name)
 }
 
-func (executor *ExpressionExecutor) searchTmpVariable(name string) *Variable {
+func (executor *ExpressionExecutor) searchTmpVariable(name string) *Value {
 	return executor.tmpVars.get(name)
 }
 
@@ -699,13 +699,11 @@ func (executor *ExpressionExecutor) addVar(name string, val *Value)  {
 		return
 	}
 
-	variable := toVar(name,  val)
-	executor.stack.addLocalVariable(variable)
+	executor.stack.addLocalVariable(name, val)
 }
 
 func (executor *ExpressionExecutor) addTmpVar(name string, val *Value)  {
-	variable := toVar(name,  val)
-	executor.tmpVars.add(variable)
+	executor.tmpVars.add(name,  val)
 }
 
 
