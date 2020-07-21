@@ -8,16 +8,28 @@ import (
     "strings"
 )
 
+var (
+    funcList = make(map[string]*Function)
+    mainFunc = newFunc("main")
+)
+
 const DEBUG_MODE = true
 
 func Run() {
     //qkfile := "demo.qk"
     qkfile := "expr.qk"
     bs, _ := ioutil.ReadFile(qkfile)
+
+    // 词法分析
     ts := ParseTokens(bs)
     printTokensByLine(ts)
-    Compile(mainFunc, ts)
+
+    // 语法分析
+    mainFunc.raw = ts
+    Compile(mainFunc)
     printFunc()
+
+    // 解析并执行
     fmt.Println("================")
     Interpret()
 }

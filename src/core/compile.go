@@ -1,51 +1,24 @@
 package core
 
-var (
-    funcList = make(map[string]*Function)
-    mainFunc = newFunc("main")
-)
 
-func Compile(stmts StatementList, ts []Token) {
+
+func Compile(stmts StatementList) {
+    if stmts == nil {
+        return
+    }
     if stmts.isCompiled() {
         return
     }else {
-        stmts.setCompiled(true)
+        stmts.setCompiled()
     }
-    extractStatement(stmts, ts)
+    extractStatement(stmts)
     parseStatementList(stmts.stmts())
 
     for _, customFunc := range funcList {
-       Compile(customFunc, customFunc.getRaw())
+       Compile(customFunc)
     }
 }
 
 
-func parseStatementList(stmts []*Statement) {
-    for _, stmt := range stmts {
-        parseStatement(stmt)
-    }
-}
 
-func parseStatement(stmt *Statement) {
-    ts := stmt.raw
-    switch {
-    case stmt.isExpressionStatement():
-        expr := extractExpression(ts)
-        stmt.addExpression(expr)
-
-    case stmt.isIfStatement():
-        parseIfStatement(stmt)
-
-    case stmt.isForStatement():
-    case stmt.isSwitchStatement():
-    case stmt.isReturnStatement():
-    }
-}
-
-func parseIfStatement(stmt *Statement) {
-    condExpr := extractExpression(stmt.condition.raw)
-    stmt.condition = condExpr
-
-    Compile(stmt, stmt.raw)
-}
 

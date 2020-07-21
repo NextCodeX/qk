@@ -11,17 +11,22 @@ const (
     IfStatement
     ForStatement
     SwitchStatement
+    MultiStatement
     ReturnStatement
 )
 
 
 type Statement struct {
     t StatementType
-    tmpcount int
     exprs []*Expression
+    preExprTokens []Token
+    condExprTokens []Token
+    postExprTokens []Token
     preExpr *Expression
-    condition *Expression
+    condExpr *Expression
     postExpr *Expression
+    condStmts []*Statement // 用于if, switch语句
+    defStmt *Statement // 用于if, switch语句
     block []*Statement
     raw []Token // token列表
     compiled bool
@@ -48,16 +53,11 @@ func (stmt *Statement) isCompiled() bool {
     return stmt.compiled
 }
 
-func (stmt *Statement) setCompiled(flag bool) {
-    stmt.compiled = flag
+func (stmt *Statement) setCompiled() {
+    stmt.compiled = true
 }
 
 
-func (s *Statement) setHeaderInfo(exprs []*Expression) {
-    s.preExpr = exprs[0]
-    s.condition = exprs[1]
-    s.postExpr = exprs[2]
-}
 
 func (s *Statement) addExpression(expr *Expression) {
     if len(s.exprs)>0 && s.exprs[len(s.exprs)-1].isMultiExpression() && !(s.exprs[len(s.exprs)-1].listFinish) {
@@ -94,6 +94,10 @@ func (s *Statement) isSwitchStatement() bool {
     return (s.t & SwitchStatement) == SwitchStatement
 }
 
+func (s *Statement) isMultiStatement() bool {
+    return (s.t & MultiStatement) == MultiStatement
+}
+
 func (s *Statement) isReturnStatement() bool {
     return (s.t & ReturnStatement) == ReturnStatement
 }
@@ -110,14 +114,14 @@ func (s *Statement) String() string {
     }
     if (s.t & IfStatement) == IfStatement {
         res.WriteString("condition:")
-        res.WriteString(s.condition.String())
+        res.WriteString(tokensString(s.condExprTokens))
         res.WriteString(" ")
     }
     if (s.t & ForStatement) == ForStatement {
         res.WriteString("header:")
         res.WriteString(s.preExpr.String())
         res.WriteString("; ")
-        res.WriteString(s.condition.String())
+        res.WriteString(tokensString(s.condExprTokens))
         res.WriteString("; ")
         res.WriteString(s.postExpr.String())
         res.WriteString(" ")

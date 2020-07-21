@@ -39,6 +39,6 @@ func (f *Function) isCompiled() bool {
 	return f.compiled
 }
 
-func (f *Function) setCompiled(flag bool) {
-	f.compiled = flag
+func (f *Function) setCompiled() {
+	f.compiled = true
 }

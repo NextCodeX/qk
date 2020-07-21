@@ -111,7 +111,27 @@ func nextSymbolIndex(ts []Token, currentIndex int, s string) int {
     return -1
 }
 
-
+func scopeEndIndex(ts []Token, currentIndex int, open, close string) int {
+	scopeOpenCount := 0
+	size := len(ts)
+	for i:=currentIndex; i<size; i++ {
+		t := ts[i]
+		if t.assertSymbol("{") {
+			scopeOpenCount++
+		}
+		if t.assertSymbol("}") {
+			scopeOpenCount--
+			if scopeOpenCount == 0 {
+				return i
+			}
+		}
+	}
+	if scopeOpenCount > 0 {
+		msg := printCurrentPositionTokens(ts, currentIndex)
+		runtimeExcption("scopeEndIndex: no match final character \""+close+"\"", msg)
+	}
+	return -1
+}
 
 // 消除两边小括号token
 func clearParentheses(ts []Token) []Token {
@@ -161,3 +181,4 @@ func toIntValue(any interface{}) int {
 func toStringValue(any interface{}) string {
 	return fmt.Sprintf("%v", any)
 }
+

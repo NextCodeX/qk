@@ -1,7 +1,7 @@
 package core
 
-func extractStatement(stmts StatementList, ts []Token) {
-	stmts.setRaw(ts)
+func extractStatement(stmts StatementList) {
+	ts := stmts.getRaw()
 	for i := 0; i < len(ts); {
 		t := ts[i]
 		var endIndex int
@@ -96,16 +96,18 @@ func extractFunction(currentIndex int, ts []Token) (*Function, int) {
 }
 
 func extractIfStatement(currentIndex int, ts []Token) (*Statement, int) {
-	stmt := &Statement{t:IfStatement}
+	var condStmts []*Statement
+	var defStmt *Statement
 
+	nextLoop:
+	stmt := &Statement{t:IfStatement}
 	index := nextSymbolIndex(ts, currentIndex,"{")
-	stmt.condition = &Expression{
-		raw:   ts[currentIndex+1:index],
-	}
+	stmt.condExprTokens = ts[currentIndex+1:index]
 
 	scopeOpenCount := 1
 	var endIndex int
-	for i:=index+1; i<len(ts); i++ {
+	size := len(ts)
+	for i:=index+1; i<size; i++ {
 		t := ts[i]
 		if t.assertSymbol("{") {
 			scopeOpenCount++
@@ -119,14 +121,31 @@ func extractIfStatement(currentIndex int, ts []Token) (*Statement, int) {
 		}
 		stmt.raw = append(stmt.raw, t)
 	}
-	return stmt, endIndex
+
+	if endIndex+1<size && ts[endIndex+1].assertIdentifier("elif") {
+		currentIndex = endIndex+1
+		condStmts = append(condStmts, stmt)
+		goto nextLoop
+	}
+	if endIndex+1<size && ts[endIndex+1].assertIdentifier("else") {
+		elseEndIndex := scopeEndIndex(ts, endIndex+1, "{", "}")
+		if elseEndIndex > 0 {
+			defStmt = newStatement(MultiStatement, ts[endIndex+2:elseEndIndex])
+			endIndex = elseEndIndex
+		}
+	}
+
+	ifStmt := newStatement(IfStatement, ts[currentIndex:endIndex+1])
+	ifStmt.condStmts = condStmts
+	ifStmt.defStmt = defStmt
+	return ifStmt, endIndex
 }
 
 func extractForStatement(currentIndex int, ts []Token) (*Statement, int) {
 	stmt := &Statement{t:IfStatement}
 	index := nextSymbolIndex(ts, currentIndex,  "{")
-	exprs := extractForHeaderExpressions(ts[currentIndex+1:index])
-	stmt.setHeaderInfo(exprs)
+	//exprs := extractForHeaderExpressions(ts[currentIndex+1:index])
+
 	scopeOpenCount := 1
 	var endIndex int
 	for i:=index+1; i<len(ts); i++ {

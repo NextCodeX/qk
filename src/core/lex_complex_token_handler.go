@@ -156,7 +156,7 @@ func extractArrayLiteral(currentIndex int, ts []Token) (t Token, nextIndex int) 
 		elems = append(elems, token)
 	}
 	if scopeOpenCount > 0 {
-		msg := printCurrentPositionTokens(ts, size-1)
+		msg := printCurrentPositionTokens(ts, currentIndex)
 		runtimeExcption("extract ArrayLiteral Exception: no match final character \"]\"", msg)
 	}
 
@@ -198,7 +198,7 @@ func extractObjectLiteral(currentIndex int, ts []Token) (t Token, nextIndex int)
 		elems = append(elems, token)
 	}
 	if scopeOpenCount > 0 {
-		msg := printCurrentPositionTokens(ts, size-1)
+		msg := printCurrentPositionTokens(ts, currentIndex)
 		runtimeExcption("extract element ObjectLiteral: no match final character \"}\"", msg)
 	}
 

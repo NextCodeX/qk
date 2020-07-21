@@ -6,5 +6,5 @@ type StatementList interface {
 	getRaw() []Token
 	setRaw([]Token)
 	isCompiled() bool
-	setCompiled(bool)
+	setCompiled()
 }
