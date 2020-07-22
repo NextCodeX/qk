@@ -1,6 +1,5 @@
 package core
 
-import "fmt"
 
 func extractStatement(stmts StatementList) {
 	ts := stmts.getRaw()
@@ -28,7 +27,6 @@ func extractStatement(stmts StatementList) {
 				goto next_loop
 			}
 			stmt, endIndex = extractExpressionStatement(i, ts)
-			fmt.Println("extractExpressionStatement", endIndex, tokensString(ts))
 
 		}
 		if endIndex > 0 {
@@ -138,14 +136,12 @@ func extractIfStatement(currentIndex int, ts []Token) (*Statement, int) {
 	if endIndex+1<size && ts[endIndex+1].assertIdentifier("else") {
 		elseEndIndex := scopeEndIndex(ts, endIndex+1, "{", "}")
 		if elseEndIndex > 0 {
-			fmt.Println("extract stmt:", tokensString(ts[endIndex+2:elseEndIndex]))
 			defStmt = newStatement(MultiStatement, ts[endIndex+3:elseEndIndex])
 			endIndex = elseEndIndex
 		}
 	}
-	condStmts = append(condStmts, stmt)
 
-	fmt.Println("extractIfStatement:", tokensString(stmt.raw))
+	condStmts = append(condStmts, stmt)
 
 	ifStmt := newStatement(IfStatement, ts[currentIndex:endIndex+1])
 	ifStmt.condStmts = condStmts

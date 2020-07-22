@@ -1,7 +1,5 @@
 package core
 
-import "fmt"
-
 func executeFunctionStatementList(stmts []*Statement, stack *VariableStack) {
 	stack.push()
 	executeStatementList(stmts, stack)
@@ -34,17 +32,14 @@ func executeExpression(expr *Expression, stack *VariableStack) (res *Value) {
 }
 
 func executeIfStatement(stmt *Statement, stack *VariableStack) (res *StatementResultType) {
-	fmt.Println("executeIfstmt")
 	for _, condStmts := range stmt.condStmts {
 		flag := executeExpression(condStmts.condExpr, stack)
-		fmt.Println("flag:", flag.bool_value, flag.isBooleanValue())
 		if flag.bool_value {
 			executeStatementList(condStmts.block, stack)
 			return
 		}
 	}
 
-	fmt.Println("execute if stmt def:", stmt.defStmt != nil, stmt.defStmt.block)
 	if stmt.defStmt != nil {
 		executeStatementList(stmt.defStmt.block, stack)
 	}
