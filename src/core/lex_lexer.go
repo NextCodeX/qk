@@ -300,7 +300,9 @@ func (lexer *Lexer) isSymbol() bool {
 	case '/': fallthrough
 	case '%': fallthrough
 	case '>': fallthrough
-	case '<':
+	case '<': fallthrough
+	case '|': fallthrough
+	case '&':
 		return true
 	}
 	return false

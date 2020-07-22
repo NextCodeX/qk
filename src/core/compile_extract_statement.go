@@ -1,5 +1,7 @@
 package core
 
+import "fmt"
+
 func extractStatement(stmts StatementList) {
 	ts := stmts.getRaw()
 	for i := 0; i < len(ts); {
@@ -26,6 +28,7 @@ func extractStatement(stmts StatementList) {
 				goto next_loop
 			}
 			stmt, endIndex = extractExpressionStatement(i, ts)
+			fmt.Println("extractExpressionStatement", endIndex, tokensString(ts))
 
 		}
 		if endIndex > 0 {
@@ -39,6 +42,11 @@ func extractStatement(stmts StatementList) {
 }
 
 func extractExpressionStatement(currentIndex int, ts []Token) (*Statement, int) {
+	size := len(ts)
+	if !hasSymbol(ts[currentIndex:], ";") && currentIndex<size {
+		stmt := newStatement(ExpressionStatement, ts[currentIndex:])
+		return stmt, size
+	}
 	var nextBoundaryIndex = nextSymbolIndex(ts, currentIndex, ";")
 	if nextBoundaryIndex > currentIndex {
 		stmt := newStatement(ExpressionStatement, ts[currentIndex:nextBoundaryIndex])
@@ -130,10 +138,14 @@ func extractIfStatement(currentIndex int, ts []Token) (*Statement, int) {
 	if endIndex+1<size && ts[endIndex+1].assertIdentifier("else") {
 		elseEndIndex := scopeEndIndex(ts, endIndex+1, "{", "}")
 		if elseEndIndex > 0 {
-			defStmt = newStatement(MultiStatement, ts[endIndex+2:elseEndIndex])
+			fmt.Println("extract stmt:", tokensString(ts[endIndex+2:elseEndIndex]))
+			defStmt = newStatement(MultiStatement, ts[endIndex+3:elseEndIndex])
 			endIndex = elseEndIndex
 		}
 	}
+	condStmts = append(condStmts, stmt)
+
+	fmt.Println("extractIfStatement:", tokensString(stmt.raw))
 
 	ifStmt := newStatement(IfStatement, ts[currentIndex:endIndex+1])
 	ifStmt.condStmts = condStmts

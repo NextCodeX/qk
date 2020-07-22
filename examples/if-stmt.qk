@@ -1,0 +1,8 @@
+a=1
+if a>1 {
+    println("a greater than 1.")
+} elif a==0 || a==1 {
+    println("elif test...")
+} else {
+    println("a <= 1")
+}

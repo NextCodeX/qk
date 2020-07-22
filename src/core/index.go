@@ -16,8 +16,9 @@ var (
 const DEBUG_MODE = true
 
 func Run() {
-    //qkfile := "demo.qk"
-    qkfile := "expr.qk"
+    //qkfile := "examples/demo.qk"
+    //qkfile := "examples/expr.qk"
+    qkfile := "examples/if-stmt.qk"
     bs, _ := ioutil.ReadFile(qkfile)
 
     // 词法分析

@@ -15,6 +15,7 @@ func parse4OperatorTokens(ts []Token) []Token {
 		currentIsOr := token.assertSymbol("|")
 		condOrMerge := lastExist && last.assertSymbols("|")
 		condOr := currentIsOr && condOrMerge
+		fmt.Println("extract operator:", condOr, tokensString(ts))
 
 		currentIsAnd := token.assertSymbol("&")
 		condAndMerge := lastExist && last.assertSymbols("&")

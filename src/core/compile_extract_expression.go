@@ -375,6 +375,11 @@ func parseBinaryExpression(ts []Token) *Expression {
 	case mid.assertSymbol("%="):
 		op = OpassignAfterMod
 
+	case mid.assertSymbol("||"):
+		op = Opor
+	case mid.assertSymbol("&&"):
+		op = Opand
+
 	default:
 		runtimeExcption("parseBinaryExpression Exception:", tokensString(ts))
 	}
