@@ -7,7 +7,7 @@ It's my golang util wapper,  a script language like JavaScript.
 ```
 expression statement -- ok  
 if statement --ok  
-for statement --waiting  
+for statement --doing  
 function --waiting  
 ```
 3. interpret and execute  --- doing

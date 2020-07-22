@@ -152,7 +152,8 @@ func extractIfStatement(currentIndex int, ts []Token) (*Statement, int) {
 func extractForStatement(currentIndex int, ts []Token) (*Statement, int) {
 	stmt := &Statement{t:IfStatement}
 	index := nextSymbolIndex(ts, currentIndex,  "{")
-	//exprs := extractForHeaderExpressions(ts[currentIndex+1:index])
+	headerTokens := ts[currentIndex+1:index]
+	stmt.preExprTokens, stmt.condExprTokens, stmt.postExprTokens = extractForHeaderExpressions(headerTokens)
 
 	scopeOpenCount := 1
 	var endIndex int
@@ -173,51 +174,36 @@ func extractForStatement(currentIndex int, ts []Token) (*Statement, int) {
 	return stmt, endIndex
 }
 
-func extractForHeaderExpressions(ts []Token) []*Expression {
-	res := make([]*Expression, 3)
+func extractForHeaderExpressions(ts []Token) (preTokens, condTokens, postTokens []Token) {
 	size := len(ts)
 	// for语句没用";"分隔，表达式即为condition expression
 	if !hasSymbol(ts, ";") {
-		res[1] = &Expression{
-			t:     BinaryExpression,
-			raw:   ts,
-		}
-		return res
+		condTokens = ts
+		return
 	}
 
 	//for 语句存在";"分隔符时
 	// extract initialize expression
-	index := nextSymbolIndex( ts, 0,";")
-	if index > 2 {
-		res[0] = &Expression{
-			t:     BinaryExpression,
-			raw:   ts[:index],
-		}
+	currentIndex := 0
+	boundaryIndex := nextSymbolIndex(ts, currentIndex,";")
+	if boundaryIndex > 0 {
+		preTokens = ts[:boundaryIndex]
 	}
 
 	// extract condition expression
-	preIndex := index+1
-	index = nextSymbolIndex(ts, preIndex, ";")
-	if index - preIndex > 2 {
-		res[1] = &Expression{
-			t:     BinaryExpression,
-			raw:   ts[preIndex:index],
-		}
-	} else if preIndex<size && !hasSymbol(ts[preIndex:], ";") {
-		res[1] = &Expression{
-			t:     BinaryExpression,
-			raw:   ts[preIndex:],
-		}
-		index = size
+	currentIndex = boundaryIndex+1
+	boundaryIndex = nextSymbolIndex(ts, currentIndex, ";")
+	if boundaryIndex > currentIndex {
+		condTokens = ts[currentIndex:boundaryIndex]
+	} else if currentIndex<size && !hasSymbol(ts[currentIndex:], ";") {
+		condTokens = ts[currentIndex:]
+		return
 	}
 
 	// extract post expression
-	preIndex = index+1
-	if preIndex < size {
-		res[2] = &Expression{
-			t:     BinaryExpression,
-			raw:   ts[preIndex:],
-		}
+	currentIndex = boundaryIndex+1
+	if currentIndex < size {
+		postTokens = ts[currentIndex:]
 	}
-	return res
+	return
 }
