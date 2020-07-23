@@ -21,6 +21,12 @@ func executeStatement(stmt *Statement, stack *VariableStack) *StatementResultTyp
 	if stmt.isIfStatement() {
 		executeIfStatement(stmt, stack)
 	}
+	if stmt.isForStatement() {
+		executeForStatement(stmt, stack)
+	}
+	if stmt.isForeachStatement() || stmt.isForIndexStatement() || stmt.isForItemStatement() {
+		executeForeachStatement(stmt, stack)
+	}
 
 	return nil
 }
@@ -31,10 +37,18 @@ func executeExpression(expr *Expression, stack *VariableStack) (res *Value) {
 	return exprExecutor.run()
 }
 
+func evalBoolExpression(expr *Expression, stack *VariableStack) bool {
+	val := executeExpression(expr, stack)
+	if !val.isBooleanValue() {
+		runtimeExcption(tokensString(expr.raw), " is not bool expression!")
+	}
+	return val.bool_value
+}
+
 func executeIfStatement(stmt *Statement, stack *VariableStack) (res *StatementResultType) {
 	for _, condStmts := range stmt.condStmts {
-		flag := executeExpression(condStmts.condExpr, stack)
-		if flag.bool_value {
+		flag := evalBoolExpression(condStmts.condExpr, stack)
+		if flag {
 			executeStatementList(condStmts.block, stack)
 			return
 		}
@@ -44,5 +58,52 @@ func executeIfStatement(stmt *Statement, stack *VariableStack) (res *StatementRe
 		executeStatementList(stmt.defStmt.block, stack)
 	}
 
+	return
+}
+
+func executeForStatement(stmt *Statement, stack *VariableStack) (res *StatementResultType) {
+	if stmt.preExpr != nil {
+		executeExpression(stmt.preExpr, stack)
+	}
+	var flag bool
+	if stmt.condExpr != nil {
+		flag = evalBoolExpression(stmt.condExpr, stack)
+	}
+	for flag {
+
+		executeStatementList(stmt.block, stack)
+
+		if stmt.postExpr != nil {
+			executeExpression(stmt.postExpr, stack)
+		}
+		if stmt.condExpr != nil {
+			flag = evalBoolExpression(stmt.condExpr, stack)
+		}
+	}
+	return
+}
+
+func executeForeachStatement(stmt *Statement, stack *VariableStack) (res *StatementResultType) {
+	fpi := stmt.fpi
+	varVal := stack.searchVariable(fpi.iterator)
+	itr := toIterator(varVal)
+	if itr == nil {
+		runtimeExcption(fpi.iterator, "is not iterator!")
+	}
+
+	indexs := itr.indexs()
+	for _, index := range indexs {
+
+		if !stmt.isForItemStatement() {
+			i := newVal(index)
+			stack.addLocalVariable(fpi.indexName, i)
+		}
+		if !stmt.isForIndexStatement() {
+			item := itr.getItem(index)
+			stack.addLocalVariable(fpi.itemName, item)
+		}
+
+		executeStatementList(stmt.block, stack)
+	}
 	return
 }

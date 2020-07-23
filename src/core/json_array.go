@@ -10,6 +10,7 @@ type JSONArray interface {
     checkOutofIndex(index int) bool
     values() []*Value
     tokens() []Token
+    Iterator
 }
 
 type JSONArrayImpl struct {
@@ -59,4 +60,17 @@ func (arr *JSONArrayImpl) values() []*Value {
 
 func (obj *JSONArrayImpl) tokens() []Token {
     return obj.ts
+}
+
+func (obj *JSONArrayImpl) indexs() []interface{} {
+    var res []interface{}
+    for i := range obj.val {
+        res = append(res, i)
+    }
+    return res
+}
+
+func (obj *JSONArrayImpl) getItem(index interface{}) *Value {
+    i := index.(int)
+    return obj.val[i]
 }

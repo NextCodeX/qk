@@ -10,6 +10,9 @@ const (
     ExpressionStatement StatementType = 1 << iota
     IfStatement
     ForStatement
+    ForeachStatement
+    ForIndexStatement
+    ForItemStatement
     SwitchStatement
     MultiStatement
     ReturnStatement
@@ -30,6 +33,7 @@ type Statement struct {
     block []*Statement
     raw []Token // token列表
     compiled bool
+    fpi *ForPlusInfo // 增强for, 相关的信息
 }
 
 
@@ -88,6 +92,18 @@ func (s *Statement) isIfStatement() bool {
 
 func (s *Statement) isForStatement() bool {
     return (s.t & ForStatement) == ForStatement
+}
+
+func (s *Statement) isForeachStatement() bool {
+    return (s.t & ForeachStatement) == ForeachStatement
+}
+
+func (s *Statement) isForIndexStatement() bool {
+    return (s.t & ForIndexStatement) == ForIndexStatement
+}
+
+func (s *Statement) isForItemStatement() bool {
+    return (s.t & ForItemStatement) == ForItemStatement
 }
 
 func (s *Statement) isSwitchStatement() bool {

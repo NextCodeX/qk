@@ -18,7 +18,11 @@ const DEBUG_MODE = true
 func Run() {
     //qkfile := "examples/demo.qk"
     //qkfile := "examples/expr.qk"
-    qkfile := "examples/if-stmt.qk"
+    //qkfile := "examples/if-stmt.qk"
+    //qkfile := "examples/for-stmt2.qk"
+    //qkfile := "examples/foreach-stmt.qk"
+    //qkfile := "examples/foritem-stmt.qk"
+    qkfile := "examples/forindex-stmt.qk"
     bs, _ := ioutil.ReadFile(qkfile)
 
     // 词法分析

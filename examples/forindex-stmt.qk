@@ -1,0 +1,12 @@
+println("array test..")
+arr = [1, false, true, 3.14, "changlie"]
+fori i : arr {
+    println("index:", i)
+}
+
+println("=================")
+println("object test:")
+obj = {name:"changlie", age:18, addr:"sz"}
+fori key : obj {
+    println("key:", key)
+}

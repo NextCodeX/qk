@@ -11,6 +11,7 @@ type JSONObject interface {
     keys() []string
     values() []*Value
     tokens() []Token
+    Iterator
 }
 
 type JSONObjectImpl struct {
@@ -72,6 +73,19 @@ func (obj *JSONObjectImpl) values() []*Value {
 
 func (obj *JSONObjectImpl) tokens() []Token {
     return obj.ts
+}
+
+func (obj *JSONObjectImpl) indexs() []interface{} {
+    var res []interface{}
+    for key := range obj.val {
+        res = append(res, key)
+    }
+    return res
+}
+
+func (obj *JSONObjectImpl) getItem(index interface{}) *Value {
+    key := index.(string)
+    return obj.val[key]
 }
 
 

@@ -16,6 +16,12 @@ func extractStatement(stmts StatementList) {
 			stmt, endIndex = extractIfStatement(i, ts)
 		case "for":
 			stmt, endIndex = extractForStatement(i, ts)
+		case "foreach":
+			stmt, endIndex = extractForeachStatement(i, ts)
+		case "fori":
+			stmt, endIndex = extractForindexStatement(i, ts)
+		case "forv":
+			stmt, endIndex = extractForitemStatement(i, ts)
 		case "switch":
 		case "return":
 			stmt, endIndex = extractReturnStatement(i, ts)
@@ -150,7 +156,7 @@ func extractIfStatement(currentIndex int, ts []Token) (*Statement, int) {
 }
 
 func extractForStatement(currentIndex int, ts []Token) (*Statement, int) {
-	stmt := &Statement{t:IfStatement}
+	stmt := &Statement{t:ForStatement}
 	index := nextSymbolIndex(ts, currentIndex,  "{")
 	headerTokens := ts[currentIndex+1:index]
 	stmt.preExprTokens, stmt.condExprTokens, stmt.postExprTokens = extractForHeaderExpressions(headerTokens)
@@ -178,7 +184,9 @@ func extractForHeaderExpressions(ts []Token) (preTokens, condTokens, postTokens 
 	size := len(ts)
 	// for语句没用";"分隔，表达式即为condition expression
 	if !hasSymbol(ts, ";") {
-		condTokens = ts
+		if len(ts) > 0 {
+			condTokens = ts
+		}
 		return
 	}
 
@@ -206,4 +214,40 @@ func extractForHeaderExpressions(ts []Token) (preTokens, condTokens, postTokens 
 		postTokens = ts[currentIndex:]
 	}
 	return
+}
+
+func extractForeachStatement(currentIndex int, ts []Token) (*Statement, int) {
+	stmt := &Statement{t:ForeachStatement}
+
+	headerEndIndex := nextSymbolIndex(ts, currentIndex, "{")
+	headerInfo := ts[currentIndex+1: headerEndIndex]
+	stmt.fpi = newForPlusInfo(headerInfo[0].str, headerInfo[2].str, headerInfo[4].str)
+
+	stmtEndIndex := scopeEndIndex(ts, currentIndex, "{", "}")
+	stmt.raw = ts[headerEndIndex+1: stmtEndIndex]
+	return stmt, stmtEndIndex
+}
+
+func extractForindexStatement(currentIndex int, ts []Token) (*Statement, int) {
+	stmt := &Statement{t:ForIndexStatement}
+
+	headerEndIndex := nextSymbolIndex(ts, currentIndex, "{")
+	headerInfo := ts[currentIndex+1: headerEndIndex]
+	stmt.fpi = newForPlusInfo(headerInfo[0].str, "", headerInfo[2].str)
+
+	stmtEndIndex := scopeEndIndex(ts, currentIndex, "{", "}")
+	stmt.raw = ts[headerEndIndex+1: stmtEndIndex]
+	return stmt, stmtEndIndex
+}
+
+func extractForitemStatement(currentIndex int, ts []Token) (*Statement, int) {
+	stmt := &Statement{t:ForItemStatement}
+
+	headerEndIndex := nextSymbolIndex(ts, currentIndex, "{")
+	headerInfo := ts[currentIndex+1: headerEndIndex]
+	stmt.fpi = newForPlusInfo("", headerInfo[0].str, headerInfo[2].str)
+
+	stmtEndIndex := scopeEndIndex(ts, currentIndex, "{", "}")
+	stmt.raw = ts[headerEndIndex+1: stmtEndIndex]
+	return stmt, stmtEndIndex
 }

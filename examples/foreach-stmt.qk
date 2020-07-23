@@ -1,0 +1,12 @@
+println("array test..")
+arr = [1, false, true, 3.14, "changlie"]
+foreach i, item : arr {
+    println("index:", i, "; item:", item)
+}
+
+println("=================")
+println("object test:")
+obj = {name:"changlie", age:18, addr:"sz"}
+foreach key, val : obj {
+    println(key, "->", val)
+}

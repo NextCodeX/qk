@@ -17,6 +17,11 @@ func parseStatement(stmt *Statement) {
 		parseIfStatement(stmt)
 
 	case stmt.isForStatement():
+		parseForStatement(stmt)
+
+	case stmt.isForeachStatement() || stmt.isForIndexStatement() || stmt.isForItemStatement():
+		parseForPlusStatement(stmt)
+
 	case stmt.isSwitchStatement():
 	case stmt.isReturnStatement():
 	}
@@ -32,4 +37,21 @@ func parseIfStatement(stmt *Statement) {
 		return
 	}
 	Compile(stmt.defStmt)
+}
+
+func parseForStatement(stmt *Statement) {
+	if stmt.preExprTokens != nil {
+		stmt.preExpr = extractExpression(stmt.preExprTokens)
+	}
+	if stmt.condExprTokens != nil {
+		stmt.condExpr = extractExpression(stmt.condExprTokens)
+	}
+	if stmt.postExprTokens != nil {
+		stmt.postExpr = extractExpression(stmt.postExprTokens)
+	}
+	Compile(stmt)
+}
+
+func parseForPlusStatement(stmt *Statement)  {
+	Compile(stmt)
 }
