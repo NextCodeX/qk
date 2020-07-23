@@ -23,16 +23,16 @@ type Statement struct {
     t StatementType
     exprs []*Expression
     preExprTokens []Token
-    condExprTokens []Token
+    condExprTokens []Token // 用于if,for语句
     postExprTokens []Token
     preExpr *Expression
     condExpr *Expression
     postExpr *Expression
     condStmts []*Statement // 用于if, switch语句
     defStmt *Statement // 用于if, switch语句
-    block []*Statement
-    raw []Token // token列表
-    compiled bool
+    block []*Statement // stmt核心组成(编译后的信息)
+    raw []Token // stmt核心组成, token列表(编译前的信息)
+    compiled bool // 该语句是否已编译
     fpi *ForPlusInfo // 增强for, 相关的信息
 }
 
