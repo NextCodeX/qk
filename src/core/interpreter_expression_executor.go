@@ -129,6 +129,13 @@ func (executor *ExpressionExecutor) executeFunctionCallExpression() (res *Value)
 	expr := executor.expr
 	functionName := expr.left.name
 	args := expr.left.args
+
+	customFunc, ok := funcList[functionName]
+	if ok {
+		argVals := executor.evalValues(args)
+		return executor.executeCustomFunction(customFunc, argVals)
+	}
+
 	if functionName == "println" {
 		argVals := executor.toGoTypeValues(args)
 		if len(argVals) < 1 {
@@ -138,6 +145,20 @@ func (executor *ExpressionExecutor) executeFunctionCallExpression() (res *Value)
 		}
 	}
 	return nil
+}
+
+func (executor *ExpressionExecutor) executeCustomFunction(f *Function, args []*Value) (res *Value) {
+	executor.stack.push()
+	defer executor.stack.pop()
+	for i, paramName := range f.paramNames {
+		arg := args[i]
+		executor.addVar(paramName, arg)
+	}
+	executeStatementList(f.block, executor.stack)
+	executor.stack.printVars()
+	res =  executor.searchVariable(funcResultName)
+
+	return res
 }
 
 func (executor *ExpressionExecutor) executeBinaryExpression() (res *Value) {
@@ -588,9 +609,21 @@ func (executor *ExpressionExecutor) toGoTypeValues(exprs []*Expression) []interf
 		if expr == nil {
 			continue
 		}
-		goValue := executor.evalNewExpression(expr)
-		v := goValue.val()
-		res = append(res, v)
+		val := executor.evalNewExpression(expr)
+		rawVal := val.val()
+		res = append(res, rawVal)
+	}
+	return res
+}
+
+func (executor *ExpressionExecutor) evalValues(exprs []*Expression) []*Value {
+	var res []*Value
+	for _, expr := range exprs {
+		if expr == nil {
+			continue
+		}
+		val := executor.evalNewExpression(expr)
+		res = append(res, val)
 	}
 	return res
 }

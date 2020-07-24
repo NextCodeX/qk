@@ -1,0 +1,6 @@
+add(num1, num2) {
+    res = num1 + num2
+    return res
+}
+
+println("result:", add(5, 9))

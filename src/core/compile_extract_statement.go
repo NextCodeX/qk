@@ -81,8 +81,11 @@ func extractReturnStatement(currentIndex int, ts []Token) (*Statement, int) {
 
 func extractFunction(currentIndex int, ts []Token) (*Function, int) {
 	var nextIndex int
-	f := newFunc(ts[currentIndex].str)
-	f.defToken = ts[currentIndex]
+	defToken := ts[currentIndex]
+
+	f := newFunc(defToken.str)
+	f.paramNames = extractFunctionParamNames(defToken.ts)
+	f.defToken = defToken
 	var blockTokens []Token
 	size := len(ts)
 	scopeOpenCount := 1
@@ -101,10 +104,21 @@ func extractFunction(currentIndex int, ts []Token) (*Function, int) {
 		blockTokens = append(blockTokens, token)
 	}
 	if scopeOpenCount > 0 {
-		panic("parse function statement exception!")
+		runtimeExcption("parse function statement exception!")
 	}
 	f.setRaw(blockTokens)
 	return f, nextIndex
+}
+
+func extractFunctionParamNames(ts []Token) []string {
+	var paramNames []string
+	for _, token := range ts {
+		if token.assertSymbol(",") {
+			continue
+		}
+		paramNames = append(paramNames, token.str)
+	}
+	return paramNames
 }
 
 func extractIfStatement(currentIndex int, ts []Token) (*Statement, int) {

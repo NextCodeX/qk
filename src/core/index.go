@@ -22,7 +22,9 @@ func Run() {
     //qkfile := "examples/for-stmt2.qk"
     //qkfile := "examples/foreach-stmt.qk"
     //qkfile := "examples/foritem-stmt.qk"
-    qkfile := "examples/forindex-stmt.qk"
+    //qkfile := "examples/forindex-stmt.qk"
+    qkfile := "examples/func.qk"
+
     bs, _ := ioutil.ReadFile(qkfile)
 
     // 词法分析

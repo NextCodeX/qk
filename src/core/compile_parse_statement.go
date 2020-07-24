@@ -24,6 +24,7 @@ func parseStatement(stmt *Statement) {
 
 	case stmt.isSwitchStatement():
 	case stmt.isReturnStatement():
+		parseReturnStatement(stmt)
 	}
 }
 
@@ -53,5 +54,12 @@ func parseForStatement(stmt *Statement) {
 }
 
 func parseForPlusStatement(stmt *Statement)  {
+	Compile(stmt)
+}
+
+func parseReturnStatement(stmt *Statement)  {
+	stmt.raw = insert(symbolToken("="), stmt.raw)
+	stmt.raw = insert(varToken(funcResultName), stmt.raw)
+
 	Compile(stmt)
 }

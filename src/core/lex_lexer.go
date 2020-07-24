@@ -94,7 +94,7 @@ func (lexer *Lexer) whenIdentifier() {
 func (lexer *Lexer) whenNumber() {
 	lexer.tmpBytesCollect()
 
-	if lexer.inStateFloat() {
+	if lexer.inStateFloat() || lexer.inStateIdentifier() {
 		return
 	}
 

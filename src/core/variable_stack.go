@@ -1,5 +1,6 @@
 package core
 
+import "fmt"
 
 type VariableStack struct {
 	list []Variables
@@ -52,4 +53,13 @@ func (stack *VariableStack) addLocalVariable(name string, val *Value) {
 	}
 
 	stack.list[size-1].add(name, val)
+}
+
+func (stack *VariableStack) printVars()  {
+	for i, vars := range stack.list {
+		fmt.Println("level", i)
+		for k,v := range vars {
+			fmt.Printf("name: %v; value: %v \n", k, v.val())
+		}
+	}
 }
