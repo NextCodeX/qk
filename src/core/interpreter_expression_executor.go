@@ -155,7 +155,7 @@ func (executor *ExpressionExecutor) executeCustomFunction(f *Function, args []*V
 		executor.addVar(paramName, arg)
 	}
 	executeStatementList(f.block, executor.stack)
-	executor.stack.printVars()
+	//executor.stack.printVars()
 	res =  executor.searchVariable(funcResultName)
 
 	return res
