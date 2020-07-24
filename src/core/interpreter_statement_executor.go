@@ -18,6 +18,9 @@ func executeStatement(stmt *Statement, stack *VariableStack) *StatementResultTyp
 			executeExpression(expr, stack)
 		}
 	}
+	if stmt.isReturnStatement() {
+		executeStatementList(stmt.block, stack)
+	}
 	if stmt.isIfStatement() {
 		executeIfStatement(stmt, stack)
 	}
