@@ -12,6 +12,6 @@ continue statement --doing
 break statement --doing
 return  statement --doing
 function --ok  
-module --waiting
+internat module --waiting
 ```
 3. interpret and execute  --- doing
