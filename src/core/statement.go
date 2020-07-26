@@ -64,22 +64,7 @@ func (stmt *Statement) setCompiled() {
 
 
 func (s *Statement) addExpression(expr *Expression) {
-    if len(s.exprs)>0 && s.exprs[len(s.exprs)-1].isMultiExpression() && !(s.exprs[len(s.exprs)-1].listFinish) {
-        lastExpr := s.exprs[len(s.exprs)-1]
-        subExprs := &lastExpr.list
-
-        if expr.isMultiExpression() {
-            expr = expr.list[0]
-        }
-
-        *subExprs = append(*subExprs, expr)
-
-        if !expr.isTmpExpression() {
-            lastExpr.listFinish = true
-        }
-        return
-    }
-    s.exprs = append(s.exprs, expr)
+   s.exprs = append(s.exprs, expr)
 }
 
 func (s *Statement) isExpressionStatement() bool {

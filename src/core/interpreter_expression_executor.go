@@ -203,7 +203,7 @@ func (executor *ExpressionExecutor) executeBinaryExpression() (res *Value) {
 		res = executor.evalAndBinaryExpression()
 
 	}
-	if expr.isTmpExpression() {
+	if expr.isAssignExpression() {
 		if res == nil {
 			res = NULL
 		}

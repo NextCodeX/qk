@@ -19,11 +19,11 @@ const (
     ElementExpression
     FunctionCallExpression
     MethodCallExpression
-    PrimaryExpression
+    PrimaryExpression  // 不可再分的原始表达式
 
-    BinaryExpression
-    MultiExpression
-    TmpExpression
+    BinaryExpression // 二元表达式
+    MultiExpression // 多元表达式
+    AssignExpression // 用于表示赋值的二元表达式
 )
 
 type OperationType int
@@ -190,12 +190,12 @@ func (this *Expression) isMultiExpression() bool {
     return (this.t & MultiExpression) == MultiExpression
 }
 
-func (this *Expression) isTmpExpression() bool {
-    return (this.t & TmpExpression) == TmpExpression
+func (this *Expression) isAssignExpression() bool {
+    return (this.t & AssignExpression) == AssignExpression
 }
 
 func (expr *Expression) setTmpname(name string) {
-    expr.t = expr.t | TmpExpression
+    expr.t = expr.t | AssignExpression
     expr.tmpname = name
 }
 
@@ -239,8 +239,8 @@ func (expr *Expression) TypeString() string {
     if expr.isMultiExpression() {
         res.WriteString("multi expression, ")
     }
-    if expr.isTmpExpression() {
-        res.WriteString("tmp expression, ")
+    if expr.isAssignExpression() {
+        res.WriteString("assign expression, ")
     }
     return strings.Trim(strings.TrimSpace(res.String()), ",")
 }
