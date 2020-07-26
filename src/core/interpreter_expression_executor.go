@@ -17,15 +17,12 @@ func newExpressionExecutor(expr *Expression, stack *VariableStack, tmpVars *Vari
 
 func (executor *ExpressionExecutor) run() (res *Value) {
 	expr := executor.expr
-	if expr.isConstExpression() || expr.isVarExpression() || expr.isElementExpression() || expr.isAttributeExpression() {
+	if expr.isPrimaryExpression() {
 		return executor.leftVal()
 	}
 
 	if expr.isBinaryExpression() {
 		return executor.executeBinaryExpression()
-	}
-	if expr.isFunctionCallExpression() {
-		return executor.executeFunctionCallExpression()
 	}
 	if expr.isMultiExpression() {
 		return executor.executeMultiExpression()
@@ -34,10 +31,9 @@ func (executor *ExpressionExecutor) run() (res *Value) {
 	return nil
 }
 
-func (executor *ExpressionExecutor) executeAttributeExpression() (res *Value) {
-	expr := executor.expr
-	varname := expr.left.caller
-	attrname := expr.left.name
+func (executor *ExpressionExecutor) executeAttributeExpression(primaryExpr *PrimaryExpr) (res *Value) {
+	varname := primaryExpr.caller
+	attrname := primaryExpr.name
 	varVal := executor.searchVariable(varname)
 	if varVal == nil {
 		return NULL
@@ -54,16 +50,15 @@ func (executor *ExpressionExecutor) executeAttributeExpression() (res *Value) {
 		return obj.get(attrname)
 	}
 
-	runtimeExcption("eval attribute exception:", expr.RawString())
+	runtimeExcption("eval attribute exception:", executor.expr.RawString())
 	return nil
 }
 
-func (executor *ExpressionExecutor) executeElementExpression() (res *Value) {
-	expr := executor.expr
-	varname := expr.left.name
+func (executor *ExpressionExecutor) executeElementExpression(primaryExpr *PrimaryExpr) (res *Value) {
+	varname := primaryExpr.name
 	varVal := executor.searchVariable(varname)
 
-	argRawVals := executor.toGoTypeValues(expr.left.args)
+	argRawVals := executor.toGoTypeValues(primaryExpr.args)
 	if varVal.isArrayValue() {
 		arr := varVal.arr_value
 		index := toIntValue(argRawVals[0])
@@ -76,7 +71,7 @@ func (executor *ExpressionExecutor) executeElementExpression() (res *Value) {
 		return obj.get(key)
 	}
 
-	runtimeExcption("eval element exception:", expr.RawString())
+	runtimeExcption("eval element exception:", executor.expr.RawString())
 	return nil
 }
 
@@ -125,10 +120,9 @@ func (executor *ExpressionExecutor) getNextExprForMultiExpression(varname string
 	return nil
 }
 
-func (executor *ExpressionExecutor) executeFunctionCallExpression() (res *Value) {
-	expr := executor.expr
-	functionName := expr.left.name
-	args := expr.left.args
+func (executor *ExpressionExecutor) executeFunctionCallExpression(primaryExpr *PrimaryExpr) (res *Value) {
+	functionName := primaryExpr.name
+	args := primaryExpr.args
 
 	customFunc, ok := funcList[functionName]
 	if ok {
@@ -137,11 +131,11 @@ func (executor *ExpressionExecutor) executeFunctionCallExpression() (res *Value)
 	}
 
 	if functionName == "println" {
-		argVals := executor.toGoTypeValues(args)
-		if len(argVals) < 1 {
+		argRawVals := executor.toGoTypeValues(args)
+		if len(argRawVals) < 1 {
 			fmt.Println()
 		}else{
-			fmt.Println(argVals...)
+			fmt.Println(argRawVals...)
 		}
 	}
 	return nil
@@ -664,11 +658,15 @@ func (executor *ExpressionExecutor) evalPrimaryExpr(primaryExpr *PrimaryExpr) *V
 		return varVal
 	}
 	if primaryExpr.isElement() {
-		return executor.executeElementExpression()
+		return executor.executeElementExpression(primaryExpr)
 	}
 	if primaryExpr.isAttibute() {
-		return executor.executeAttributeExpression()
+		return executor.executeAttributeExpression(primaryExpr)
 	}
+	if primaryExpr.isFunctionCall() {
+		return executor.executeFunctionCallExpression(primaryExpr)
+	}
+
 	return NULL
 }
 

@@ -60,48 +60,35 @@ func parseUnaryExpression(ts []Token) *Expression {
 	expr := &Expression{}
 	primaryExpr := parsePrimaryExpression(&token)
 	expr.left = primaryExpr
-	if token.isObjLiteral() {
-		expr.t = JSONObjectExpression | ConstExpression
-		return expr
-	}
-	if token.isArrLiteral() {
-		expr.t = JSONArrayExpression | ConstExpression
-		return expr
-	}
-	if token.isStr() {
-		expr.t = StringExpression | ConstExpression
-		return expr
-	}
-	if token.isInt() {
-		expr.t = IntExpression | ConstExpression
-		return expr
-	}
-	if token.isFloat() {
-		expr.t = FloatExpression | ConstExpression
-		return expr
-	}
-	if token.isIdentifier() {
+	switch {
+	case token.isObjLiteral():
+		expr.t = JSONObjectExpression
+	case token.isArrLiteral():
+		expr.t = JSONArrayExpression
+	case token.isStr():
+		expr.t = StringExpression
+	case token.isInt():
+		expr.t = IntExpression
+	case token.isFloat():
+		expr.t = FloatExpression
+	case token.isIdentifier():
 		if primaryExpr.isVar() {
 			expr.t = VarExpression
 		} else {
-			expr.t = BooleanExpression | ConstExpression
+			expr.t = BooleanExpression
 		}
-		return expr
-	}
-	if token.isElement() {
+	case token.isElement():
 		expr.t = ElementExpression
-		return expr
-	}
-	if token.isAttribute() {
+	case token.isAttribute():
 		expr.t = AttributeExpression
-		return expr
-	}
-	if token.isFcall() {
+	case token.isFcall():
 		expr.t = FunctionCallExpression
-		return expr
-	}
+	default:
+		runtimeExcption("unknow expression:", token.String())
 
-	return nil
+	}
+	expr.t = expr.t | PrimaryExpression
+	return expr
 }
 
 func parseMultivariateExpression(ts []Token) (expr *Expression) {
@@ -416,7 +403,7 @@ func parsePrimaryExpression(t *Token) *PrimaryExpr {
 
 	} else if t.isFcall() {
 		exprs := getArgExprsFromToken(t.ts)
-		res = &PrimaryExpr{name:t.str, args: exprs, t:OtherPrimaryExpressionType}
+		res = &PrimaryExpr{name:t.str, args: exprs, t:FunctionCallPrimaryExpressionType}
 
 	} else {
 		res = &PrimaryExpr{name:t.str, t:VarPrimaryExpressionType}

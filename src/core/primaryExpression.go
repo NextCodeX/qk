@@ -10,6 +10,7 @@ const (
 	ObjectPrimaryExpressionType
 	ElementPrimaryExpressionType
 	AttibutePrimaryExpressionType
+	FunctionCallPrimaryExpressionType
 	OtherPrimaryExpressionType PrimaryExpressionType = 0
 )
 
@@ -43,6 +44,10 @@ func (this *PrimaryExpr) isElement() bool {
 
 func (this *PrimaryExpr) isAttibute() bool {
 	return (this.t & AttibutePrimaryExpressionType) == AttibutePrimaryExpressionType
+}
+
+func (this *PrimaryExpr) isFunctionCall() bool {
+	return (this.t & FunctionCallPrimaryExpressionType) == FunctionCallPrimaryExpressionType
 }
 
 func (this *PrimaryExpr) isOther() bool {

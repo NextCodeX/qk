@@ -14,12 +14,13 @@ const (
     StringExpression
     JSONObjectExpression
     JSONArrayExpression
-    ConstExpression
     VarExpression
     AttributeExpression
     ElementExpression
     FunctionCallExpression
     MethodCallExpression
+    PrimaryExpression
+
     BinaryExpression
     MultiExpression
     TmpExpression
@@ -133,13 +134,6 @@ func (this *Expression) isMod() bool {
     return (this.op & Opmod) ==Opmod
 }
 
-func newMultiExpression() *Expression {
-    return &Expression{
-        t:          MultiExpression,
-        listFinish: false,
-    }
-}
-
 func (this *Expression) isIntExpression() bool {
     return (this.t & IntExpression) == IntExpression
 }
@@ -164,10 +158,6 @@ func (this *Expression) isJSONArrayExpression() bool {
     return (this.t & JSONArrayExpression) == JSONArrayExpression
 }
 
-func (this *Expression) isConstExpression() bool {
-    return (this.t & ConstExpression) == ConstExpression
-}
-
 func (this *Expression) isVarExpression() bool {
     return (this.t & VarExpression) == VarExpression
 }
@@ -186,6 +176,10 @@ func (this *Expression) isFunctionCallExpression() bool {
 
 func (this *Expression) isMethodCallExpression() bool {
     return (this.t & MethodCallExpression) == MethodCallExpression
+}
+
+func (this *Expression) isPrimaryExpression() bool {
+    return (this.t & PrimaryExpression) == PrimaryExpression
 }
 
 func (this *Expression) isBinaryExpression() bool {
@@ -220,8 +214,8 @@ func (expr *Expression) TypeString() string {
     if expr.isStringExpression() {
         res.WriteString("string expression, ")
     }
-    if expr.isConstExpression() {
-        res.WriteString("const expression, ")
+    if expr.isPrimaryExpression() {
+        res.WriteString("primary expression, ")
     }
     if expr.isVarExpression() {
         res.WriteString("var expression, ")
