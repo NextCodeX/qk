@@ -15,6 +15,8 @@ const (
     ForItemStatement
     SwitchStatement
     MultiStatement
+    ContinueStatement
+    BreakStatement
     ReturnStatement
 )
 
@@ -92,6 +94,14 @@ func (s *Statement) isSwitchStatement() bool {
 
 func (s *Statement) isMultiStatement() bool {
     return (s.t & MultiStatement) == MultiStatement
+}
+
+func (s *Statement) isContinueStatement() bool {
+    return (s.t & ContinueStatement) == ContinueStatement
+}
+
+func (s *Statement) isBreakStatement() bool {
+    return (s.t & BreakStatement) == BreakStatement
 }
 
 func (s *Statement) isReturnStatement() bool {

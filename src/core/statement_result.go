@@ -19,18 +19,18 @@ func newStatementResult(t StatementResultType, val *Value) *StatementResult {
 	return &StatementResult{t, val}
 }
 
-func (this *StatementResult) isStatementReturn() bool {
+func (this *StatementResult) isReturn() bool {
 	return (this.t & StatementReturn) == StatementReturn
 }
 
-func (this *StatementResult) isStatementContinue() bool {
+func (this *StatementResult) isContinue() bool {
 	return (this.t & StatementContinue) == StatementContinue
 }
 
-func (this *StatementResult) isStatementBreak() bool {
+func (this *StatementResult) isBreak() bool {
 	return (this.t & StatementBreak) == StatementBreak
 }
 
-func (this *StatementResult) isStatementNormal() bool {
+func (this *StatementResult) isNormal() bool {
 	return (this.t & StatementNormal) == StatementNormal
 }

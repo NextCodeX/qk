@@ -11,7 +11,11 @@ func executeStatementList(stmts []*Statement, stack *VariableStack) *StatementRe
 	var res *StatementResult
 	for _, stmt := range stmts {
 		res = executeStatement(stmt, stack)
-		if res.isStatementReturn() {
+
+		if res.isContinue() {
+			res.t = StatementNormal
+			break
+		} else if res.isReturn() || res.isBreak() {
 			break
 		}
 	}
@@ -30,13 +34,13 @@ func executeStatement(stmt *Statement, stack *VariableStack) *StatementResult {
 		res = newStatementResult(StatementReturn, funcResult)
 
 	} else if stmt.isIfStatement() {
-		executeIfStatement(stmt, stack)
+		res = executeIfStatement(stmt, stack)
 
 	} else if stmt.isForStatement() {
-		executeForStatement(stmt, stack)
+		res = executeForStatement(stmt, stack)
 
 	} else if stmt.isForeachStatement() || stmt.isForIndexStatement() || stmt.isForItemStatement() {
-		executeForeachStatement(stmt, stack)
+		res = executeForeachStatement(stmt, stack)
 
 	} else {
 		runtimeExcption("unknow statememnt:", tokensString(stmt.raw))
@@ -59,23 +63,22 @@ func evalBoolExpression(expr *Expression, stack *VariableStack) bool {
 	return val.bool_value
 }
 
-func executeIfStatement(stmt *Statement, stack *VariableStack) (res *StatementResultType) {
+func executeIfStatement(stmt *Statement, stack *VariableStack) (res *StatementResult) {
 	for _, condStmts := range stmt.condStmts {
 		flag := evalBoolExpression(condStmts.condExpr, stack)
 		if flag {
-			executeStatementList(condStmts.block, stack)
-			return
+			return executeStatementList(condStmts.block, stack)
 		}
 	}
 
 	if stmt.defStmt != nil {
-		executeStatementList(stmt.defStmt.block, stack)
+		return executeStatementList(stmt.defStmt.block, stack)
 	}
 
-	return
+	return newStatementResult(StatementNormal, NULL)
 }
 
-func executeForStatement(stmt *Statement, stack *VariableStack) (res *StatementResultType) {
+func executeForStatement(stmt *Statement, stack *VariableStack) (res *StatementResult) {
 	if stmt.preExpr != nil {
 		executeExpression(stmt.preExpr, stack)
 	}
@@ -85,7 +88,14 @@ func executeForStatement(stmt *Statement, stack *VariableStack) (res *StatementR
 	}
 	for flag {
 
-		executeStatementList(stmt.block, stack)
+		res = executeStatementList(stmt.block, stack)
+
+		if res.isBreak() {
+			res.t = StatementNormal
+			return
+		}else if res.isReturn() {
+			return
+		}
 
 		if stmt.postExpr != nil {
 			executeExpression(stmt.postExpr, stack)
@@ -94,10 +104,10 @@ func executeForStatement(stmt *Statement, stack *VariableStack) (res *StatementR
 			flag = evalBoolExpression(stmt.condExpr, stack)
 		}
 	}
-	return
+	return res
 }
 
-func executeForeachStatement(stmt *Statement, stack *VariableStack) (res *StatementResultType) {
+func executeForeachStatement(stmt *Statement, stack *VariableStack) (res *StatementResult) {
 	fpi := stmt.fpi
 	varVal := stack.searchVariable(fpi.iterator)
 	itr := toIterator(varVal)
@@ -117,7 +127,14 @@ func executeForeachStatement(stmt *Statement, stack *VariableStack) (res *Statem
 			stack.addLocalVariable(fpi.itemName, item)
 		}
 
-		executeStatementList(stmt.block, stack)
+		res = executeStatementList(stmt.block, stack)
+
+		if res.isBreak() {
+			res.t = StatementNormal
+			return
+		}else if res.isReturn() {
+			return
+		}
 	}
-	return
+	return res
 }
