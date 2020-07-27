@@ -10,8 +10,7 @@ func parseStatement(stmt *Statement) {
 	ts := stmt.raw
 	switch {
 	case stmt.isExpressionStatement():
-		expr := extractExpression(ts)
-		stmt.addExpression(expr)
+		stmt.expr = extractExpression(ts)
 
 	case stmt.isIfStatement():
 		parseIfStatement(stmt)

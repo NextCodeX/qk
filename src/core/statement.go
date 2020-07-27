@@ -21,10 +21,10 @@ const (
 
 type Statement struct {
     t StatementType
-    exprs []*Expression
-    preExprTokens []Token
+    expr *Expression // 用于expressionStatement.
+    preExprTokens []Token // 用于普通for语句
     condExprTokens []Token // 用于if,for语句
-    postExprTokens []Token
+    postExprTokens []Token // 用于普通for语句
     preExpr *Expression
     condExpr *Expression
     postExpr *Expression
@@ -61,11 +61,6 @@ func (stmt *Statement) setCompiled() {
     stmt.compiled = true
 }
 
-
-
-func (s *Statement) addExpression(expr *Expression) {
-   s.exprs = append(s.exprs, expr)
-}
 
 func (s *Statement) isExpressionStatement() bool {
     return (s.t & ExpressionStatement) == ExpressionStatement
@@ -133,7 +128,6 @@ func (s *Statement) String() string {
 func newStatement(t StatementType, ts []Token) *Statement {
     return &Statement{
         t:     t,
-        exprs: nil,
         raw:   ts,
     }
 }

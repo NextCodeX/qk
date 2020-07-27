@@ -2,36 +2,47 @@ package core
 
 func executeFunctionStatementList(stmts []*Statement, stack *VariableStack) {
 	stack.push()
+	defer stack.pop()
+
 	executeStatementList(stmts, stack)
-	stack.pop()
 }
 
-func executeStatementList(stmts []*Statement, stack *VariableStack) {
+func executeStatementList(stmts []*Statement, stack *VariableStack) *StatementResult {
+	var res *StatementResult
 	for _, stmt := range stmts {
-		executeStatement(stmt, stack)
-	}
-}
-
-func executeStatement(stmt *Statement, stack *VariableStack) *StatementResultType {
-	if stmt.isExpressionStatement() {
-		for _, expr := range stmt.exprs {
-			executeExpression(expr, stack)
+		res = executeStatement(stmt, stack)
+		if res.isStatementReturn() {
+			break
 		}
 	}
-	if stmt.isReturnStatement() {
+	return res
+}
+
+func executeStatement(stmt *Statement, stack *VariableStack) *StatementResult {
+	var res *StatementResult
+	if stmt.isExpressionStatement() {
+		exprResult := executeExpression(stmt.expr, stack)
+		res = newStatementResult(StatementNormal, exprResult)
+
+	} else if stmt.isReturnStatement() {
 		executeStatementList(stmt.block, stack)
-	}
-	if stmt.isIfStatement() {
+		funcResult := stack.searchVariable(funcResultName)
+		res = newStatementResult(StatementReturn, funcResult)
+
+	} else if stmt.isIfStatement() {
 		executeIfStatement(stmt, stack)
-	}
-	if stmt.isForStatement() {
+
+	} else if stmt.isForStatement() {
 		executeForStatement(stmt, stack)
-	}
-	if stmt.isForeachStatement() || stmt.isForIndexStatement() || stmt.isForItemStatement() {
+
+	} else if stmt.isForeachStatement() || stmt.isForIndexStatement() || stmt.isForItemStatement() {
 		executeForeachStatement(stmt, stack)
+
+	} else {
+		runtimeExcption("unknow statememnt:", tokensString(stmt.raw))
 	}
 
-	return nil
+	return res
 }
 
 func executeExpression(expr *Expression, stack *VariableStack) (res *Value) {

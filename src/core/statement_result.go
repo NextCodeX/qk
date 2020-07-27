@@ -12,7 +12,11 @@ const (
 
 type StatementResult struct {
 	t StatementResultType
-	val Value
+	val *Value
+}
+
+func newStatementResult(t StatementResultType, val *Value) *StatementResult {
+	return &StatementResult{t, val}
 }
 
 func (this *StatementResult) isStatementReturn() bool {
