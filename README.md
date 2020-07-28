@@ -8,10 +8,10 @@ It's my golang util wapper,  a script language like JavaScript.
 expression statement -- ok  
 if statement --ok  
 for statement --ok
-continue statement --doing
-break statement --doing
-return  statement --doing
+continue statement --ok
+break statement --ok
+return  statement --ok
 function --ok  
-internat module --waiting
+internat module --doing
 ```
 3. interpret and execute  --- doing
