@@ -2,5 +2,5 @@ add(num1, num2) {
     res = num1 + num2
     return res
 }
-
-println("result:", add(5, 9))
+c = add(3*3, 4*4)
+println("result:", add(5, 9), c)

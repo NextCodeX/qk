@@ -1,23 +1,43 @@
 package core
 
-func executeFunctionStatementList(stmts []*Statement, stack *VariableStack) {
-	stack.push()
+type StmtListType int
+const (
+	StmtListTypeFunc StmtListType = 1 << iota
+	StmtListTypeIf
+	StmtListTypeFor
+	StmtListTypeNormal
+)
+
+func executeFunctionStatementList(stmts []*Statement, stack *VariableStack) *Value {
 	defer stack.pop()
 
-	executeStatementList(stmts, stack)
+	executeStatementList(stmts, stack, StmtListTypeFunc)
+	res := stack.searchVariable(funcResultName)
+	return res
 }
 
-func executeStatementList(stmts []*Statement, stack *VariableStack) *StatementResult {
+func executeStatementList(stmts []*Statement, stack *VariableStack, t StmtListType) *StatementResult {
+	if t == StmtListTypeFunc {
+		stack.addLocalVariable(funcResultName, NULL)
+	}
 	var res *StatementResult
 	for _, stmt := range stmts {
+		//fmt.Println("start*****")
+		//fmt.Println("index:", i, "stmt:", tokensString(stmt.raw))
 		res = executeStatement(stmt, stack)
+		//fmt.Println(res.isContinue(), "; t == StmtListTypeFor:", t == StmtListTypeFor)
+		//fmt.Println("+++++++++++")
 
 		if res.isContinue() {
-			res.t = StatementNormal
+			if t == StmtListTypeFor {
+				res.t = StatementNormal
+			}
+			//fmt.Println(" in cond ((index:", i, "stmt:", tokensString(stmt.raw))
 			break
 		} else if res.isReturn() || res.isBreak() {
 			break
 		}
+
 	}
 	return res
 }
@@ -28,8 +48,14 @@ func executeStatement(stmt *Statement, stack *VariableStack) *StatementResult {
 		exprResult := executeExpression(stmt.expr, stack)
 		res = newStatementResult(StatementNormal, exprResult)
 
+	} else if stmt.isContinueStatement() {
+		res = newStatementResult(StatementContinue, NULL)
+
+	} else if stmt.isBreakStatement() {
+		res = newStatementResult(StatementBreak, NULL)
+
 	} else if stmt.isReturnStatement() {
-		executeStatementList(stmt.block, stack)
+		executeStatementList(stmt.block, stack, StmtListTypeNormal)
 		funcResult := stack.searchVariable(funcResultName)
 		res = newStatementResult(StatementReturn, funcResult)
 
@@ -46,6 +72,7 @@ func executeStatement(stmt *Statement, stack *VariableStack) *StatementResult {
 		runtimeExcption("unknow statememnt:", tokensString(stmt.raw))
 	}
 
+	//fmt.Println("executeStatementList:", tokensString(stmt.raw), stmt.isExpressionStatement(), stmt.isIfStatement(), res.isContinue())
 	return res
 }
 
@@ -67,12 +94,13 @@ func executeIfStatement(stmt *Statement, stack *VariableStack) (res *StatementRe
 	for _, condStmts := range stmt.condStmts {
 		flag := evalBoolExpression(condStmts.condExpr, stack)
 		if flag {
-			return executeStatementList(condStmts.block, stack)
+			res = executeStatementList(condStmts.block, stack, StmtListTypeIf)
+			return
 		}
 	}
 
 	if stmt.defStmt != nil {
-		return executeStatementList(stmt.defStmt.block, stack)
+		return executeStatementList(stmt.defStmt.block, stack, StmtListTypeIf)
 	}
 
 	return newStatementResult(StatementNormal, NULL)
@@ -86,9 +114,13 @@ func executeForStatement(stmt *Statement, stack *VariableStack) (res *StatementR
 	if stmt.condExpr != nil {
 		flag = evalBoolExpression(stmt.condExpr, stack)
 	}
+	//for _, st := range stmt.block {
+	//	fmt.Println("stmts: ", tokensString(st.raw))
+	//}
 	for flag {
 
-		res = executeStatementList(stmt.block, stack)
+		res = executeStatementList(stmt.block, stack, StmtListTypeFor)
+
 
 		if res.isBreak() {
 			res.t = StatementNormal
@@ -127,7 +159,7 @@ func executeForeachStatement(stmt *Statement, stack *VariableStack) (res *Statem
 			stack.addLocalVariable(fpi.itemName, item)
 		}
 
-		res = executeStatementList(stmt.block, stack)
+		res = executeStatementList(stmt.block, stack, StmtListTypeFor)
 
 		if res.isBreak() {
 			res.t = StatementNormal

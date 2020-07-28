@@ -19,12 +19,9 @@ func (executor *ExpressionExecutor) run() (res *Value) {
 	expr := executor.expr
 	if expr.isPrimaryExpression() {
 		return executor.leftVal()
-	}
-
-	if expr.isBinaryExpression() {
+	}else if expr.isBinaryExpression() {
 		return executor.executeBinaryExpression()
-	}
-	if expr.isMultiExpression() {
+	}else if expr.isMultiExpression() {
 		return executor.executeMultiExpression()
 	}
 	runtimeExcption("expression is not supported:", expr.RawString())
@@ -143,14 +140,11 @@ func (executor *ExpressionExecutor) executeFunctionCallExpression(primaryExpr *P
 
 func (executor *ExpressionExecutor) executeCustomFunction(f *Function, args []*Value) (res *Value) {
 	executor.stack.push()
-	defer executor.stack.pop()
 	for i, paramName := range f.paramNames {
 		arg := args[i]
 		executor.addVar(paramName, arg)
 	}
-	executeStatementList(f.block, executor.stack)
-	//executor.stack.printVars()
-	res =  executor.searchVariable(funcResultName)
+	res =  executeFunctionStatementList(f.block, executor.stack)
 
 	return res
 }

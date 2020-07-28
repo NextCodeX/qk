@@ -23,6 +23,10 @@ func extractStatement(stmts StatementList) {
 		case "forv":
 			stmt, endIndex = extractForitemStatement(i, ts)
 		case "switch":
+		case "continue":
+			stmt, endIndex = extractContinueStatement(i, ts)
+		case "break":
+			stmt, endIndex = extractBreakStatement(i, ts)
 		case "return":
 			stmt, endIndex = extractReturnStatement(i, ts)
 		default:
@@ -57,6 +61,29 @@ func extractExpressionStatement(currentIndex int, ts []Token) (*Statement, int) 
 		return stmt, nextBoundaryIndex
 	}
 	return nil, -1
+}
+
+func extractContinueStatement(currentIndex int, ts []Token) (*Statement, int) {
+	stmt := &Statement{t:ContinueStatement}
+	size := len(ts)
+	if currentIndex == size -1 {
+		return stmt, size
+	}
+
+	endIndex := nextSymbolIndex(ts, currentIndex, ";")
+	return stmt, endIndex
+}
+
+func extractBreakStatement(currentIndex int, ts []Token) (*Statement, int) {
+	stmt := &Statement{t:BreakStatement}
+	size := len(ts)
+	if currentIndex == size -1 {
+		return stmt, size
+	}
+
+
+	endIndex := nextSymbolIndex(ts, currentIndex, ";")
+	return stmt, endIndex
 }
 
 func extractReturnStatement(currentIndex int, ts []Token) (*Statement, int) {
