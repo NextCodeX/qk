@@ -2,7 +2,6 @@ package core
 
 import (
     "fmt"
-    "io/ioutil"
     "os/exec"
     "runtime"
     "strings"
@@ -24,22 +23,22 @@ func Run() {
     //qkfile := "examples/foritem-stmt.qk"
     //qkfile := "examples/forindex-stmt.qk"
     //qkfile := "examples/func.qk"
-    qkfile := "examples/for-continue-break.qk"
+    //qkfile := "examples/for-continue-break.qk"
 
-    bs, _ := ioutil.ReadFile(qkfile)
+    //bs, _ := ioutil.ReadFile(qkfile)
 
     // 词法分析
-    ts := ParseTokens(bs)
-    printTokensByLine(ts)
-
-    // 语法分析
-    mainFunc.raw = ts
-    Compile(mainFunc)
-    printFunc()
-
-    // 解析并执行
-    fmt.Println("================")
-    Interpret()
+    //ts := ParseTokens(bs)
+    //printTokensByLine(ts)
+	//
+    //// 语法分析
+    //mainFunc.raw = ts
+    //Compile(mainFunc)
+    //printFunc()
+	//
+    //// 解析并执行
+    //fmt.Println("================")
+    //Interpret()
 }
 
 func printFunc() {
