@@ -1,7 +1,6 @@
 package module
 
 import (
-	"reflect"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -12,13 +11,7 @@ import (
 
 func init()  {
 	f := &File{}
-	v1 := reflect.ValueOf(&f).Elem()
-	k1 := v1.Type()
-	for i := 0; i < v1.NumMethod(); i++ {
-		key := k1.Method(i)
-		val := v1.Method(i)
-		fmt.Println(key.Name, val.Type(), val.Interface())
-	}
+	collectFunctionInfo(&f)
 }
 
 type File struct {
