@@ -11,7 +11,7 @@ import (
 
 func init()  {
 	f := &File{}
-	collectFunctionInfo(&f)
+	collectFunctionInfo(&f, "name")
 }
 
 type File struct {

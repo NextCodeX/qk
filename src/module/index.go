@@ -3,40 +3,44 @@ package module
 import (
 	"fmt"
 	"reflect"
+	"strings"
 )
 
-var funcs map[string]*FunctionExecutor
+var funcs =  make(map[string]*FunctionExecutor)
 
 
-func collectFunctionInfo(obj interface{})  {
-	fmt.Println("do collectFunctionInfo...")
+func collectFunctionInfo(obj interface{}, moduleName string)  {
 	v1 := reflect.ValueOf(obj).Elem()
 	k1 := v1.Type()
 	for i := 0; i < v1.NumMethod(); i++ {
+		funcExe := &FunctionExecutor{}
+
 		methodName := k1.Method(i).Name
 		methodObject := v1.Method(i)
-		if methodName == "GetAge" {
-			fmt.Println("age: ", methodObject.Call(nil)[0])
-		}
 
-		fmt.Println(methodName, methodObject.Type())
 		methodType := methodObject.Type()
-
-		fmt.Println("\nin params:")
+		// in params
 		incount := methodType.NumIn()
 		for ii := 0; ii < incount; ii++ {
 			argType := methodType.In(ii)
-			fmt.Println(argType, argType.Kind())
+			funcExe.ins = append(funcExe.ins, argType)
 		}
 
-		fmt.Println("\nout params:")
+		// out params
 		outcount := methodType.NumOut()
 		for ii := 0; ii < outcount; ii++ {
 			argType := methodType.Out(ii)
-			fmt.Println(argType, argType.Kind())
+			funcExe.outs = append(funcExe.outs, argType)
 		}
-		fmt.Println("+++++++++++++")
+
+		funcExe.obj = methodObject
+		funcExe.name = standardName(moduleName, methodName)
+		funcs[funcExe.name] = funcExe
 	}
+}
+
+func standardName(moduleName, methodName string) string {
+	return fmt.Sprintf("%v_%v%v", moduleName, strings.ToLower(methodName[:1]), methodName[1:])
 }
 
 func Load() map[string]*FunctionExecutor {
