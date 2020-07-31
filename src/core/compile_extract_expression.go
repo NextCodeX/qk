@@ -2,9 +2,8 @@ package core
 
 import (
 	"strconv"
-	"fmt"
+	"strings"
 )
-
 
 func extractExpression(ts []Token) *Expression {
 	var expr *Expression
@@ -14,7 +13,7 @@ func extractExpression(ts []Token) *Expression {
 
 	tlen := len(ts)
 
-	if tlen % 2 == 0 {
+	if tlen%2 == 0 {
 		runtimeExcption("error expression:", tokensString(ts))
 	}
 
@@ -113,9 +112,9 @@ func parseMultivariateExpression(ts []Token) (expr *Expression) {
 	finalExpr := getFinalExpr(exprs, resVarToken)
 
 	expr = &Expression{
-		t:MultiExpression,
-		list:exprs,
-		finalExpr:finalExpr,
+		t:         MultiExpression,
+		list:      exprs,
+		finalExpr: finalExpr,
 	}
 	return expr
 }
@@ -202,19 +201,19 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 		}
 	}
 
-	for i:=0; i<size; i++ {
+	for i := 0; i < size; i++ {
 		tmpSize := len(exprTokens)
 		token := ts[i]
 
 		condBoundry := tmpSize == 2
-		condFinish := condBoundry && i==size-1
-		preCond1 := condBoundry && i<size-1
+		condFinish := condBoundry && i == size-1
+		preCond1 := condBoundry && i < size-1
 		//if preCond1 {
 		//	fmt.Printf("pre.priority:  %v:%v; next.priority: %v:%v \n", last(exprTokens).str, last(exprTokens).priority(), next(ts, i).str, next(ts, i).priority() )
 		//}
 		// 处理根据运算符优先级, 左向归约的情况
-		condShiftLeft1 := preCond1 && last(exprTokens).equal(next(ts,i))
-		condShiftLeft2 := preCond1 && last(exprTokens).lower(next(ts,i))
+		condShiftLeft1 := preCond1 && last(exprTokens).equal(next(ts, i))
+		condShiftLeft2 := preCond1 && last(exprTokens).lower(next(ts, i))
 		//fmt.Printf("condFinish: %v, preCond1: %v, condShiftLeft1: %v, condShiftLeft2: %v\n", condFinish, preCond1, condShiftLeft1, condShiftLeft2)
 		if condShiftLeft1 || condShiftLeft2 || condFinish {
 			exprTokens = append(exprTokens, token)
@@ -227,14 +226,13 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 			break
 		}
 
-
 		// 处理括号不是第一个token的情况
 		condRightParentheses := preCond1 && token.assertSymbol("(")
 		//fmt.Printf("condRightParentheses: %v; \n", condRightParentheses)
 		if condRightParentheses {
 			rightTokens, nextIndex := extractTokensByParentheses(ts[i:])
-			nextIndex  = i+nextIndex // 转换回切片ts的相应索引
-			if nextIndex < size - 1 {
+			nextIndex = i + nextIndex // 转换回切片ts的相应索引
+			if nextIndex < size-1 {
 				// 因为括号圈的不是右边整个表达式, 故先求括号值, 再通过运算符优先级求值
 				tmpVarToken1 := getTmpVarToken() // 括号内的中间临时值
 				reduceTokensForExpression(&tmpVarToken1, rightTokens, exprTokensList)
@@ -250,10 +248,9 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 
 					nextTokens2 := insert(tmpVarToken2, ts[nextIndex:]) //
 					reduceTokensForExpression(res, nextTokens2, exprTokensList)
-				}else {
+				} else {
 					// 右优先
 					exprTokens = append(exprTokens, tmpVarToken2) // rigtht expr result.
-
 
 					nextTokens3 := insert(tmpVarToken1, ts[nextIndex:])
 					reduceTokensForExpression(&tmpVarToken2, nextTokens3, exprTokensList)
@@ -271,9 +268,9 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 		}
 
 		// 处理根据运算符优先级, 右向归约的情况
-		condShiftRight1 := preCond1 && last(exprTokens).upper(next(ts,i))
+		condShiftRight1 := preCond1 && last(exprTokens).upper(next(ts, i))
 		//fmt.Printf("condShiftRight1: %v; \n", condShiftRight1)
-		if  condShiftRight1 {
+		if condShiftRight1 {
 			tmpVarToken := getTmpVarToken()
 			nextTokens := ts[i:]
 			exprTokens = append(exprTokens, tmpVarToken)
@@ -302,7 +299,7 @@ func extractTokensByParentheses(ts []Token) (res []Token, nextIndex int) {
 			scopeOpen --
 			if scopeOpen == 0 {
 				res = ts[1:i]
-				nextIndex = i+1
+				nextIndex = i + 1
 				break
 			}
 		}
@@ -312,10 +309,6 @@ func extractTokensByParentheses(ts []Token) (res []Token, nextIndex int) {
 	}
 	return res, nextIndex
 }
-
-
-
-
 
 // 根据token列表获取二元表达式
 func parseBinaryExpression(ts []Token) *Expression {
@@ -349,7 +342,7 @@ func parseBinaryExpression(ts []Token) *Expression {
 	case mid.assertSymbol("=="):
 		op = Opeq
 
-	case  mid.assertSymbol("="):
+	case mid.assertSymbol("="):
 		op = Opassign
 	case mid.assertSymbol("+="):
 		op = OpassignAfterAdd
@@ -380,7 +373,6 @@ func parseBinaryExpression(ts []Token) *Expression {
 	return expr
 }
 
-
 func parsePrimaryExpression(t *Token) *PrimaryExpr {
 	v := tokenToValue(t)
 	var res *PrimaryExpr
@@ -392,21 +384,21 @@ func parsePrimaryExpression(t *Token) *PrimaryExpr {
 		if t.isArrLiteral() {
 			primaryExprType = primaryExprType | ArrayPrimaryExpressionType
 		}
-		res = &PrimaryExpr{res:v, t:primaryExprType}
+		res = &PrimaryExpr{res: v, t: primaryExprType}
 
 	} else if t.isElement() {
 		exprs := getArgExprsFromToken(t.ts)
-		res = &PrimaryExpr{name:t.str, args: exprs, t:ElementPrimaryExpressionType}
+		res = &PrimaryExpr{name: t.str, args: exprs, t: ElementPrimaryExpressionType}
 
 	} else if t.isAttribute() {
-		res = &PrimaryExpr{name:t.str, caller:t.caller, t:AttibutePrimaryExpressionType}
+		res = &PrimaryExpr{name: t.str, caller: t.caller, t: AttibutePrimaryExpressionType}
 
 	} else if t.isFcall() {
 		exprs := getArgExprsFromToken(t.ts)
-		res = &PrimaryExpr{name:t.str, args: exprs, t:FunctionCallPrimaryExpressionType}
+		res = &PrimaryExpr{name: t.str, args: exprs, t: FunctionCallPrimaryExpressionType}
 
 	} else {
-		res = &PrimaryExpr{name:t.str, t:VarPrimaryExpressionType}
+		res = &PrimaryExpr{name: t.str, t: VarPrimaryExpressionType}
 	}
 	return res
 }
@@ -419,7 +411,7 @@ func getArgExprsFromToken(ts []Token) []*Expression {
 	}
 	if size == 1 || !hasSymbol(ts, ",") {
 		expr := extractExpression(ts)
-		assert(expr==nil, "failed to parse Expression:", tokensString(ts))
+		assert(expr == nil, "failed to parse Expression:", tokensString(ts))
 		res = append(res, expr)
 		return res
 	}
@@ -428,7 +420,7 @@ func getArgExprsFromToken(ts []Token) []*Expression {
 	for nextIndex >= 0 {
 		exprTokens, nextIndex = extractExpressionTokensByComma(nextIndex, ts)
 		expr := extractExpression(exprTokens)
-		assert(expr==nil, "failed to parse Expression:", tokensString(ts))
+		assert(expr == nil, "failed to parse Expression:", tokensString(ts))
 		res = append(res, expr)
 	}
 	return res
@@ -436,14 +428,14 @@ func getArgExprsFromToken(ts []Token) []*Expression {
 
 func extractExpressionTokensByComma(currentIndex int, ts []Token) (exprTokens []Token, nextIndex int) {
 	size := len(ts)
-	for i:=currentIndex; i<size; i++ {
+	for i := currentIndex; i < size; i++ {
 		token := ts[i]
 		if token.assertSymbol(",") {
-			nextIndex = i+1
+			nextIndex = i + 1
 			break
 		}
 		exprTokens = append(exprTokens, token)
-		if i == size - 1 {
+		if i == size-1 {
 			nextIndex = -1
 		}
 	}
@@ -461,26 +453,27 @@ func tokenToValue(t *Token) (v *Value) {
 	}
 	if t.isFloat() {
 		f, err := strconv.ParseFloat(t.str, 64)
-		assert(err!=nil, t.String(), "line:", t.lineIndex)
+		assert(err != nil, t.String(), "line:", t.lineIndex)
 		v = newVal(f)
 		return
 	}
 	if t.isInt() {
 		i, err := strconv.Atoi(t.str)
-		assert(err!=nil, t.String(), "line:", t.lineIndex)
+		assert(err != nil, t.String(), "line:", t.lineIndex)
 		v = newVal(i)
 		return
 	}
 	if t.isStr() {
-		v = newVal(fmt.Sprintf("%v", t.str))
+		//v = newVal(fmt.Sprintf("%v", t.str))
+		str := strings.Replace(t.str, "\\n", "\n", -1)
+		v = newVal(str)
 		return
 	}
 	if t.isIdentifier() && (t.str == "true" || t.str == "false") {
 		b, err := strconv.ParseBool(t.str)
-		assert(err!=nil, t.String(), "line:", t.lineIndex)
+		assert(err != nil, t.String(), "line:", t.lineIndex)
 		v = newVal(b)
 		return
 	}
 	return nil
 }
-

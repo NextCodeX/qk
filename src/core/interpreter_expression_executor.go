@@ -127,13 +127,9 @@ func (executor *ExpressionExecutor) executeFunctionCallExpression(primaryExpr *P
 		return executor.executeCustomFunction(customFunc, argVals)
 	}
 
-	if functionName == "println" {
+	if  isPrint(functionName) {
 		argRawVals := executor.toGoTypeValues(args)
-		if len(argRawVals) < 1 {
-			fmt.Println()
-		}else{
-			fmt.Println(argRawVals...)
-		}
+		executePrintFunc(functionName, argRawVals)
 	}
 	return nil
 }

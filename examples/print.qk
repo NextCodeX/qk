@@ -1,0 +1,7 @@
+println("it's ok?")
+
+printf("NO, understand? %v-_- ---> \n", "ruic")
+
+print("en, yeah!")
+
+print("you are right.", "yark")
