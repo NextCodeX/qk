@@ -11,7 +11,7 @@ import (
 
 func init()  {
 	f := &File{}
-	collectFunctionInfo(&f, "name")
+	collectFunctionInfo(&f, "file")
 }
 
 type File struct {
@@ -36,13 +36,13 @@ func (f *File) Content(filename string) string {
 	return ""
 }
 
-func (f *File) Lines(filename string) []string {
+func (f *File) Lines(filename string) []interface{} {
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to read %v file: %v", filename, err.Error()))
 		return nil
 	}
-	var res []string
+	var res []interface{}
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		res = append(res, scanner.Text())

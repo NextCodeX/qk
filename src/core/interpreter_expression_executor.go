@@ -127,9 +127,14 @@ func (executor *ExpressionExecutor) executeFunctionCallExpression(primaryExpr *P
 		return executor.executeCustomFunction(customFunc, argVals)
 	}
 
-	if  isPrint(functionName) {
+	if isPrint(functionName) {
 		argRawVals := executor.toGoTypeValues(args)
 		executePrintFunc(functionName, argRawVals)
+	}
+
+	if isModuleFunc(functionName) {
+		argRawVals := executor.toGoTypeValues(args)
+		return executeModuleFunc(functionName, argRawVals)
 	}
 	return nil
 }

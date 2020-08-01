@@ -25,7 +25,8 @@ func Run() {
     //qkfile := "examples/forindex-stmt.qk"
     //qkfile := "examples/func.qk"
     //qkfile := "examples/for-continue-break.qk"
-    qkfile := "examples/print.qk"
+    //qkfile := "examples/print.qk"
+    qkfile := "examples/file-test1.qk"
 
     bs, _ := ioutil.ReadFile(qkfile)
 

@@ -24,6 +24,10 @@ func newJSONObject(ts []Token) JSONObject {
     return &JSONObjectImpl{ts:ts}
 }
 
+func toJSONObject(v map[string]*Value) JSONObject {
+    return &JSONObjectImpl{val:v, parsedFlag:true}
+}
+
 func (obj *JSONObjectImpl) init() {
     obj.parsedFlag = true
     obj.val =  make(map[string]*Value)

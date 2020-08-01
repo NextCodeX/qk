@@ -8,7 +8,30 @@ import (
     "regexp"
     "strings"
     "testing"
+    "reflect"
 )
+
+
+func Test_a(t *testing.T) {
+    t1 := reflect.TypeOf(22)
+    t2 := reflect.TypeOf("sss")
+    t3 := reflect.TypeOf(false)
+    t11 := reflect.TypeOf(2222)
+    t22 := reflect.TypeOf("sss33")
+    t33 := reflect.TypeOf(true)
+    fmt.Println(t1 == t2)
+    fmt.Println(t1 == t3)
+    fmt.Println(t2 == t3)
+    fmt.Println("=============")
+    fmt.Println(t1 == t1)
+    fmt.Println(t2 == t2)
+    fmt.Println(t3 == t3)
+    fmt.Println("=============")
+    fmt.Println(t1 == t11)
+    fmt.Println(t2 == t22)
+    fmt.Println(t3 == t33)
+}
+
 
 func Test_insertsql(t *testing.T) {
     fields := `taskId, taskName, sourceAppId, targetAppId, sourceDbType, targetDbType, taskStatus, taskGroup, description, ext, createdDate, createdBy, lastUpdateDate, lastUpdatedBy`

@@ -23,19 +23,19 @@ func collectFunctionInfo(obj interface{}, moduleName string)  {
 		incount := methodType.NumIn()
 		for ii := 0; ii < incount; ii++ {
 			argType := methodType.In(ii)
-			funcExe.ins = append(funcExe.ins, argType)
+			funcExe.Ins = append(funcExe.Ins, argType)
 		}
 
 		// out params
 		outcount := methodType.NumOut()
 		for ii := 0; ii < outcount; ii++ {
 			argType := methodType.Out(ii)
-			funcExe.outs = append(funcExe.outs, argType)
+			funcExe.Outs = append(funcExe.Outs, argType)
 		}
 
-		funcExe.obj = methodObject
-		funcExe.name = standardName(moduleName, methodName)
-		funcs[funcExe.name] = funcExe
+		funcExe.Obj = methodObject
+		funcExe.Name = standardName(moduleName, methodName)
+		funcs[funcExe.Name] = funcExe
 	}
 }
 

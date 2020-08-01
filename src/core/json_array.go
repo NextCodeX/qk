@@ -23,6 +23,10 @@ func newJSONArray(ts []Token) JSONArray {
     return &JSONArrayImpl{ts:ts}
 }
 
+func toJSONArray(v []*Value) JSONArray {
+    return &JSONArrayImpl{val:v, parsedFlag:true}
+}
+
 func (obj *JSONArrayImpl) setParsed() {
     obj.parsedFlag = true
 }
