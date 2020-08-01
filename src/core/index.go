@@ -16,17 +16,7 @@ var (
 const DEBUG_MODE = true
 
 func Run() {
-    //qkfile := "examples/demo.qk"
-    //qkfile := "examples/expr.qk"
-    //qkfile := "examples/if-stmt.qk"
-    //qkfile := "examples/for-stmt2.qk"
-    //qkfile := "examples/foreach-stmt.qk"
-    //qkfile := "examples/foritem-stmt.qk"
-    //qkfile := "examples/forindex-stmt.qk"
-    //qkfile := "examples/func.qk"
-    //qkfile := "examples/for-continue-break.qk"
-    //qkfile := "examples/print.qk"
-    qkfile := "examples/file-test1.qk"
+    qkfile := "examples/object-test1.qk"
 
     bs, _ := ioutil.ReadFile(qkfile)
 

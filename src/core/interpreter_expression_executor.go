@@ -661,8 +661,28 @@ func (executor *ExpressionExecutor) evalPrimaryExpr(primaryExpr *PrimaryExpr) *V
 	if primaryExpr.isFunctionCall() {
 		return executor.executeFunctionCallExpression(primaryExpr)
 	}
+	if primaryExpr.isMethodCall() {
+		return executor.executeMethodCallExpression(primaryExpr)
+	}
 
 	return NULL
+}
+
+func (executor *ExpressionExecutor) executeMethodCallExpression(primaryExpr *PrimaryExpr) (res *Value) {
+	caller := primaryExpr.caller
+	methodName := primaryExpr.name
+	args := primaryExpr.args
+
+	variable := executor.stack.searchVariable(caller)
+	argRawVals := executor.toGoTypeValues(args)
+	if variable.isArrayValue() {
+		return evalJSONArrayMethod(variable.arr_value, methodName, argRawVals)
+	}
+	if variable.isObjectValue() {
+		return evalJSONObjectMethod(variable.obj_value, methodName, argRawVals)
+	}
+
+	return nil
 }
 
 func (executor *ExpressionExecutor) parseJSONObject(object JSONObject) {
@@ -674,6 +694,9 @@ func (executor *ExpressionExecutor) parseJSONObject(object JSONObject) {
 	size := len(ts)
 	for i:=0; i<size; i++ {
 		token := ts[i]
+		if ts[i+2].assertSymbol("[") {
+			extractArrayLiteral(i+2, ts)
+		}
 		nextCommaIndex := nextSymbolIndex(ts, i, ",")
 		if nextCommaIndex < 0 {
 			nextCommaIndex = size

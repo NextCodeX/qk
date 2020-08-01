@@ -82,6 +82,8 @@ func parseUnaryExpression(ts []Token) *Expression {
 		expr.t = AttributeExpression
 	case token.isFcall():
 		expr.t = FunctionCallExpression
+	case token.isMtcall():
+		expr.t = MethodCallExpression
 	default:
 		runtimeExcption("unknow expression:", token.String())
 
@@ -396,6 +398,10 @@ func parsePrimaryExpression(t *Token) *PrimaryExpr {
 	} else if t.isFcall() {
 		exprs := getArgExprsFromToken(t.ts)
 		res = &PrimaryExpr{name: t.str, args: exprs, t: FunctionCallPrimaryExpressionType}
+
+	} else if t.isMtcall() {
+		exprs := getArgExprsFromToken(t.ts)
+		res = &PrimaryExpr{name: t.str, caller:t.caller, args: exprs, t: MethodCallPrimaryExpressionType}
 
 	} else {
 		res = &PrimaryExpr{name: t.str, t: VarPrimaryExpressionType}

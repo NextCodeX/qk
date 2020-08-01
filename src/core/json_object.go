@@ -1,16 +1,23 @@
 package core
 
+import (
+	"bytes"
+	"fmt"
+)
 
 type JSONObject interface {
     parsed() bool
     init()
     size() int
     exist(key string) bool
+    remove(key string)
     put(key string, value *Value)
     get(key string) *Value
     keys() []string
     values() []*Value
     tokens() []Token
+    String() string
+	toJSONObjectString() string
     Iterator
 }
 
@@ -39,6 +46,10 @@ func (obj *JSONObjectImpl) parsed() bool {
 
 func (obj *JSONObjectImpl) size() int {
     return len(obj.val)
+}
+
+func (obj *JSONObjectImpl) remove(key string) {
+    delete(obj.val, key)
 }
 
 func (obj *JSONObjectImpl) exist(key string) bool {
@@ -77,6 +88,38 @@ func (obj *JSONObjectImpl) values() []*Value {
 
 func (obj *JSONObjectImpl) tokens() []Token {
     return obj.ts
+}
+
+func (obj *JSONObjectImpl) String() string {
+	return obj.toJSONObjectString()
+}
+
+func (obj *JSONObjectImpl) toJSONObjectString() string {
+	var res bytes.Buffer
+	res.WriteString("{")
+	var i int
+	for k, v := range obj.val {
+		kstr := fmt.Sprintf(`"%v"`, k)
+		var rawVal interface{}
+		if v.isStringValue() {
+			rawVal = fmt.Sprintf(`"%v"`, v.str_value)
+		} else if v.isObjectValue() {
+			rawVal = v.obj_value.toJSONObjectString()
+		} else if v.isArrayValue() {
+			rawVal = v.arr_value.toJSONArrayString()
+		} else {
+			rawVal = v.val()
+		}
+		if i < 1 {
+			i++
+			res.WriteString(fmt.Sprintf("%v:%v", kstr, rawVal))
+		} else {
+			res.WriteString(fmt.Sprintf(", %v:%v", kstr, rawVal))
+		}
+	}
+	res.WriteString("}")
+
+	return res.String()
 }
 
 func (obj *JSONObjectImpl) indexs() []interface{} {

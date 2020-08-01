@@ -1,0 +1,18 @@
+obj = {
+    name: "car",
+    special: "carry",
+    food: "oil",
+    color: ["red", "yellow", "black"]
+}
+
+printf("size: %v, values: %v \n", obj.size(), obj)
+
+obj.weight = 998
+obj.isNew = false
+printf("size: %v, values: %v \n", obj.size(), obj)
+
+obj.remove("special")
+printf("size: %v, values: %v \n", obj.size(), obj)
+
+println("contain name:", obj.contain("name"))
+println("contain special:", obj.contain("special"))

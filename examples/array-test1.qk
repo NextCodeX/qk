@@ -1,0 +1,10 @@
+arr = []
+printf("size: %v, values: %v \n", arr.size(), arr)
+
+
+arr.add(1, false, "D")
+printf("size: %v, values: %v \n", arr.size(), arr)
+
+
+arr.remove(1)
+printf("size: %v, values: %v \n", arr.size(), arr)

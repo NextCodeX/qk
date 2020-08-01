@@ -1,15 +1,23 @@
 package core
 
+import (
+    "bytes"
+    "fmt"
+)
+
 type JSONArray interface {
     setParsed()
     parsed() bool
     size() int
     add(elem *Value)
+    remove(index int)
     set(index int, elem *Value)
     get(index int) *Value
     checkOutofIndex(index int) bool
     values() []*Value
     tokens() []Token
+    String() string
+    toJSONArrayString() string
     Iterator
 }
 
@@ -27,12 +35,12 @@ func toJSONArray(v []*Value) JSONArray {
     return &JSONArrayImpl{val:v, parsedFlag:true}
 }
 
-func (obj *JSONArrayImpl) setParsed() {
-    obj.parsedFlag = true
+func (arr *JSONArrayImpl) setParsed() {
+    arr.parsedFlag = true
 }
 
-func (obj *JSONArrayImpl) parsed() bool {
-    return obj.val != nil
+func (arr *JSONArrayImpl) parsed() bool {
+    return arr.val != nil
 }
 
 func (arr *JSONArrayImpl) size() int {
@@ -41,6 +49,16 @@ func (arr *JSONArrayImpl) size() int {
 
 func (arr *JSONArrayImpl) add(elem *Value) {
     arr.val = append(arr.val, elem)
+}
+
+func (arr *JSONArrayImpl)  remove(index int) {
+    assert(arr.checkOutofIndex(index), "array out of index")
+    newList := make([]*Value, 0, arr.size())
+    newList = append(newList, arr.val[:index]...)
+    if index + 1 < arr.size() {
+        newList = append(newList, arr.val[index+1:]...)
+    }
+    arr.val = newList
 }
 
 func (arr *JSONArrayImpl) set(index int, elem *Value) {
@@ -62,19 +80,47 @@ func (arr *JSONArrayImpl) values() []*Value {
     return arr.val
 }
 
-func (obj *JSONArrayImpl) tokens() []Token {
-    return obj.ts
+func (arr *JSONArrayImpl) tokens() []Token {
+    return arr.ts
 }
 
-func (obj *JSONArrayImpl) indexs() []interface{} {
+func (arr *JSONArrayImpl) String() string {
+    return arr.toJSONArrayString()
+}
+
+func (arr *JSONArrayImpl) toJSONArrayString() string {
+    var res bytes.Buffer
+    res.WriteString("[")
+    for i, item := range arr.val {
+        var rawVal interface{}
+        if item.isStringValue() {
+            rawVal = fmt.Sprintf(`"%v"`, item.str_value)
+        } else if item.isObjectValue() {
+            rawVal = item.obj_value.toJSONObjectString()
+        } else if item.isArrayValue() {
+            rawVal = item.arr_value.toJSONArrayString()
+        } else {
+            rawVal = item.val()
+        }
+        if i < 1 {
+            res.WriteString(fmt.Sprintf("%v", rawVal))
+        } else {
+            res.WriteString(fmt.Sprintf(", %v", rawVal))
+        }
+    }
+    res.WriteString("]")
+    return res.String()
+}
+
+func (arr *JSONArrayImpl) indexs() []interface{} {
     var res []interface{}
-    for i := range obj.val {
+    for i := range arr.val {
         res = append(res, i)
     }
     return res
 }
 
-func (obj *JSONArrayImpl) getItem(index interface{}) *Value {
+func (arr *JSONArrayImpl) getItem(index interface{}) *Value {
     i := index.(int)
-    return obj.val[i]
+    return arr.val[i]
 }
