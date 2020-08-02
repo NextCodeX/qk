@@ -76,7 +76,8 @@ func evalStringMethod(str string, method string, args []interface{}) (res *Value
 		assert(len(args)<1, "method string.split must has one parameter.")
 		reg, ok := args[0].(string)
 		assert(!ok, "parameter type error, require split(string)")
-		rawVal = strings.Split(str, reg)
+		tmp := toCommonSlice(strings.Split(str, reg))
+		return toQKValue(tmp)
 
 	default:
 		runtimeExcption(fmt.Sprintf("string.%v is undefined.", method))
