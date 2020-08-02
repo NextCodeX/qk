@@ -1,9 +1,14 @@
+color = "strawberry"
+
 obj = {
     name: "car",
     special: "carry",
     food: "oil",
-    color: ["red", "yellow", "black"]
+    colors: ["red", color, "black"]
 }
+
+color = "gray"
+println("after change color value:", color)
 
 printf("size: %v, values: %v \n", obj.size(), obj)
 
@@ -16,3 +21,7 @@ printf("size: %v, values: %v \n", obj.size(), obj)
 
 println("contain name:", obj.contain("name"))
 println("contain special:", obj.contain("special"))
+
+list = obj.colors
+println("arr vals:", list, list.size())
+println("arr value:", list[1])

@@ -1,14 +1,13 @@
 package core
 
 import (
-	"module"
 	"reflect"
 )
 
-var moduleFuncs map[string]*module.FunctionExecutor
+var moduleFuncs map[string]*FunctionExecutor
 
 func init()  {
-	moduleFuncs = module.Load()
+	moduleFuncs = Load()
 }
 
 func isModuleFunc(funcName string) bool {
@@ -67,7 +66,7 @@ func isDecomposable(v interface{}) bool {
 	return kind == reflect.Map || kind == reflect.Slice
 }
 
-func extractModuleFuncArgs(f *module.FunctionExecutor, args []interface{}) []reflect.Value {
+func extractModuleFuncArgs(f *FunctionExecutor, args []interface{}) []reflect.Value {
 	if len(args) < len(f.Ins) {
 		runtimeExcption("execute", f.Name, ", arguments is too less")
 		return nil

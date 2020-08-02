@@ -693,16 +693,28 @@ func (executor *ExpressionExecutor) parseJSONObject(object JSONObject) {
 	ts := clearBraces(object.tokens())
 	size := len(ts)
 	for i:=0; i<size; i++ {
-		token := ts[i]
+
+		var nextCommaIndex int
+		var exprTokens []Token
 		if ts[i+2].assertSymbol("[") {
-			extractArrayLiteral(i+2, ts)
+			complexToken, endIndex := extractArrayLiteral(i+2, ts)
+			nextCommaIndex = endIndex+1
+			exprTokens = append(exprTokens, complexToken)
+		} else if ts[i+2].assertSymbol("{") {
+			complexToken, endIndex := extractObjectLiteral(i+2, ts)
+			nextCommaIndex = endIndex+1
+			exprTokens = append(exprTokens, complexToken)
+		} else {
+			nextCommaIndex = nextSymbolIndex(ts, i, ",")
+			if nextCommaIndex < 0 {
+				nextCommaIndex = size
+			}
+			exprTokens = ts[i+2:nextCommaIndex]
 		}
-		nextCommaIndex := nextSymbolIndex(ts, i, ",")
-		if nextCommaIndex < 0 {
-			nextCommaIndex = size
-		}
+
+		token := ts[i]
 		keyname := token.str
-		exprTokens := ts[i+2:nextCommaIndex]
+
 		expr := extractExpression(exprTokens)
 		val := executor.evalNewExpression(expr)
 		object.put(keyname, val)
@@ -717,11 +729,24 @@ func (executor *ExpressionExecutor) parseJSONArray(array JSONArray) {
 	ts := clearBrackets(array.tokens())
 	size := len(ts)
 	for i:=0; i<size; i++ {
-		nextCommaIndex := nextSymbolIndex(ts, i, ",")
-		if nextCommaIndex < 0 {
-			nextCommaIndex = size
+		var nextCommaIndex int
+		var exprTokens []Token
+		if ts[i].assertSymbol("[") {
+			complexToken, endIndex := extractArrayLiteral(i, ts)
+			nextCommaIndex = endIndex+1
+			exprTokens = append(exprTokens, complexToken)
+		} else if ts[i].assertSymbol("{") {
+			complexToken, endIndex := extractObjectLiteral(i, ts)
+			nextCommaIndex = endIndex+1
+			exprTokens = append(exprTokens, complexToken)
+		} else {
+			nextCommaIndex = nextSymbolIndex(ts, i, ",")
+			if nextCommaIndex < 0 {
+				nextCommaIndex = size
+			}
+			exprTokens = ts[i:nextCommaIndex]
 		}
-		exprTokens := ts[i:nextCommaIndex]
+
 		expr := extractExpression(exprTokens)
 		val := executor.evalNewExpression(expr)
 		array.add(val)

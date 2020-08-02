@@ -1,4 +1,4 @@
-package module
+package core
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 )
 
-func init()  {
+func fileModuleInit()  {
 	f := &File{}
 	collectFunctionInfo(&f, "file")
 }

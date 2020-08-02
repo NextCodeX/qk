@@ -1,4 +1,4 @@
-package module
+package core
 
 import (
 	"fmt"
@@ -45,5 +45,6 @@ func standardName(moduleName, methodName string) string {
 
 func Load() map[string]*FunctionExecutor {
 	fmt.Println("register all module...")
+	fileModuleInit()
 	return funcs
 }
