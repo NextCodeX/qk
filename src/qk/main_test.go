@@ -12,6 +12,12 @@ import (
 )
 
 
+func Test_str(t *testing.T) {
+    str := "hello"
+    fmt.Println(str[1:1], len(str[1:1]))
+    fmt.Println(str[1:2], len(str[1:2]))
+}
+
 func Test_a(t *testing.T) {
     t1 := reflect.TypeOf(22)
     t2 := reflect.TypeOf("sss")

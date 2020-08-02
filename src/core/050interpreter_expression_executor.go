@@ -681,6 +681,9 @@ func (executor *ExpressionExecutor) executeMethodCallExpression(primaryExpr *Pri
 	if variable.isObjectValue() {
 		return evalJSONObjectMethod(variable.obj_value, methodName, argRawVals)
 	}
+	if variable.isStringValue() {
+		return evalStringMethod(variable.str_value, methodName, argRawVals)
+	}
 
 	return nil
 }
@@ -692,11 +695,18 @@ func (executor *ExpressionExecutor) parseJSONObject(object JSONObject) {
 	object.init()
 	ts := clearBraces(object.tokens())
 	size := len(ts)
+
+	if size < 1 {
+		return
+	}
+
 	for i:=0; i<size; i++ {
 
 		var nextCommaIndex int
 		var exprTokens []Token
-		if ts[i+2].assertSymbol("[") {
+		if i+2 >= size {
+			runtimeExcption("error jsonobject literal:", tokensString(ts))
+		} else if ts[i+2].assertSymbol("[") {
 			complexToken, endIndex := extractArrayLiteral(i+2, ts)
 			nextCommaIndex = endIndex+1
 			exprTokens = append(exprTokens, complexToken)
@@ -728,6 +738,11 @@ func (executor *ExpressionExecutor) parseJSONArray(array JSONArray) {
 	}
 	ts := clearBrackets(array.tokens())
 	size := len(ts)
+
+	if size < 1 {
+		return
+	}
+
 	for i:=0; i<size; i++ {
 		var nextCommaIndex int
 		var exprTokens []Token
