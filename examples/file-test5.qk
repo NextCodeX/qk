@@ -1,0 +1,5 @@
+
+flist = file_scan("/home/changlie/test")
+forv item : flist {
+    println(item)
+}

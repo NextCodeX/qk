@@ -1,0 +1,8 @@
+s = "
+hello wole
+jky
+wel to qk.
+"
+file_out("/home/changlie/test/out.txt", s)
+
+file_append("/home/changlie/test/out.txt", "final line\n")

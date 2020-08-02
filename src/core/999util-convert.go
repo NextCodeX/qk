@@ -30,6 +30,9 @@ func toCommonSlice(any interface{}) []interface{} {
 
 
 func toQKValue(v interface{}) *Value {
+	if v == nil {
+		return NULL
+	}
 	typ := reflect.TypeOf(v)
 	kind := typ.Kind()
 	switch kind {

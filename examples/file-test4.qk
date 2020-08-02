@@ -1,0 +1,3 @@
+
+args = file_args("/home/changlie/test/args.txt")
+print(args)

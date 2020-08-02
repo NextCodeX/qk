@@ -13,5 +13,7 @@ It's my golang util wapper,  a script language like JavaScript.
 6. net handler -- waiting
 
 ### syntax and tool
-1. chain call
-2. the running script file to select
+1. chain call -- waiting
+2. method executor -- waiting
+3. error handler -- waiting
+4. the running script file to select --waiting

@@ -32,6 +32,9 @@ type Value struct {
 }
 
 func newVal(rawVal interface{}) *Value {
+    if rawVal == nil {
+        return NULL
+    }
     var val *Value
     switch v := rawVal.(type) {
     case int:

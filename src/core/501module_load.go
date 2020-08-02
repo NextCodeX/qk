@@ -8,6 +8,12 @@ import (
 
 var funcs =  make(map[string]*FunctionExecutor)
 
+func Load() map[string]*FunctionExecutor {
+	fmt.Println("register all module...")
+	fileModuleInit()
+	stringModuleInit()
+	return funcs
+}
 
 func collectFunctionInfo(obj interface{}, moduleName string)  {
 	v1 := reflect.ValueOf(obj).Elem()
@@ -43,8 +49,4 @@ func standardName(moduleName, methodName string) string {
 	return fmt.Sprintf("%v_%v%v", moduleName, strings.ToLower(methodName[:1]), methodName[1:])
 }
 
-func Load() map[string]*FunctionExecutor {
-	fmt.Println("register all module...")
-	fileModuleInit()
-	return funcs
-}
+
