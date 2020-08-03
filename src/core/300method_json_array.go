@@ -9,11 +9,11 @@ func evalJSONArrayMethod(arr JSONArray, method string, args []interface{}) (res 
 
 	switch method {
 	case "size":
-		return newVal(arr.size())
+		return newQkValue(arr.size())
 
 	case "add":
 		for _, arg := range args {
-			arr.add(newVal(arg))
+			arr.add(newQkValue(arg))
 		}
 
 	case "remove":
@@ -35,7 +35,7 @@ func evalJSONArrayMethod(arr JSONArray, method string, args []interface{}) (res 
 			valStr := fmt.Sprintf("%v", val.val())
 			res.WriteString(valStr)
 		}
-		return newVal(res.String())
+		return newQkValue(res.String())
 
 	default:
 		runtimeExcption(fmt.Sprintf("array.%v is undefined!", method))

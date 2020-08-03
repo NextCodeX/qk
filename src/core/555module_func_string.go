@@ -15,7 +15,7 @@ type QkString struct {
 	
 }
 
-func (s *QkString) Uuid() string {
+func (s *QkString) RawUUID() string {
 	bs := make([]byte, 16)
 	_, err := rand.Read(bs)
 	if err != nil {
@@ -25,7 +25,7 @@ func (s *QkString) Uuid() string {
 	return uuid
 }
 
-func (s *QkString) Rawuuid() string {
+func (s *QkString) Uuid() string {
 	bs := make([]byte, 16)
 	_, err := rand.Read(bs)
 	if err != nil {
@@ -33,4 +33,11 @@ func (s *QkString) Rawuuid() string {
 	}
 	rawuuid := fmt.Sprintf("%x", bs)
 	return rawuuid
+}
+
+func (s *QkString) Format(args []interface{}) string {
+	assert(len(args) < 2,"function str_format(format, any...) must has two parameters.")
+	format, ok := args[0].(string)
+	assert(!ok, "function str_format(format, any...), parameter format must be string type.")
+	return fmt.Sprintf(format, args[1:]...)
 }

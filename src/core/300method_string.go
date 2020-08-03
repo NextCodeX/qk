@@ -86,6 +86,6 @@ func evalStringMethod(str string, method string, args []interface{}) (res *Value
 	if rawVal == nil {
 		return
 	}
-	return newVal(rawVal)
+	return newQkValue(rawVal)
 
 }

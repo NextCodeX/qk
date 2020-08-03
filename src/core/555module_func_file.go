@@ -104,11 +104,17 @@ func (f *File) Args(filename string) []interface{} {
 
 func (f *File) Scan(path string) []interface{} {
 	var res []interface{}
-	doScan(path, &res)
+	doScan(path, false, &res)
 	return res
 }
 
-func doScan(path string, res *[]interface{})  {
+func (f *File) ScanAll(path string) []interface{} {
+	var res []interface{}
+	doScan(path, false, &res)
+	return res
+}
+
+func doScan(path string, scanAll bool, res *[]interface{})  {
 	if !isDir(path) {
 		log.Fatal(path, "is not directory.")
 		return
@@ -121,8 +127,10 @@ func doScan(path string, res *[]interface{})  {
 	for _, f := range fs {
 		nextPath := filepath.Join(path, f.Name())
 		if f.IsDir() {
-			*res = append(*res, nextPath)
-			doScan(nextPath, res)
+			if scanAll {
+				*res = append(*res, nextPath)
+			}
+			doScan(nextPath, scanAll, res)
 			continue
 		}
 		*res = append(*res, nextPath)

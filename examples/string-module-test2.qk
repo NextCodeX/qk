@@ -1,0 +1,4 @@
+
+println("string format testing=============")
+
+println(str_format("He is %v, a blue %v", "tom", "cat"))

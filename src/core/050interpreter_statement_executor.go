@@ -151,7 +151,7 @@ func executeForeachStatement(stmt *Statement, stack *VariableStack) (res *Statem
 	for _, index := range indexs {
 
 		if !stmt.isForItemStatement() {
-			i := newVal(index)
+			i := newQkValue(index)
 			stack.addLocalVariable(fpi.indexName, i)
 		}
 		if !stmt.isForIndexStatement() {

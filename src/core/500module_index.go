@@ -22,14 +22,18 @@ func executeModuleFunc(funcName string, args []interface{}) *Value {
 	return toQKValue(res)
 }
 
-
-
 func extractModuleFuncArgs(f *FunctionExecutor, args []interface{}) []reflect.Value {
+	var res []reflect.Value
+	if len(f.Ins) == 1 && f.Ins[0].Kind() == reflect.Slice {
+		res = append(res, reflect.ValueOf(args))
+		return res
+	}
+
 	if len(args) < len(f.Ins) {
 		runtimeExcption("execute", f.Name, ", arguments is too less")
 		return nil
 	}
-	var res []reflect.Value
+
 	for i, t := range f.Ins {
 		arg := args[i]
 		if t != reflect.TypeOf(arg) {

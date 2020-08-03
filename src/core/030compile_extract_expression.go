@@ -1,10 +1,5 @@
 package core
 
-import (
-	"strconv"
-	"strings"
-)
-
 func extractExpression(ts []Token) *Expression {
 	var expr *Expression
 
@@ -448,38 +443,4 @@ func extractExpressionTokensByComma(currentIndex int, ts []Token) (exprTokens []
 	return exprTokens, nextIndex
 }
 
-func tokenToValue(t *Token) (v *Value) {
-	if t.isArrLiteral() {
-		v := newJSONArray(t.ts)
-		return newVal(v)
-	}
-	if t.isObjLiteral() {
-		v := newJSONObject(t.ts)
-		return newVal(v)
-	}
-	if t.isFloat() {
-		f, err := strconv.ParseFloat(t.str, 64)
-		assert(err != nil, t.String(), "line:", t.lineIndex)
-		v = newVal(f)
-		return
-	}
-	if t.isInt() {
-		i, err := strconv.Atoi(t.str)
-		assert(err != nil, t.String(), "line:", t.lineIndex)
-		v = newVal(i)
-		return
-	}
-	if t.isStr() {
-		//v = newVal(fmt.Sprintf("%v", t.str))
-		str := strings.Replace(t.str, "\\n", "\n", -1)
-		v = newVal(str)
-		return
-	}
-	if t.isIdentifier() && (t.str == "true" || t.str == "false") {
-		b, err := strconv.ParseBool(t.str)
-		assert(err != nil, t.String(), "line:", t.lineIndex)
-		v = newVal(b)
-		return
-	}
-	return nil
-}
+

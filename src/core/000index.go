@@ -16,8 +16,7 @@ var (
 const DEBUG_MODE = true
 
 func Run() {
-    qkfile := "examples/file-test5.qk"
-    //qkfile := "examples/string-module-test1.qk"
+    qkfile := "examples/string-module-test2.qk"
 
     bs, _ := ioutil.ReadFile(qkfile)
 

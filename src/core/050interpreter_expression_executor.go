@@ -225,7 +225,7 @@ func (executor *ExpressionExecutor) evalAndBinaryExpression() (res *Value) {
 	default:
 		runtimeExcption("evalAndBinaryExpression Exception:", tokensString(expr.raw))
 	}
-	res = newVal(tmpVal)
+	res = newQkValue(tmpVal)
 	return res
 }
 
@@ -241,7 +241,7 @@ func (executor *ExpressionExecutor) evalOrBinaryExpression() (res *Value) {
 	default:
 		runtimeExcption("evalOrBinaryExpression Exception:", tokensString(expr.raw))
 	}
-	res = newVal(tmpVal)
+	res = newQkValue(tmpVal)
 	return res
 }
 
@@ -267,7 +267,7 @@ func (executor *ExpressionExecutor) evalEqBinaryExpression() (res *Value) {
 	default:
 		tmpVal = false
 	}
-	res = newVal(tmpVal)
+	res = newQkValue(tmpVal)
 	return res
 }
 
@@ -291,7 +291,7 @@ func (executor *ExpressionExecutor) evalGtBinaryExpression() (res *Value) {
 	default:
 		tmpVal = false
 	}
-	res = newVal(tmpVal)
+	res = newQkValue(tmpVal)
 	return res
 }
 
@@ -315,19 +315,19 @@ func (executor *ExpressionExecutor) evalLtBinaryExpression() (res *Value) {
 	default:
 		tmpVal = false
 	}
-	res = newVal(tmpVal)
+	res = newQkValue(tmpVal)
 	return res
 }
 
 func (executor *ExpressionExecutor) evalGeBinaryExpression() (res *Value) {
 	tmpVal := executor.evalGtBinaryExpression().bool_value || executor.evalEqBinaryExpression().bool_value
-	res = newVal(tmpVal)
+	res = newQkValue(tmpVal)
 	return res
 }
 
 func (executor *ExpressionExecutor) evalLeBinaryExpression() (res *Value) {
 	tmpVal := executor.evalLtBinaryExpression().bool_value || executor.evalEqBinaryExpression().bool_value
-	res = newVal(tmpVal)
+	res = newQkValue(tmpVal)
 	return res
 }
 
@@ -459,7 +459,7 @@ func (executor *ExpressionExecutor) evalAddBinaryExpression() (res *Value) {
 		runtimeExcption("unknow operation:", left.val(), "+", right.val(), " -> ", executor.expr.RawString())
 	}
 
-	res = newVal(tmpVal)
+	res = newQkValue(tmpVal)
 	return res
 }
 
@@ -483,7 +483,7 @@ func (executor *ExpressionExecutor) evalSubBinaryExpression() (res *Value) {
 	default:
 		runtimeExcption("unknow operation:", left.val(), "-", right.val())
 	}
-	res = newVal(tmpVal)
+	res = newQkValue(tmpVal)
 	return res
 }
 
@@ -507,7 +507,7 @@ func (executor *ExpressionExecutor) evalMulBinaryExpression() (res *Value) {
 	default:
 		runtimeExcption("unknow operation:", left.val(), "*", right.val())
 	}
-	res = newVal(tmpVal)
+	res = newQkValue(tmpVal)
 	return res
 }
 
@@ -534,7 +534,7 @@ func (executor *ExpressionExecutor) evalDivBinaryExpression() (res *Value) {
 	default:
 		runtimeExcption("unknow operation:", left.val(), "/", right.val())
 	}
-	res = newVal(tmpVal)
+	res = newQkValue(tmpVal)
 	return res
 }
 
@@ -552,7 +552,7 @@ func (executor *ExpressionExecutor) evalModBinaryExpression() (res *Value) {
 	default:
 		runtimeExcption("unknow operation:", left.val(), "%", right.val())
 	}
-	res = newVal(tmpVal)
+	res = newQkValue(tmpVal)
 	return res
 }
 
