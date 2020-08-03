@@ -34,24 +34,39 @@ func Run() {
     Interpret()
 }
 
-func printFunc() {
-    doPrintFunc(mainFunc)
-    for _, fn := range funcList {
-        doPrintFunc(fn)
+func ParseTokens(bs []byte) []Token {
+    // 提取原始token列表
+    ts := parse4PrimaryTokens(bs)
+
+    // 语法预处理
+    // 提取'++', '--'等运算符
+    ts = parse4OperatorTokens(ts)
+    // 去掉无用的';', 合并token生成函数调用token(Fcall), 方法调用token(Mtcall)等复合token
+    ts = parse4ComplexTokens(ts)
+    return ts
+}
+
+func Compile(stmts StatementList) {
+    if stmts == nil {
+        return
+    }
+    if stmts.isCompiled() {
+        return
+    }else {
+        stmts.setCompiled()
+    }
+    extractStatement(stmts)
+    parseStatementList(stmts.stmts())
+
+    for _, customFunc := range funcList {
+        Compile(customFunc)
     }
 }
 
-func doPrintFunc(fn *Function) {
-    fmt.Println("######################", fn.name, len(fn.block))
-    for i, stmt := range fn.block {
-        fmt.Printf("num: %v line %v: \n %v \n", len(stmt.raw), i, stmt)
-    }
-}
-
-func printTokensByLine(tokens []Token) {
-    for i, token := range tokens {
-        fmt.Printf("count %v-%v: [%v] -> %v \n", i, token.lineIndexString(), token.String(), token.TokenTypeName())
-    }
+func Interpret() {
+    stack := newVariableStack()
+    stack.push()
+    executeFunctionStatementList(mainFunc.block, stack)
 }
 
 // 获取命令所在的路径
