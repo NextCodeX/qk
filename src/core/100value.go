@@ -22,13 +22,13 @@ var NULL = &Value{
 
 type Value struct {
     t ValueType
-    int_value int
-    float_value float64
-    bool_value bool
-    str_value string
-    any_value interface{}
-    arr_value JSONArray
-    obj_value JSONObject
+    int int
+    float float64
+    bool bool
+    str string
+    any interface{}
+    jsonArr JSONArray
+    jsonObj JSONObject
 }
 
 func newQkValue(rawVal interface{}) *Value {
@@ -38,19 +38,19 @@ func newQkValue(rawVal interface{}) *Value {
     var val *Value
     switch v := rawVal.(type) {
     case int:
-        val = &Value{t: IntValue, int_value: v}
+        val = &Value{t: IntValue, int: v}
     case float64:
-        val = &Value{t: FloatValue, float_value: v}
+        val = &Value{t: FloatValue, float: v}
     case float32:
-        val = &Value{t: FloatValue, float_value: float64(v)}
+        val = &Value{t: FloatValue, float: float64(v)}
     case bool:
-        val = &Value{t: BooleanValue, bool_value: v}
+        val = &Value{t: BooleanValue, bool: v}
     case string:
-        val = &Value{t: StringValue, str_value: v}
+        val = &Value{t: StringValue, str: v}
     case JSONArray:
-        val = &Value{t: ArrayValue, arr_value: v}
+        val = &Value{t: ArrayValue, jsonArr: v}
     case JSONObject:
-        val = &Value{t: ObjectValue, obj_value: v}
+        val = &Value{t: ObjectValue, jsonObj: v}
     default:
         panic(fmt.Sprintln("unknow exception when newVal:", rawVal))
     }
@@ -60,13 +60,13 @@ func newQkValue(rawVal interface{}) *Value {
 
 func (v *Value) val() interface{} {
     switch {
-    case v.isIntValue(): return v.int_value
-    case v.isFloatValue(): return v.float_value
-    case v.isBooleanValue(): return v.bool_value
-    case v.isStringValue(): return v.str_value
-    case v.isArrayValue(): return v.arr_value
-    case v.isObjectValue(): return v.obj_value
-    case v.isAnyValue(): return v.any_value
+    case v.isIntValue(): return v.int
+    case v.isFloatValue(): return v.float
+    case v.isBooleanValue(): return v.bool
+    case v.isStringValue(): return v.str
+    case v.isArrayValue(): return v.jsonArr
+    case v.isObjectValue(): return v.jsonObj
+    case v.isAnyValue(): return v.any
     }
     return nil
 }

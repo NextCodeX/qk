@@ -94,11 +94,11 @@ func (arr *JSONArrayImpl) toJSONArrayString() string {
     for i, item := range arr.val {
         var rawVal interface{}
         if item.isStringValue() {
-            rawVal = fmt.Sprintf(`"%v"`, item.str_value)
+            rawVal = fmt.Sprintf(`"%v"`, item.str)
         } else if item.isObjectValue() {
-            rawVal = item.obj_value.toJSONObjectString()
+            rawVal = item.jsonObj.toJSONObjectString()
         } else if item.isArrayValue() {
-            rawVal = item.arr_value.toJSONArrayString()
+            rawVal = item.jsonArr.toJSONArrayString()
         } else {
             rawVal = item.val()
         }

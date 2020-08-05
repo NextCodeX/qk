@@ -7,10 +7,10 @@ type Iterator interface {
 
 func toIterator(v *Value) Iterator {
 	if v.isArrayValue() {
-		return v.arr_value
+		return v.jsonArr
 	}
 	if v.isObjectValue() {
-		return v.obj_value
+		return v.jsonObj
 	}
 	return nil
 }

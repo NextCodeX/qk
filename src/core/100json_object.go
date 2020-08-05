@@ -102,11 +102,11 @@ func (obj *JSONObjectImpl) toJSONObjectString() string {
 		kstr := fmt.Sprintf(`"%v"`, k)
 		var rawVal interface{}
 		if v.isStringValue() {
-			rawVal = fmt.Sprintf(`"%v"`, v.str_value)
+			rawVal = fmt.Sprintf(`"%v"`, v.str)
 		} else if v.isObjectValue() {
-			rawVal = v.obj_value.toJSONObjectString()
+			rawVal = v.jsonObj.toJSONObjectString()
 		} else if v.isArrayValue() {
-			rawVal = v.arr_value.toJSONArrayString()
+			rawVal = v.jsonArr.toJSONArrayString()
 		} else {
 			rawVal = v.val()
 		}
