@@ -9,7 +9,7 @@ func extractStatement(stmts StatementList) {
 		var stmt *Statement
 
 		if !t.isIdentifier() && !t.isComplex() {
-			goto next_loop
+			goto nextLoop
 		}
 		switch t.str {
 		case "if":
@@ -34,7 +34,7 @@ func extractStatement(stmts StatementList) {
 				f, endIndex1 := extractFunction(i, ts)
 				funcList[f.name] = f
 				i = endIndex1
-				goto next_loop
+				goto nextLoop
 			}
 			stmt, endIndex = extractExpressionStatement(i, ts)
 
@@ -44,7 +44,7 @@ func extractStatement(stmts StatementList) {
 			i = endIndex
 		}
 
-	next_loop:
+	nextLoop:
 		i++
 	}
 }

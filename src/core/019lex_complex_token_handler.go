@@ -13,7 +13,7 @@ func parse4ComplexTokens(ts []Token) []Token {
 
 		// 处理无用分号
 		if checkUselessBoundary(i, ts, res) {
-			goto end_current_iterate
+			goto endCurrentIterate
 		}
 
 		// 捕获数组的字面值Token
@@ -22,7 +22,7 @@ func parse4ComplexTokens(ts []Token) []Token {
 			if nextIndex > i {
 				res = append(res, complexToken)
 				i = nextIndex
-				goto next_loop
+				goto nextLoop
 			}
 		}
 		// 捕获对象的字面值Token
@@ -31,12 +31,12 @@ func parse4ComplexTokens(ts []Token) []Token {
 			if nextIndex > i {
 				res = append(res, complexToken)
 				i = nextIndex
-				goto next_loop
+				goto nextLoop
 			}
 		}
 
 		if !token.isIdentifier() || i == size-1 {
-			goto token_collect
+			goto tokenCollect
 		}
 
 		// 捕获Attribute类型token
@@ -48,7 +48,7 @@ func parse4ComplexTokens(ts []Token) []Token {
 			}
 			res = append(res, complexToken)
 			i = nextIndex
-			goto next_loop
+			goto nextLoop
 		}
 
 		// 捕获Fcall类型token
@@ -60,7 +60,7 @@ func parse4ComplexTokens(ts []Token) []Token {
 			}
 			res = append(res, complexToken)
 			i = nextIndex
-			goto next_loop
+			goto nextLoop
 		}
 
 		// 捕获Element类型token
@@ -68,16 +68,16 @@ func parse4ComplexTokens(ts []Token) []Token {
 		if nextIndex > i {
 			res = append(res, complexToken)
 			i = nextIndex
-			goto next_loop
+			goto nextLoop
 		}
 
 		// token 原样返回
-	token_collect:
+	tokenCollect:
 		res = append(res, token)
 
-	end_current_iterate:
+	endCurrentIterate:
 		i++
-	next_loop:
+	nextLoop:
 	}
 	return res
 }
