@@ -24,20 +24,20 @@ func executeModuleFunc(funcName string, args []interface{}) *Value {
 
 func extractModuleFuncArgs(f *FunctionExecutor, args []interface{}) []reflect.Value {
 	var res []reflect.Value
-	if len(f.Ins) == 1 && f.Ins[0].Kind() == reflect.Slice {
+	if len(f.ins) == 1 && f.ins[0].Kind() == reflect.Slice {
 		res = append(res, reflect.ValueOf(args))
 		return res
 	}
 
-	if len(args) < len(f.Ins) {
-		runtimeExcption("execute", f.Name, ", arguments is too less")
+	if len(args) < len(f.ins) {
+		runtimeExcption("execute", f.name, ", arguments is too less")
 		return nil
 	}
 
-	for i, t := range f.Ins {
+	for i, t := range f.ins {
 		arg := args[i]
 		if t != reflect.TypeOf(arg) {
-			runtimeExcption("execute", f.Name, ", arguments type is not match!")
+			runtimeExcption("execute", f.name, ", arguments type is not match!")
 			return nil
 		}
 		res = append(res, reflect.ValueOf(arg))

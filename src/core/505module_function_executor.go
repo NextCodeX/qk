@@ -5,14 +5,14 @@ import (
 )
 
 type FunctionExecutor struct {
-	Name string
-	Ins []reflect.Type
-	Outs []reflect.Type
-	Obj reflect.Value
+	name string
+	ins []reflect.Type
+	outs []reflect.Type
+	obj reflect.Value
 }
 
 func (f *FunctionExecutor) Run(args []reflect.Value) interface{} {
-	resList := f.Obj.Call(args)
+	resList := f.obj.Call(args)
 	if len(resList) < 1 {
 		return nil
 	}

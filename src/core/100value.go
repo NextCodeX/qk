@@ -1,6 +1,9 @@
 package core
 
-import "fmt"
+import (
+    "fmt"
+    "reflect"
+)
 
 type ValueType int
 
@@ -22,9 +25,9 @@ var NULL = &Value{
 
 type Value struct {
     t ValueType
-    int int
-    float float64
-    bool bool
+    integer int
+    decimal float64
+    boolean bool
     str string
     any interface{}
     jsonArr JSONArray
@@ -32,19 +35,20 @@ type Value struct {
 }
 
 func newQkValue(rawVal interface{}) *Value {
+    reflect.TypeOf(rawVal).Kind()
     if rawVal == nil {
         return NULL
     }
     var val *Value
     switch v := rawVal.(type) {
     case int:
-        val = &Value{t: IntValue, int: v}
+        val = &Value{t: IntValue, integer: v}
     case float64:
-        val = &Value{t: FloatValue, float: v}
+        val = &Value{t: FloatValue, decimal: v}
     case float32:
-        val = &Value{t: FloatValue, float: float64(v)}
+        val = &Value{t: FloatValue, decimal: float64(v)}
     case bool:
-        val = &Value{t: BooleanValue, bool: v}
+        val = &Value{t: BooleanValue, boolean: v}
     case string:
         val = &Value{t: StringValue, str: v}
     case JSONArray:
@@ -60,9 +64,9 @@ func newQkValue(rawVal interface{}) *Value {
 
 func (v *Value) val() interface{} {
     switch {
-    case v.isIntValue(): return v.int
-    case v.isFloatValue(): return v.float
-    case v.isBooleanValue(): return v.bool
+    case v.isIntValue(): return v.integer
+    case v.isFloatValue(): return v.decimal
+    case v.isBooleanValue(): return v.boolean
     case v.isStringValue(): return v.str
     case v.isArrayValue(): return v.jsonArr
     case v.isObjectValue(): return v.jsonObj

@@ -21,8 +21,8 @@ func (s *QkString) RawUUID() string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	uuid := fmt.Sprintf("%x-%x-%x-%x-%x", bs[0:4], bs[4:6], bs[6:8], bs[8:10], bs[10:])
-	return uuid
+	rawuuid := fmt.Sprintf("%x-%x-%x-%x-%x", bs[0:4], bs[4:6], bs[6:8], bs[8:10], bs[10:])
+	return rawuuid
 }
 
 func (s *QkString) Uuid() string {
@@ -31,8 +31,8 @@ func (s *QkString) Uuid() string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	rawuuid := fmt.Sprintf("%x", bs)
-	return rawuuid
+	uuid := fmt.Sprintf("%x", bs)
+	return uuid
 }
 
 func (s *QkString) Format(args []interface{}) string {

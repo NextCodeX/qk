@@ -220,7 +220,7 @@ func (executor *ExpressionExecutor) evalAndBinaryExpression() (res *Value) {
 	var tmpVal interface{}
 	switch {
 	case left.isBooleanValue() && right.isBooleanValue():
-		tmpVal = left.bool && right.bool
+		tmpVal = left.boolean && right.boolean
 
 	default:
 		runtimeExcption("evalAndBinaryExpression Exception:", tokensString(expr.raw))
@@ -236,7 +236,7 @@ func (executor *ExpressionExecutor) evalOrBinaryExpression() (res *Value) {
 	var tmpVal interface{}
 	switch {
 	case left.isBooleanValue() && right.isBooleanValue():
-		tmpVal = left.bool || right.bool
+		tmpVal = left.boolean || right.boolean
 
 	default:
 		runtimeExcption("evalOrBinaryExpression Exception:", tokensString(expr.raw))
@@ -251,18 +251,18 @@ func (executor *ExpressionExecutor) evalEqBinaryExpression() (res *Value) {
 	var tmpVal interface{}
 	switch {
 	case left.isBooleanValue() && right.isBooleanValue():
-		tmpVal = left.bool == left.bool
+		tmpVal = left.boolean == left.boolean
 	case left.isIntValue() && right.isIntValue():
-		tmpVal = left.int == right.int
+		tmpVal = left.integer == right.integer
 	case left.isFloatValue() && right.isFloatValue():
-		tmpVal = left.float == right.float
+		tmpVal = left.decimal == right.decimal
 	case left.isStringValue() && right.isStringValue():
 		tmpVal = left.str == right.str
 
 	case left.isFloatValue() && right.isIntValue():
-		tmpVal = left.float == float64(right.int)
+		tmpVal = left.decimal == float64(right.integer)
 	case left.isIntValue() && right.isFloatValue():
-		tmpVal = float64(left.int) == right.float
+		tmpVal = float64(left.integer) == right.decimal
 
 	default:
 		tmpVal = false
@@ -277,16 +277,16 @@ func (executor *ExpressionExecutor) evalGtBinaryExpression() (res *Value) {
 	var tmpVal interface{}
 	switch {
 	case left.isIntValue() && right.isIntValue():
-		tmpVal = left.int > right.int
+		tmpVal = left.integer > right.integer
 	case left.isFloatValue() && right.isFloatValue():
-		tmpVal = left.float > right.float
+		tmpVal = left.decimal > right.decimal
 	case left.isStringValue() && right.isStringValue():
 		tmpVal = left.str > right.str
 
 	case left.isFloatValue() && right.isIntValue():
-		tmpVal = left.float > float64(right.int)
+		tmpVal = left.decimal > float64(right.integer)
 	case left.isIntValue() && right.isFloatValue():
-		tmpVal = float64(left.int) > right.float
+		tmpVal = float64(left.integer) > right.decimal
 
 	default:
 		tmpVal = false
@@ -301,16 +301,16 @@ func (executor *ExpressionExecutor) evalLtBinaryExpression() (res *Value) {
 	var tmpVal interface{}
 	switch {
 	case left.isIntValue() && right.isIntValue():
-		tmpVal = left.int < right.int
+		tmpVal = left.integer < right.integer
 	case left.isFloatValue() && right.isFloatValue():
-		tmpVal = left.float < right.float
+		tmpVal = left.decimal < right.decimal
 	case left.isStringValue() && right.isStringValue():
 		tmpVal = left.str < right.str
 
 	case left.isFloatValue() && right.isIntValue():
-		tmpVal = left.float < float64(right.int)
+		tmpVal = left.decimal < float64(right.integer)
 	case left.isIntValue() && right.isFloatValue():
-		tmpVal = float64(left.int) < right.float
+		tmpVal = float64(left.integer) < right.decimal
 
 	default:
 		tmpVal = false
@@ -320,13 +320,13 @@ func (executor *ExpressionExecutor) evalLtBinaryExpression() (res *Value) {
 }
 
 func (executor *ExpressionExecutor) evalGeBinaryExpression() (res *Value) {
-	tmpVal := executor.evalGtBinaryExpression().bool || executor.evalEqBinaryExpression().bool
+	tmpVal := executor.evalGtBinaryExpression().boolean || executor.evalEqBinaryExpression().boolean
 	res = newQkValue(tmpVal)
 	return res
 }
 
 func (executor *ExpressionExecutor) evalLeBinaryExpression() (res *Value) {
-	tmpVal := executor.evalLtBinaryExpression().bool || executor.evalEqBinaryExpression().bool
+	tmpVal := executor.evalLtBinaryExpression().boolean || executor.evalEqBinaryExpression().boolean
 	res = newQkValue(tmpVal)
 	return res
 }
@@ -427,30 +427,30 @@ func (executor *ExpressionExecutor) evalAddBinaryExpression() (res *Value) {
 	var tmpVal interface{}
 	switch {
 	case left.isIntValue() && right.isIntValue():
-		tmpVal = left.int + right.int
+		tmpVal = left.integer + right.integer
 
 	case left.isFloatValue() && right.isFloatValue():
-		tmpVal = left.float + right.float
+		tmpVal = left.decimal + right.decimal
 
 	case left.isFloatValue() && right.isIntValue():
-		tmpVal = left.float + float64(right.int)
+		tmpVal = left.decimal + float64(right.integer)
 
 	case left.isIntValue() && right.isFloatValue():
-		tmpVal = float64(left.int) + right.float
+		tmpVal = float64(left.integer) + right.decimal
 
 	case left.isIntValue() && right.isStringValue():
-		tmpVal = fmt.Sprintf("%v%v", left.int, right.str)
+		tmpVal = fmt.Sprintf("%v%v", left.integer, right.str)
 	case left.isFloatValue() && right.isStringValue():
-		tmpVal = fmt.Sprintf("%v%v", left.float, right.str)
+		tmpVal = fmt.Sprintf("%v%v", left.decimal, right.str)
 	case left.isBooleanValue() && right.isStringValue():
-		tmpVal = fmt.Sprintf("%v%v", left.bool, right.str)
+		tmpVal = fmt.Sprintf("%v%v", left.boolean, right.str)
 
 	case left.isStringValue() && right.isIntValue():
-		tmpVal = fmt.Sprintf("%v%v", left.str, right.int)
+		tmpVal = fmt.Sprintf("%v%v", left.str, right.integer)
 	case left.isStringValue() && right.isFloatValue():
-		tmpVal = fmt.Sprintf("%v%v", left.str, right.float)
+		tmpVal = fmt.Sprintf("%v%v", left.str, right.decimal)
 	case left.isStringValue() && right.isBooleanValue():
-		tmpVal = fmt.Sprintf("%v%v", left.str, right.bool)
+		tmpVal = fmt.Sprintf("%v%v", left.str, right.boolean)
 
 	case left.isStringValue() && right.isStringValue():
 		tmpVal = fmt.Sprintf("%v%v", left.str, right.str)
@@ -469,16 +469,16 @@ func (executor *ExpressionExecutor) evalSubBinaryExpression() (res *Value) {
 	var tmpVal interface{}
 	switch {
 	case left.isIntValue() && right.isIntValue():
-		tmpVal = left.int - right.int
+		tmpVal = left.integer - right.integer
 
 	case left.isFloatValue() && right.isFloatValue():
-		tmpVal = left.float - right.float
+		tmpVal = left.decimal - right.decimal
 
 	case left.isFloatValue() && right.isIntValue():
-		tmpVal = left.float - float64(right.int)
+		tmpVal = left.decimal - float64(right.integer)
 
 	case left.isIntValue() && right.isFloatValue():
-		tmpVal = float64(left.int) - right.float
+		tmpVal = float64(left.integer) - right.decimal
 
 	default:
 		runtimeExcption("unknow operation:", left.val(), "-", right.val())
@@ -493,16 +493,16 @@ func (executor *ExpressionExecutor) evalMulBinaryExpression() (res *Value) {
 	var tmpVal interface{}
 	switch {
 	case left.isIntValue() && right.isIntValue():
-		tmpVal = left.int * right.int
+		tmpVal = left.integer * right.integer
 
 	case left.isFloatValue() && right.isFloatValue():
-		tmpVal = left.float * right.float
+		tmpVal = left.decimal * right.decimal
 
 	case left.isFloatValue() && right.isIntValue():
-		tmpVal = left.float * float64(right.int)
+		tmpVal = left.decimal * float64(right.integer)
 
 	case left.isIntValue() && right.isFloatValue():
-		tmpVal = float64(left.int) * right.float
+		tmpVal = float64(left.integer) * right.decimal
 
 	default:
 		runtimeExcption("unknow operation:", left.val(), "*", right.val())
@@ -520,16 +520,16 @@ func (executor *ExpressionExecutor) evalDivBinaryExpression() (res *Value) {
 	var tmpVal interface{}
 	switch {
 	case left.isIntValue() && right.isIntValue():
-		tmpVal = left.int / right.int
+		tmpVal = left.integer / right.integer
 
 	case left.isFloatValue() && right.isFloatValue():
-		tmpVal = left.float / right.float
+		tmpVal = left.decimal / right.decimal
 
 	case left.isFloatValue() && right.isIntValue():
-		tmpVal = left.float / float64(right.int)
+		tmpVal = left.decimal / float64(right.integer)
 
 	case left.isIntValue() && right.isFloatValue():
-		tmpVal = float64(left.int) / right.float
+		tmpVal = float64(left.integer) / right.decimal
 
 	default:
 		runtimeExcption("unknow operation:", left.val(), "/", right.val())
@@ -547,7 +547,7 @@ func (executor *ExpressionExecutor) evalModBinaryExpression() (res *Value) {
 	var tmpVal interface{}
 	switch {
 	case left.isIntValue() && right.isIntValue():
-		tmpVal = right.int % left.int
+		tmpVal = right.integer % left.integer
 
 	default:
 		runtimeExcption("unknow operation:", left.val(), "%", right.val())
@@ -559,10 +559,10 @@ func (executor *ExpressionExecutor) evalModBinaryExpression() (res *Value) {
 func (executor *ExpressionExecutor) checkDivZeroOperation(val *Value) {
 	var flag bool
 	if val.isIntValue() {
-		flag = val.int == 0
+		flag = val.integer == 0
 	}
 	if val.isFloatValue() {
-		flag = val.float == 0
+		flag = val.decimal == 0
 	}
 	if flag {
 		runtimeExcption("Invalid Operation: divide zero")
