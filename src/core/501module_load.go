@@ -8,8 +8,8 @@ import (
 
 var funcs =  make(map[string]*FunctionExecutor)
 
+// register all module...
 func Load() map[string]*FunctionExecutor {
-	fmt.Println("register all module...")
 	fileModuleInit()
 	stringModuleInit()
 	return funcs

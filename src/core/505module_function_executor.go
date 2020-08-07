@@ -4,11 +4,12 @@ import (
 	"reflect"
 )
 
+// 用于内置函数的执行
 type FunctionExecutor struct {
-	name string
-	ins []reflect.Type
-	outs []reflect.Type
-	obj reflect.Value
+	name string // 函数名称
+	ins []reflect.Type //入参类型
+	outs []reflect.Type // 出参类型
+	obj reflect.Value // 函数对象
 }
 
 func (f *FunctionExecutor) Run(args []reflect.Value) interface{} {
