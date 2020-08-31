@@ -13,9 +13,10 @@ import (
 	"io"
 )
 
-func fileModuleInit()  {
+func (mr *ModuleRegister) FileModuleInit()  {
 	f := &File{}
-	collectFunctionInfo(&f, "file")
+	fmap := collectFunctionInfo(&f)
+	functionRegister("file", fmap)
 }
 
 var regBlankChar = regexp.MustCompile(`\s+`)

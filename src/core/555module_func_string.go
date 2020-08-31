@@ -6,9 +6,10 @@ import (
 	"crypto/rand"
 )
 
-func stringModuleInit()  {
+func (mr *ModuleRegister) StringModuleInit() {
 	s := &QkString{}
-	collectFunctionInfo(&s, "str")
+	fmap := collectFunctionInfo(&s)
+	functionRegister("str", fmap)
 }
 
 type QkString struct {
