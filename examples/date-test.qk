@@ -1,0 +1,5 @@
+d = now()
+println(d.format("y/M/d"))
+println(d.format("H:m:s.S"))
+println(d.timestamp)
+println(d.standardFormat)

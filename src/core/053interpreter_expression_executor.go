@@ -47,6 +47,10 @@ func (executor *ExpressionExecutor) executeAttributeExpression(primaryExpr *Prim
 		return obj.get(attrname)
 	}
 
+	if varVal.isClass() {
+		return evalClassField(varVal.any, attrname)
+	}
+
 	runtimeExcption("eval attribute exception:", executor.expr.RawString())
 	return nil
 }
@@ -684,9 +688,14 @@ func (executor *ExpressionExecutor) executeMethodCallExpression(primaryExpr *Pri
 	if variable.isStringValue() {
 		return evalStringMethod(variable.str, methodName, argRawVals)
 	}
+	if variable.isClass() {
+		return evalClassMethod(variable.any, methodName, argRawVals)
+	}
 
 	return nil
 }
+
+
 
 func (executor *ExpressionExecutor) parseJSONObject(object JSONObject) {
 	if object.parsed() {

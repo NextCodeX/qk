@@ -13,7 +13,7 @@ import (
 	"io"
 )
 
-func (mr *ModuleRegister) FileModuleInit()  {
+func (mr *ModuleRegister) FileModuleInit() {
 	f := &File{}
 	fmap := collectFunctionInfo(&f)
 	functionRegister("file", fmap)

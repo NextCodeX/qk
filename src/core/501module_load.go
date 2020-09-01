@@ -20,9 +20,9 @@ func Load() map[string]*FunctionExecutor {
 	return funcs
 }
 
-func collectFieldInfo(obj interface{}) (res map[string]reflect.Type) {
-	res = make(map[string]reflect.Type)
-	v := reflect.ValueOf(obj).Elem()
+func collectFieldInfo(objPtr interface{}) (res map[string]*FieldInfo) {
+	res = make(map[string]*FieldInfo)
+	v := reflect.ValueOf(objPtr).Elem()
 	k := v.Type()
 	for i := 0; i < v.NumField(); i++ {
 		key := k.Field(i)
@@ -30,14 +30,15 @@ func collectFieldInfo(obj interface{}) (res map[string]reflect.Type) {
 		if !val.CanInterface() { //CanInterface(): 判断该成员变量是否能被获取值
 			continue
 		}
-		res[key.Name] = val.Type()
+		fieldName := formatName(key.Name)
+		res[fieldName] = &FieldInfo{name: fieldName, t:val.Type(), v:val}
 	}
 	return res
 }
 
-func collectFunctionInfo(obj interface{}) map[string]*FunctionExecutor {
-	res := make(map[string]*FunctionExecutor)
-	v1 := reflect.ValueOf(obj).Elem()
+func collectFunctionInfo(objDoublePtr interface{}) (res map[string]*FunctionExecutor) {
+	res = make(map[string]*FunctionExecutor)
+	v1 := reflect.ValueOf(objDoublePtr).Elem()
 	k1 := v1.Type()
 	for i := 0; i < v1.NumMethod(); i++ {
 		funcExe := &FunctionExecutor{}
@@ -61,29 +62,30 @@ func collectFunctionInfo(obj interface{}) map[string]*FunctionExecutor {
 		}
 
 		funcExe.obj = methodObject
-		res[methodName] = funcExe
+		funcExe.name = formatName(methodName)
+		res[funcExe.name] = funcExe
 	}
 	return res
 }
 
 func functionRegister(module string, fmap map[string]*FunctionExecutor) {
 	for name, f := range fmap {
-		var funcKey string
 		if module == "" {
-			funcKey = formatName(module)
-		} else {
-			funcKey = standardName(module, name)
+			funcs[name] = f
 		}
+
+		funcKey := standardName(module, name)
 		funcs[funcKey] = f
 	}
 }
 
 func standardName(moduleName, methodName string) string {
-	return fmt.Sprintf("%v_%v%v", moduleName, strings.ToLower(methodName[:1]), methodName[1:])
+	return fmt.Sprintf("%v_%v", moduleName, methodName)
 }
 
 func formatName(methodName string) string {
 	return fmt.Sprintf("%v%v", strings.ToLower(methodName[:1]), methodName[1:])
 }
+
 
 

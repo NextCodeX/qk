@@ -1,7 +1,6 @@
 package core
 
 import (
-    "fmt"
     "reflect"
 )
 
@@ -56,7 +55,7 @@ func newQkValue(rawVal interface{}) *Value {
     case JSONObject:
         val = &Value{t: ObjectValue, jsonObj: v}
     default:
-        panic(fmt.Sprintln("unknow exception when newVal:", rawVal))
+        val = &Value{t: AnyValue, any: v}
     }
     return val
 }
@@ -97,6 +96,10 @@ func (v *Value) isStringValue() bool {
 
 func (v *Value) isAnyValue() bool {
     return (v.t & AnyValue) == AnyValue
+}
+
+func (v *Value) isClass() bool {
+    return v.isAnyValue() && reflect.TypeOf(v.any).AssignableTo(classType())
 }
 
 func (v *Value) isArrayValue() bool {

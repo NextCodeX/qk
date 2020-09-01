@@ -21,7 +21,7 @@ func evalStringMethod(str string, method string, args []interface{}) (res *Value
 		oldVal, ok1 := args[0].(string)
 		newVal, ok2 := args[1].(string)
 		assert(!ok1 || !ok2, "parameter type error, require replace(string, string)")
-		rawVal = strings.Replace(str, oldVal, newVal, -1)
+		rawVal = strings.ReplaceAll(str, oldVal, newVal)
 
 	case "contain":
 		assert(len(args)<1, "method string.contain must has one parameter.")

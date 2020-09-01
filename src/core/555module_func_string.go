@@ -12,9 +12,7 @@ func (mr *ModuleRegister) StringModuleInit() {
 	functionRegister("str", fmap)
 }
 
-type QkString struct {
-	
-}
+type QkString struct {}
 
 func (s *QkString) RawUUID() string {
 	bs := make([]byte, 16)

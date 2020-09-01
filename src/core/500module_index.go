@@ -17,6 +17,10 @@ func isModuleFunc(funcName string) bool {
 
 func executeModuleFunc(funcName string, args []interface{}) *Value {
 	f := moduleFuncs[funcName]
+	return callFunctionExecutor(f, args)
+}
+
+func callFunctionExecutor(f *FunctionExecutor, args []interface{}) *Value {
 	params := extractModuleFuncArgs(f, args)
 	res := f.Run(params)
 	return toQKValue(res)
