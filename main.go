@@ -1,6 +1,8 @@
 package main
 
-import "core"
+import (
+	"qk/core"
+)
 
 func main() {
 	core.Run()

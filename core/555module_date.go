@@ -13,8 +13,8 @@ func (mr *ModuleRegister) DateModuleInit() {
 
 type Datetime struct {
 	val       time.Time
-	Timestamp int64
-	StandardFormat string
+	Time int64
+	Stdfmt string
 }
 
 // date format: y-M-d H:m:s:S
