@@ -21,3 +21,15 @@ func (f *FunctionExecutor) Run(args []reflect.Value) interface{} {
 	return res.Interface()
 }
 
+func (f *FunctionExecutor) InNum() int {
+	return len(f.ins)
+}
+
+func (f *FunctionExecutor) InLastIndex() int {
+	return len(f.ins) - 1
+}
+
+func (f *FunctionExecutor) OutNum() int {
+	return len(f.outs)
+}
+

@@ -12,8 +12,9 @@ import (
 )
 
 func main() {
-	//qkfile := "examples/date-test.qk"
-	qkfile := getScriptFile()
+	//qkfile := "examples/string-module-test2.qk"
+	qkfile := "examples/db-test.qk"
+	//qkfile := getScriptFile()
 
 	bs, _ := ioutil.ReadFile(qkfile)
 	core.Run(bs)

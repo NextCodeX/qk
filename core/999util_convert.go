@@ -136,6 +136,9 @@ func toQKValue(v interface{}) *Value {
 }
 
 func isDecomposable(v interface{}) bool {
+	if v == nil {
+		return false
+	}
 	kind := reflect.TypeOf(v).Kind()
 	return kind == reflect.Map || kind == reflect.Slice
 }
