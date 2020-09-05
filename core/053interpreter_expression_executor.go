@@ -403,7 +403,7 @@ func (executor *ExpressionExecutor) evalAssignBinaryExpression() (res *Value) {
 			return
 		}
 
-	}else if primaryExpr.isAttibute() {
+	} else if primaryExpr.isAttibute() {
 		varname = primaryExpr.caller
 		attrname := primaryExpr.name
 		varVal := executor.searchVariable(varname)
@@ -416,6 +416,9 @@ func (executor *ExpressionExecutor) evalAssignBinaryExpression() (res *Value) {
 			index := toIntValue(attrname)
 			arr := varVal.jsonArr
 			arr.set(index, res)
+			return
+		}
+		if varVal.isClass() {
 			return
 		}
 	}

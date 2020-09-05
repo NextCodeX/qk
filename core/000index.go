@@ -1,36 +1,25 @@
 package core
 
-import (
-	"fmt"
-	"io/ioutil"
-	"os/exec"
-	"runtime"
-	"strings"
-)
-
 var (
 	funcList = make(map[string]*Function)
 	mainFunc = newFunc("main")
 )
 
-const DEBUG_MODE = true
+//const DEBUG_MODE = true
+const DEBUG_MODE = false
 
-func Run() {
-	qkfile := "examples/date-test.qk"
-
-	bs, _ := ioutil.ReadFile(qkfile)
-
+func Run(bs []byte) {
 	// 词法分析
 	ts := ParseTokens(bs)
-	printTokensByLine(ts)
+	//printTokensByLine(ts)
 
 	// 语法分析
 	mainFunc.raw = ts
 	Compile(mainFunc)
-	printFunc()
+	//printFunc()
 
 	// 解析并执行
-	fmt.Println("================")
+	//fmt.Println("================")
 	Interpret()
 }
 
@@ -69,14 +58,4 @@ func Interpret() {
 	executeFunctionStatementList(mainFunc.block, stack)
 }
 
-// 获取命令所在的路径
-func getCmdDir() string {
-	cmd := exec.Command("cmd", "/c", "cd")
-	if runtime.GOOS != "windows" {
-		cmd = exec.Command("pwd")
-	}
-	d, err := cmd.CombinedOutput()
-	assert(err != nil, err, "failed to get personal work directory")
-	pwd := strings.TrimSpace(string(d))
-	return pwd
-}
+

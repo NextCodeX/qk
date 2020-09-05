@@ -22,17 +22,12 @@ func executeStatementList(stmts []*Statement, stack *VariableStack, t StmtListTy
 	}
 	var res *StatementResult
 	for _, stmt := range stmts {
-		//fmt.Println("start*****")
-		//fmt.Println("index:", i, "stmt:", tokensString(stmt.raw))
 		res = executeStatement(stmt, stack)
-		//fmt.Println(res.isContinue(), "; t == StmtListTypeFor:", t == StmtListTypeFor)
-		//fmt.Println("+++++++++++")
 
 		if res.isContinue() {
 			if t == StmtListTypeFor {
 				res.t = StatementNormal
 			}
-			//fmt.Println(" in cond ((index:", i, "stmt:", tokensString(stmt.raw))
 			break
 		} else if res.isReturn() || res.isBreak() {
 			break
@@ -72,7 +67,6 @@ func executeStatement(stmt *Statement, stack *VariableStack) *StatementResult {
 		runtimeExcption("unknow statememnt:", tokensString(stmt.raw))
 	}
 
-	//fmt.Println("executeStatementList:", tokensString(stmt.raw), stmt.isExpressionStatement(), stmt.isIfStatement(), res.isContinue())
 	return res
 }
 
