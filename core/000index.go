@@ -1,27 +1,25 @@
 package core
 
-import "fmt"
-
 var (
 	funcList = make(map[string]*Function)
 	mainFunc = newFunc("main")
 )
 
-const DEBUG_MODE = true
-//const DEBUG_MODE = false
+//const DEBUG_MODE = true
+const DEBUG_MODE = false
 
 func Run(bs []byte) {
 	// 词法分析
 	ts := ParseTokens(bs)
-	printTokensByLine(ts)
+	//printTokensByLine(ts)
 
 	// 语法分析
 	mainFunc.raw = ts
 	Compile(mainFunc)
-	printFunc()
+	//printFunc()
 
 	// 解析并执行
-	fmt.Println("================")
+	//fmt.Println("================")
 	Interpret()
 }
 

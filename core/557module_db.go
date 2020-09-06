@@ -139,8 +139,6 @@ func (ds *DataSource) GetRow(args []interface{}) map[string]interface{} {
 	}
 }
 
-
-
 func (ds *DataSource) GetRows(args []interface{}) []interface{} {
 	sql, vals := ds.parseArgs("getRows", args)
 	db, err := dbManager.Open(ds.driver, ds.source)
