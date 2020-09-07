@@ -1,5 +1,5 @@
 # Quick(qk)
-It's my golang util wapper,  a script language like JavaScript.
+It's golang util wrapper,  a script language like JavaScript.
 
 
 ## progress
@@ -14,6 +14,4 @@ It's my golang util wapper,  a script language like JavaScript.
 
 ### syntax and tool
 1. chain call -- waiting
-2. method executor -- waiting
-3. error handler -- waiting
-4. the running script file to select --waiting
+2. error handler -- waiting
