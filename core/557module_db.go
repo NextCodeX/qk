@@ -3,7 +3,9 @@ package core
 import (
 	dbManager "database/sql"
 	"fmt"
+	_ "github.com/denisenkom/go-mssqldb"
 	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -13,15 +15,8 @@ func (mr *ModuleRegister) DBModuleInit() {
 	functionRegister("", fs)
 }
 
-// 数据库连接接口
-type IDataSource interface {
-	Insert(sql string, args...interface{}) interface{}
-	Update(sql string, args...interface{}) int64
-	GetValue(sql string, args...interface{}) interface{}
-	GetRow(sql string, args...interface{}) map[string]interface{}
-	GetRows(sql string, args...interface{}) []map[string]interface{}
-}
 
+// 数据库连接对象
 type DataSource struct {
 	driver string
 	source string
@@ -32,6 +27,20 @@ type DateSourceConstructor struct{}
 func (dsc *DateSourceConstructor) ConnDB(driverName, sourceName string) *ClassExecutor {
 	ds := &DataSource{driverName, sourceName}
 	return newClassExecutor("date", ds, &ds)
+}
+
+func (ds *DataSource) Exec(args []interface{}) int64 {
+	sql, vals := ds.parseArgs("update", args)
+	db, err := dbManager.Open(ds.driver, ds.source)
+	assert(err != nil, "failed to build db connection:", err)
+	defer db.Close()
+
+	execResult, err := db.Exec(sql, vals)
+	assert(err != nil, "failed to execute sql:", err)
+
+	affected, err := execResult.RowsAffected()
+	assert(err != nil, "failed to update:", err)
+	return affected
 }
 
 func (ds *DataSource) Insert(args []interface{}) interface{} {
