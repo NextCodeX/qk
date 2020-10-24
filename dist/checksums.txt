@@ -1,0 +1,5 @@
+6dce86c7befcf38ba123f0afc7c3fe22d5ecfe24aae5c9549319f46daab42f06  qk_v0.1.1-next_Windows_x86_64.tar.gz
+8cd9a591cfe723819735c5afae0f73c01fb3e23a878ee3b3b87bcdaa54bbdef4  qk_v0.1.1-next_Windows_i386.tar.gz
+98f961795ee207c24cc181f3f730c6167fd35d40fc5c585cb1fc6cda3052b334  qk_v0.1.1-next_Linux_i386.tar.gz
+f2d124f980b14f25af67d579a37b85ef01bf419bb7e014d5e37a26a94d79dff5  qk_v0.1.1-next_Linux_x86_64.tar.gz
+fa5226eb6b5a783c852b58bd2748c772d3080db8e384798fb64be35784e315f6  qk_v0.1.1-next_Darwin_x86_64.tar.gz
