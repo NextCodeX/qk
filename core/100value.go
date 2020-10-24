@@ -24,7 +24,7 @@ var NULL = &Value{
 
 type Value struct {
     t ValueType
-    integer int64
+    integer int
     decimal float64
     boolean bool
     str string
@@ -40,11 +40,11 @@ func newQkValue(rawVal interface{}) *Value {
     var val *Value
     switch v := rawVal.(type) {
     case int:
-        val = &Value{t: IntValue, integer: int64(v)}
-    case int64:
         val = &Value{t: IntValue, integer: v}
+    case int64:
+        val = &Value{t: IntValue, integer: int(v)}
     case int32:
-        val = &Value{t: IntValue, integer: int64(v)}
+        val = &Value{t: IntValue, integer: int(v)}
     case float64:
         val = &Value{t: FloatValue, decimal: v}
     case float32:

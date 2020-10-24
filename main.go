@@ -12,10 +12,9 @@ import (
 )
 
 func main() {
-	//qkfile := "examples/string-module-test2.qk"
 	//qkfile := "examples/db-mssql-test.qk"
 	qkfile := getScriptFile()
-	changeWorkDirectory()
+	//changeWorkDirectory()
 
 	bs, _ := ioutil.ReadFile(qkfile)
 	core.Run(bs)
@@ -36,8 +35,8 @@ func changeWorkDirectory() {
 		fmt.Printf("failed to change work dirctory to current command directory: %v", err.Error())
 		os.Exit(5)
 	}
-	cwd, _ := os.Getwd()
-	fmt.Println("current work directory:", cwd)
+	//cwd, _ := os.Getwd()
+	//fmt.Println("current work directory:", cwd)
 }
 
 // find qk script file for run
