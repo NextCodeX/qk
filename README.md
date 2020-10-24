@@ -16,3 +16,8 @@ It's golang util wrapper,  a script language like JavaScript.
 ### syntax and tool
 1. chain call -- waiting
 2. error handler -- waiting
+
+
+### download
+[download and use just now](https://gitee.com/changlie713/qk-bin)
+
