@@ -445,22 +445,8 @@ func (executor *ExpressionExecutor) evalAddBinaryExpression() (res *Value) {
 	case left.isIntValue() && right.isFloatValue():
 		tmpVal = float64(left.integer) + right.decimal
 
-	case left.isIntValue() && right.isStringValue():
-		tmpVal = fmt.Sprintf("%v%v", left.integer, right.str)
-	case left.isFloatValue() && right.isStringValue():
-		tmpVal = fmt.Sprintf("%v%v", left.decimal, right.str)
-	case left.isBooleanValue() && right.isStringValue():
-		tmpVal = fmt.Sprintf("%v%v", left.boolean, right.str)
-
-	case left.isStringValue() && right.isIntValue():
-		tmpVal = fmt.Sprintf("%v%v", left.str, right.integer)
-	case left.isStringValue() && right.isFloatValue():
-		tmpVal = fmt.Sprintf("%v%v", left.str, right.decimal)
-	case left.isStringValue() && right.isBooleanValue():
-		tmpVal = fmt.Sprintf("%v%v", left.str, right.boolean)
-
-	case left.isStringValue() && right.isStringValue():
-		tmpVal = fmt.Sprintf("%v%v", left.str, right.str)
+	case left.isStringValue() || right.isStringValue():
+		tmpVal = fmt.Sprintf("%v%v", left.val(), right.val())
 
 	default:
 		runtimeExcption("unknow operation:", left.val(), "+", right.val(), " -> ", executor.expr.RawString())

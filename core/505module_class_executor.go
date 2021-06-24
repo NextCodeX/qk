@@ -8,6 +8,7 @@ import (
 
 // 类对象: 用于内置对象执行
 type ClassExecutor struct {
+	raw interface{}
 	name    string // class name
 	fields  map[string]*FieldInfo
 	methods map[string]*FunctionExecutor
@@ -22,6 +23,7 @@ func newClassExecutor(name string, objPtr interface{}, objDoublePtr interface{})
 	fs := collectFieldInfo(objPtr)
 	mts := collectFunctionInfo(objDoublePtr)
 	res := &ClassExecutor{
+		raw: objPtr,
 		name: name,
 		fields: fs,
 		methods: mts,
@@ -55,4 +57,12 @@ func evalClassMethod(any interface{}, name string, vals []interface{}) *Value {
 func evalClassField(any interface{}, attrname string) *Value {
 	clazz := any.(*ClassExecutor)
 	return toQKValue(clazz.fieldValue(attrname))
+}
+
+func (clazz *ClassExecutor) String() string {
+	si, ok := clazz.raw.(fmt.Stringer)
+	if ok {
+		return si.String()
+	}
+	return fmt.Sprint("class ", clazz.name)
 }

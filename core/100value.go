@@ -1,6 +1,7 @@
 package core
 
 import (
+    "fmt"
     "reflect"
 )
 
@@ -66,13 +67,19 @@ func newQkValue(rawVal interface{}) *Value {
 
 func (v *Value) val() interface{} {
     switch {
-    case v.isIntValue(): return v.integer
-    case v.isFloatValue(): return v.decimal
-    case v.isBooleanValue(): return v.boolean
-    case v.isStringValue(): return v.str
-    case v.isArrayValue(): return v.jsonArr
-    case v.isObjectValue(): return v.jsonObj
-    case v.isAnyValue(): return v.any
+        case v.isIntValue(): return v.integer
+        case v.isFloatValue(): return v.decimal
+        case v.isBooleanValue(): return v.boolean
+        case v.isStringValue(): return v.str
+        case v.isArrayValue(): return v.jsonArr
+        case v.isObjectValue(): return v.jsonObj
+        case v.isAnyValue(): {
+            si, ok := v.any.(fmt.Stringer)
+            if ok {
+                return si.String()
+            }
+            return v.any
+        }
     }
     return nil
 }
@@ -112,9 +119,6 @@ func (v *Value) isArrayValue() bool {
 func (v *Value) isObjectValue() bool {
     return (v.t & ObjectValue) == ObjectValue
 }
-
-
-
 
 
 

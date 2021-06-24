@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	qkfile := "examples/an.qk"
+	qkfile := "examples/date-test.qk"
 	//qkfile := getScriptFile()
 	//changeWorkDirectory()
 
