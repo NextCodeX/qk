@@ -12,8 +12,8 @@ import (
 )
 
 func main() {
-	qkfile := "examples/date-test.qk"
-	//qkfile := getScriptFile()
+	//qkfile := "examples/date-test.qk"
+	qkfile := getScriptFile()
 	//changeWorkDirectory()
 
 	bs, _ := ioutil.ReadFile(qkfile)
