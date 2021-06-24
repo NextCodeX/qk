@@ -12,8 +12,8 @@ import (
 )
 
 func main() {
-	//qkfile := "examples/db-mssql-test.qk"
-	qkfile := getScriptFile()
+	qkfile := "examples/an.qk"
+	//qkfile := getScriptFile()
 	//changeWorkDirectory()
 
 	bs, _ := ioutil.ReadFile(qkfile)

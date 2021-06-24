@@ -1,0 +1,14 @@
+println("for test \"say!\"")
+
+arr = ["a", 1, true]
+
+str = ""
+forv item : arr {
+    str += item + ", "
+    println("---------------")
+    println(str)
+    // println(item)
+    // println("----------------")
+}
+println("final -> ")
+println(str)

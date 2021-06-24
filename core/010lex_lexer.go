@@ -12,9 +12,9 @@ const (
 	stateSymbol
 	stateSpace
 
-	statePreComment
-	stateSingleLineComment
-	stateMutliLineComment
+	statePreComment // 表示即将进入注释状态
+	stateSingleLineComment  // 单行注释状态
+	stateMutliLineComment  // 多行注释状态
 
 	stateNormal
 )
@@ -128,26 +128,39 @@ func (lexer *Lexer) whenSymBol() {
 func (lexer *Lexer) whenStringLiterial() {
 	// 处理字符串字面值
 	if len(lexer.tmpBytes) < 1 {
+		if lexer.state == stateStrLiteral {
+			// 状态机当前状态是stateStrLiteral，且tmpBytes没有值，说遇到空字符串
+			lexer.ts = append(lexer.ts, Token{
+				lineIndex: lexer.lineIndex,
+				str: "",
+				t:   Str,
+			})
+			lexer.setState(stateNormal)
+			return
+		}
+
 		lexer.setState(stateStrLiteral)
 		return
 	}
 
-	last := lexer.tmpBytes[len(lexer.tmpBytes)-1]
+	lastIndex := len(lexer.tmpBytes)-1
+	last := lexer.tmpBytes[lastIndex]
 	if last != '\\' {
 		// 当前字符为'"', 且前一个字符不就转义字符, 则视为字符串结束
 		lexer.pushLongToken()
 		lexer.setState(stateNormal)
 	} else {
+		// clear escape character
+		lexer.tmpBytes = lexer.tmpBytes[:lastIndex]
 		lexer.tmpBytesCollect()
 	}
-
 }
 
 func (lexer *Lexer) whenMultiComment()  {
 	if lexer.inStatePreComment() {
 		// 使状态机进入多行注释状态
 		lexer.setState(stateMutliLineComment)
-		// 并之前添加的'/'token
+		// 并清除之前添加的'/'token
 		lexer.tailTokenClear()
 		return
 	}
