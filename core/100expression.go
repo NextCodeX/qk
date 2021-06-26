@@ -31,6 +31,7 @@ const (
 
     // 逻辑运算
     Opeq OperationType = 1 << iota //等于 equal to
+    Opne // not equal to
     Opgt // 大于 greater than
     Oplt // 小于 less than
     Opge // 大于等于 greater than or equal to
@@ -91,26 +92,29 @@ func (this *Expression) isAssignAfterMod() bool {
 
 
 func (this *Expression) isEq() bool {
-    return (this.op & Opeq) ==Opeq
+    return (this.op & Opeq) == Opeq
+}
+func (this *Expression) isNe() bool {
+    return (this.op & Opne) == Opne
 }
 func (this *Expression) isGt() bool {
-    return (this.op & Opgt) ==Opgt
+    return (this.op & Opgt) == Opgt
 }
 func (this *Expression) isLt() bool {
-    return (this.op & Oplt) ==Oplt
+    return (this.op & Oplt) == Oplt
 }
 func (this *Expression) isGe() bool {
-    return (this.op & Opge) ==Opge
+    return (this.op & Opge) == Opge
 }
 func (this *Expression) isLe() bool {
-    return (this.op & Ople) ==Ople
+    return (this.op & Ople) == Ople
 }
 
 func (this *Expression) isOr() bool {
-    return (this.op & Opor) ==Opor
+    return (this.op & Opor) == Opor
 }
 func (this *Expression) isAnd() bool {
-    return (this.op & Opand) ==Opand
+    return (this.op & Opand) == Opand
 }
 
 

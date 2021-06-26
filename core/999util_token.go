@@ -35,6 +35,14 @@ func lastToken(ts []Token) (t Token, ok bool) {
     return ts[size-1], true
 }
 
+func lastSecondToken(ts []Token) (t Token, ok bool) {
+	size := len(ts)
+	if size < 2 {
+		return
+	}
+	return ts[size-2], true
+}
+
 func nextToken(currentIndex int, ts []Token) (t Token, ok bool) {
     if currentIndex+1>=len(ts) {
         return

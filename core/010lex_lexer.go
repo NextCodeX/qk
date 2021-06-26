@@ -201,6 +201,8 @@ func (lexer *Lexer) whenSpace() {
 		if lexer.inStateSingleLineComment() {
 			// 结束状态机的单行注释状态
 			lexer.setState(stateNormal)
+			// 添加行结束符
+			lexer.pushBoundryToken()
 			return
 		}
 		if lexer.preState == stateMutliLineComment {
@@ -307,6 +309,7 @@ func (lexer *Lexer) isSymbol() bool {
 	case ';': fallthrough
 	case ',': fallthrough
 	case '=': fallthrough
+	case '!': fallthrough
 	case '+': fallthrough
 	case '-': fallthrough
 	case '*': fallthrough

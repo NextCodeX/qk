@@ -11,7 +11,7 @@ const DEBUG_MODE = false
 func Run(bs []byte) {
 	// 词法分析
 	ts := ParseTokens(bs)
-	//printTokensByLine(ts)
+	printTokensByLine(ts)
 
 	// 语法分析
 	mainFunc.raw = ts
@@ -28,7 +28,7 @@ func ParseTokens(bs []byte) []Token {
 	ts := parse4PrimaryTokens(bs)
 
 	// 语法预处理
-	// 提取'++', '--'等运算符
+	// 提取'++', '--'等运算符以及负数表达式
 	ts = parse4OperatorTokens(ts)
 	// 去掉无用的';', 合并token生成函数调用token(Fcall), 方法调用token(Mtcall)等复合token
 	ts = parse4ComplexTokens(ts)

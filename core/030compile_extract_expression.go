@@ -80,7 +80,7 @@ func parseUnaryExpression(ts []Token) *Expression {
 	case token.isMtcall():
 		expr.t = MethodCallExpression
 	default:
-		runtimeExcption("unknow expression:", token.String())
+		runtimeExcption("parseUnaryExpression# unknow expression -> ", token.String())
 
 	}
 	expr.t = expr.t | PrimaryExpression
@@ -338,6 +338,8 @@ func parseBinaryExpression(ts []Token) *Expression {
 		op = Ople
 	case mid.assertSymbol("=="):
 		op = Opeq
+	case mid.assertSymbol("!="):
+		op = Opne
 
 	case mid.assertSymbol("="):
 		op = Opassign

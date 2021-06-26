@@ -40,8 +40,8 @@ func extractModuleFuncArgs(f *FunctionExecutor, args []interface{}) []reflect.Va
 
 	for i, t := range f.ins {
 		arg := args[i]
-		if t != reflect.TypeOf(arg) {
-			runtimeExcption("execute", f.name, ", arguments type is not match!")
+		if t.Kind() != reflect.Interface && t != reflect.TypeOf(arg) {
+			runtimeExcption("execute", f.name, ", arguments type is not match!", t, reflect.TypeOf(arg))
 			return nil
 		}
 		res = append(res, reflect.ValueOf(arg))

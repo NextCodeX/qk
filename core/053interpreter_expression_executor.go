@@ -187,6 +187,8 @@ func (executor *ExpressionExecutor) executeBinaryExpression() (res *Value) {
 
 	case expr.isEq():
 		res = executor.evalEqBinaryExpression()
+	case expr.isNe():
+		res = executor.evalNeBinaryExpression()
 	case expr.isGt():
 		res = executor.evalGtBinaryExpression()
 	case expr.isGe():
@@ -267,6 +269,32 @@ func (executor *ExpressionExecutor) evalEqBinaryExpression() (res *Value) {
 		tmpVal = left.decimal == float64(right.integer)
 	case left.isIntValue() && right.isFloatValue():
 		tmpVal = float64(left.integer) == right.decimal
+
+	default:
+		tmpVal = false
+	}
+	res = newQkValue(tmpVal)
+	return res
+}
+
+func (executor *ExpressionExecutor) evalNeBinaryExpression() (res *Value) {
+	left := executor.leftVal()
+	right := executor.rightVal()
+	var tmpVal interface{}
+	switch {
+	case left.isBooleanValue() && right.isBooleanValue():
+		tmpVal = left.boolean != left.boolean
+	case left.isIntValue() && right.isIntValue():
+		tmpVal = left.integer != right.integer
+	case left.isFloatValue() && right.isFloatValue():
+		tmpVal = left.decimal != right.decimal
+	case left.isStringValue() && right.isStringValue():
+		tmpVal = left.str != right.str
+
+	case left.isFloatValue() && right.isIntValue():
+		tmpVal = left.decimal != float64(right.integer)
+	case left.isIntValue() && right.isFloatValue():
+		tmpVal = float64(left.integer) != right.decimal
 
 	default:
 		tmpVal = false
@@ -540,7 +568,7 @@ func (executor *ExpressionExecutor) evalModBinaryExpression() (res *Value) {
 	var tmpVal interface{}
 	switch {
 	case left.isIntValue() && right.isIntValue():
-		tmpVal = right.integer % left.integer
+		tmpVal = left.integer % right.integer
 
 	default:
 		runtimeExcption("unknow operation:", left.val(), "%", right.val())

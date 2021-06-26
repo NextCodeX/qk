@@ -9,7 +9,7 @@ func parse4OperatorTokens(ts []Token) []Token {
 		last, lastExist := lastToken(res)
 
 		currentIsEqual := token.assertSymbol("=")
-		condEqualMerge := lastExist && last.assertSymbols("=", ">", "<", "+", "-", "*", "/", "%")
+		condEqualMerge := lastExist && last.assertSymbols("=", ">", "<", "+", "-", "*", "/", "%", "!")
 		condEqual := currentIsEqual && condEqualMerge
 
 		currentIsOr := token.assertSymbol("|")
@@ -28,7 +28,10 @@ func parse4OperatorTokens(ts []Token) []Token {
 		condSubMerge := lastExist && last.assertSymbols("-")
 		condSub := currentIsSub && condSubMerge
 
-		if condEqual || condAnd || condOr || condAdd || condSub {
+		lastSecond, lastSecondExist := lastSecondToken(res)
+		condNegative := (token.isInt() || token.isFloat()) && (lastExist && last.assertSymbol("-")) && (lastSecondExist && !lastSecond.assertSymbol(")") && !(lastSecond.isInt() || lastSecond.isFloat()))
+
+		if condEqual || condAnd || condOr || condAdd || condSub || condNegative {
 			res = tailTokenMerge(res, token)
 			if newTokens, ok := extractAddSubSelfToken(condAdd, condSub, res); ok {
 				res = newTokens
@@ -67,10 +70,14 @@ func extractAddSubSelfToken(condAdd bool, condSub bool, ts []Token) (res []Token
 
 // 当前token与前一个token合并。
 // 常用于提取"++", "--"这样的运算符。
+// token类型取自后一个token
 func tailTokenMerge(ts []Token, t Token) []Token {
 	size := len(ts)
 	tail := ts[size-1]
+
 	tail.str = fmt.Sprintf("%v%v", tail.str, t.str)
+	tail.t = t.t
+
 	ts[size - 1] = tail
 	return ts
 }
