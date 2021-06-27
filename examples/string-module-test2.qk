@@ -1,4 +1,6 @@
 
 println("string format testing=============")
 
-println(str_format("He is %v, a blue %v", "tom", "cat"))
+println(str_format("He is %v, a blue %v", "tom", "cat")) // He is tom, a blue cat
+println(str_format("number format: %.3f", 9.3126789)) // number format: 9.313
+println(str_format("number format: %.3f", 3.14)) // number format: 3.140

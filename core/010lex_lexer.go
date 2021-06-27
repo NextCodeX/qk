@@ -53,6 +53,10 @@ func (lexer *Lexer) run() []Token {
 			continue
 		}
 		if lexer.inStateStrLiteral() && b != '"' {
+			tmpBytesLen := len(lexer.tmpBytes)
+			if b == '\\' && tmpBytesLen > 1 && lexer.tmpBytes[tmpBytesLen-1] == '\\' {
+				continue
+			}
 			lexer.tmpBytesCollect()
 			continue
 		}

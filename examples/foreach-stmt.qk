@@ -6,7 +6,7 @@ foreach i, item : arr {
 
 println("=================")
 println("object test:")
-obj = {name:"changlie", age:18, addr:"sz"}
+obj = {name:"changlie", age:18, addr:"sz", marriage: false}
 foreach key, val : obj {
     println(key, "->", val)
 }

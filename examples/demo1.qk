@@ -1,0 +1,6 @@
+obj = {}
+k = "name"
+obj[k] = "changlie"
+obj.age = 18
+obj["addr"] = "sz"
+println(obj)

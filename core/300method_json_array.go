@@ -37,6 +37,15 @@ func evalJSONArrayMethod(arr JSONArray, method string, args []interface{}) (res 
 		}
 		return newQkValue(res.String())
 
+	case "sub":
+		// todo
+		//assert(len(args)<1, "method array.remove must has one parameter.")
+		//startIndex, ok := args[0].(int)
+		//assert(!ok, "method array.remove, parameter must be int type")
+		//if len(args) < 2 {
+		//	return
+		//}
+
 	default:
 		runtimeExcption(fmt.Sprintf("array.%v is undefined!", method))
 	}

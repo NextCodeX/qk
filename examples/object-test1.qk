@@ -1,5 +1,6 @@
 color = "strawberry"
 
+// 初始化
 obj = {
     name: "car",
     special: "carry",
@@ -12,6 +13,7 @@ println("after change color value:", color)
 
 printf("size: %v, values: %v \n", obj.size(), obj)
 
+// 新增键值对
 obj.weight = 998
 obj.isNew = false
 printf("size: %v, values: %v \n", obj.size(), obj)
