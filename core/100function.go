@@ -14,8 +14,6 @@ type Function struct {
 	compiled bool // 是否已编译
 }
 
-//func newFunc(name string)
-
 func newFunc(name string) *Function {
 	return &Function{local:newVariables(), name:name}
 }

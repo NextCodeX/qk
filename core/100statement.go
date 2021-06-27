@@ -64,72 +64,72 @@ func (stmt *Statement) setCompiled() {
 }
 
 
-func (s *Statement) isExpressionStatement() bool {
-    return (s.t & ExpressionStatement) == ExpressionStatement
+func (stmt *Statement) isExpressionStatement() bool {
+    return (stmt.t & ExpressionStatement) == ExpressionStatement
 }
 
-func (s *Statement) isIfStatement() bool {
-    return (s.t & IfStatement) == IfStatement
+func (stmt *Statement) isIfStatement() bool {
+    return (stmt.t & IfStatement) == IfStatement
 }
 
-func (s *Statement) isForStatement() bool {
-    return (s.t & ForStatement) == ForStatement
+func (stmt *Statement) isForStatement() bool {
+    return (stmt.t & ForStatement) == ForStatement
 }
 
-func (s *Statement) isForeachStatement() bool {
-    return (s.t & ForeachStatement) == ForeachStatement
+func (stmt *Statement) isForeachStatement() bool {
+    return (stmt.t & ForeachStatement) == ForeachStatement
 }
 
-func (s *Statement) isForIndexStatement() bool {
-    return (s.t & ForIndexStatement) == ForIndexStatement
+func (stmt *Statement) isForIndexStatement() bool {
+    return (stmt.t & ForIndexStatement) == ForIndexStatement
 }
 
-func (s *Statement) isForItemStatement() bool {
-    return (s.t & ForItemStatement) == ForItemStatement
+func (stmt *Statement) isForItemStatement() bool {
+    return (stmt.t & ForItemStatement) == ForItemStatement
 }
 
-func (s *Statement) isSwitchStatement() bool {
-    return (s.t & SwitchStatement) == SwitchStatement
+func (stmt *Statement) isSwitchStatement() bool {
+    return (stmt.t & SwitchStatement) == SwitchStatement
 }
 
-func (s *Statement) isMultiStatement() bool {
-    return (s.t & MultiStatement) == MultiStatement
+func (stmt *Statement) isMultiStatement() bool {
+    return (stmt.t & MultiStatement) == MultiStatement
 }
 
-func (s *Statement) isContinueStatement() bool {
-    return (s.t & ContinueStatement) == ContinueStatement
+func (stmt *Statement) isContinueStatement() bool {
+    return (stmt.t & ContinueStatement) == ContinueStatement
 }
 
-func (s *Statement) isBreakStatement() bool {
-    return (s.t & BreakStatement) == BreakStatement
+func (stmt *Statement) isBreakStatement() bool {
+    return (stmt.t & BreakStatement) == BreakStatement
 }
 
-func (s *Statement) isReturnStatement() bool {
-    return (s.t & ReturnStatement) == ReturnStatement
+func (stmt *Statement) isReturnStatement() bool {
+    return (stmt.t & ReturnStatement) == ReturnStatement
 }
 
 
-func (s *Statement) String() string {
+func (stmt *Statement) String() string {
     var res bytes.Buffer
-    if s.isReturnStatement() {
+    if stmt.isReturnStatement() {
         res.WriteString(" return: ")
     }
-    for _, t := range s.raw {
+    for _, t := range stmt.raw {
         res.WriteString(t.String())
         res.WriteString(" ")
     }
-    if (s.t & IfStatement) == IfStatement {
+    if (stmt.t & IfStatement) == IfStatement {
         res.WriteString("condition:")
-        res.WriteString(tokensString(s.condExprTokens))
+        res.WriteString(tokensString(stmt.condExprTokens))
         res.WriteString(" ")
     }
-    if (s.t & ForStatement) == ForStatement {
+    if (stmt.t & ForStatement) == ForStatement {
         res.WriteString("header:")
-        res.WriteString(s.preExpr.String())
+        res.WriteString(stmt.preExpr.String())
         res.WriteString("; ")
-        res.WriteString(tokensString(s.condExprTokens))
+        res.WriteString(tokensString(stmt.condExprTokens))
         res.WriteString("; ")
-        res.WriteString(s.postExpr.String())
+        res.WriteString(stmt.postExpr.String())
         res.WriteString(" ")
     }
     return res.String()

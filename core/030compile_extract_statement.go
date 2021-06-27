@@ -31,11 +31,13 @@ func extractStatement(stmts StatementList) {
 			stmt, endIndex = extractReturnStatement(i, ts)
 		default:
 			if t.isFdef() {
+				// 提取 函数定义
 				f, endIndex1 := extractFunction(i, ts)
 				funcList[f.name] = f
 				i = endIndex1
 				goto nextLoop
 			}
+			// 提取 表达式语句
 			stmt, endIndex = extractExpressionStatement(i, ts)
 
 		}

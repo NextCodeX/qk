@@ -68,19 +68,20 @@ func tokenToValue(t *Token) (v *Value) {
 	}
 	if t.isFloat() {
 		f, err := strconv.ParseFloat(t.str, 64)
-		assert(err != nil, t.String(), "line:", t.lineIndex)
+		assert(err != nil, "failed to parse float", t.String(), "line:", t.lineIndex)
 		v = newQkValue(f)
 		return
 	}
 	if t.isInt() {
 		i, err := strconv.Atoi(t.str)
-		assert(err != nil, t.String(), "line:", t.lineIndex)
+		assert(err != nil, "failed to parse int", t.String(), "line:", t.lineIndex)
 		v = newQkValue(i)
 		return
 	}
 	if t.isStr() {
-		//v = newVal(fmt.Sprintf("%v", t.str))
-		str := strings.Replace(t.str, "\\n", "\n", -1)
+		str := strings.Replace(t.str, "\\\\", "\\", -1)
+		str = strings.Replace(str, "\\n", "\n", -1) // 对 \n 进行转义
+		str = strings.Replace(str, "\\t", "\t", -1) // 对 \t 进行转义
 		v = newQkValue(str)
 		return
 	}

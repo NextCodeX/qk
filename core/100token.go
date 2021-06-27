@@ -50,80 +50,80 @@ func varToken(s string) Token {
 	return Token{str:s, t:Identifier}
 }
 
-func (this *Token) isIdentifier() bool {
-	return (this.t & Identifier) == Identifier
+func (tk *Token) isIdentifier() bool {
+	return (tk.t & Identifier) == Identifier
 }
 
-func (this *Token) isStr() bool {
-	return (this.t & Str) == Str
+func (tk *Token) isStr() bool {
+	return (tk.t & Str) == Str
 }
 
-func (this *Token) isInt() bool {
-	return (this.t & Int) == Int
+func (tk *Token) isInt() bool {
+	return (tk.t & Int) == Int
 }
 
-func (this *Token) isFloat() bool {
-	return (this.t & Float) == Float
+func (tk *Token) isFloat() bool {
+	return (tk.t & Float) == Float
 }
 
-func (this *Token) isSymbol() bool {
-	return (this.t & Symbol) == Symbol
+func (tk *Token) isSymbol() bool {
+	return (tk.t & Symbol) == Symbol
 }
 
-func (this *Token) isFdef() bool {
-	return (this.t & Fdef) == Fdef
+func (tk *Token) isFdef() bool {
+	return (tk.t & Fdef) == Fdef
 }
 
-func (this *Token) isFcall() bool {
-	return (this.t & Fcall) == Fcall
+func (tk *Token) isFcall() bool {
+	return (tk.t & Fcall) == Fcall
 }
 
-func (this *Token) isAttribute() bool {
-	return (this.t & Attribute) == Attribute
+func (tk *Token) isAttribute() bool {
+	return (tk.t & Attribute) == Attribute
 }
 
-func (this *Token) isMtcall() bool {
-	return (this.t & Mtcall) == Mtcall
+func (tk *Token) isMtcall() bool {
+	return (tk.t & Mtcall) == Mtcall
 }
 
-func (this *Token) isArrLiteral() bool {
-	return (this.t & ArrLiteral) == ArrLiteral
+func (tk *Token) isArrLiteral() bool {
+	return (tk.t & ArrLiteral) == ArrLiteral
 }
 
-func (this *Token) isObjLiteral() bool {
-	return (this.t & ObjLiteral) == ObjLiteral
+func (tk *Token) isObjLiteral() bool {
+	return (tk.t & ObjLiteral) == ObjLiteral
 }
 
-func (this *Token) isElement() bool {
-	return (this.t & Element) == Element
+func (tk *Token) isElement() bool {
+	return (tk.t & Element) == Element
 }
 
-func (this *Token) isComplex() bool {
-	return (this.t & Complex) == Complex
+func (tk *Token) isComplex() bool {
+	return (tk.t & Complex) == Complex
 }
 
-func (this *Token) isAddSelf() bool {
-	return (this.t & AddSelf) == AddSelf
+func (tk *Token) isAddSelf() bool {
+	return (tk.t & AddSelf) == AddSelf
 }
 
-func (this *Token) isSubSelf() bool {
-	return (this.t & SubSelf) == SubSelf
+func (tk *Token) isSubSelf() bool {
+	return (tk.t & SubSelf) == SubSelf
 }
 
-func (this *Token) assertIdentifier(s string) bool {
-	return this.isIdentifier() && this.str == s
+func (tk *Token) assertIdentifier(s string) bool {
+	return tk.isIdentifier() && tk.str == s
 }
 
-func (this *Token) assertSymbol(s string) bool {
-	return this.isSymbol() && this.str == s
+func (tk *Token) assertSymbol(s string) bool {
+	return tk.isSymbol() && tk.str == s
 }
 
-func (this *Token) assertSymbols(ss ...string) bool {
-	if !this.isSymbol(){
+func (tk *Token) assertSymbols(ss ...string) bool {
+	if !tk.isSymbol(){
 		return false
 	}
 	for _, s := range ss {
-		if s == this.str {
+		if s == tk.str {
 			return true
 		}
 	}
@@ -132,10 +132,10 @@ func (this *Token) assertSymbols(ss ...string) bool {
 
 // 获取运算符优先级
 // （注：运算符的优先级，值越小，优先级越高）
-func (this *Token) priority() int {
+func (tk *Token) priority() int {
 	res := -1
 
-	if !this.isSymbol() {
+	if !tk.isSymbol() {
 		return res
 	}
 
@@ -145,32 +145,32 @@ func (this *Token) priority() int {
 	//case this.assertSymbols("!", "+", "-", " ", "++", "--"):
 	//! +(正)  -(负)   ++ -- , 结合性：从右向左
 	//res = 2
-	case this.assertSymbols("*", "/", "%"):
+	case tk.assertSymbols("*", "/", "%"):
 		res = 3
-	case this.assertSymbols("+", "-"):
+	case tk.assertSymbols("+", "-"):
 		// +(加) -(减)
 		res = 4
-	case this.assertSymbols("<<", ">>", ">>>"):
+	case tk.assertSymbols("<<", ">>", ">>>"):
 		res = 5
-	case this.assertSymbols("<", "<=", ">", ">="):
+	case tk.assertSymbols("<", "<=", ">", ">="):
 		res = 6
-	case this.assertSymbols("==", "!="):
+	case tk.assertSymbols("==", "!="):
 		res = 7
-	case this.assertSymbols("&"):
+	case tk.assertSymbols("&"):
 		// (按位与)
 		res = 8
-	case this.assertSymbols("^"):
+	case tk.assertSymbols("^"):
 		res = 9
-	case this.assertSymbols("|"):
+	case tk.assertSymbols("|"):
 		res = 10
-	case this.assertSymbols("&&"):
+	case tk.assertSymbols("&&"):
 		res = 11
-	case this.assertSymbols("||"):
+	case tk.assertSymbols("||"):
 		res = 12
-	case this.assertSymbols("?:"):
+	case tk.assertSymbols("?:"):
 		//  结合性：从右向左
 		res = 13
-	case this.assertSymbols("=", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", " =", "<<=", ">>=", ">>>="):
+	case tk.assertSymbols("=", "+=", "-=", "*=", "/=", "%=", "&=", "|=", "^=", " =", "<<=", ">>=", ">>>="):
 		// 结合性：从右向左
 		res = 14
 	}
@@ -184,29 +184,29 @@ func isValidPriorityCompared(t1, t2 *Token) bool {
 	return true
 }
 
-func (this *Token) equal(t *Token) bool {
-	return isValidPriorityCompared(this,t) && this.priority() == t.priority()
+func (tk *Token) equal(t *Token) bool {
+	return isValidPriorityCompared(tk,t) && tk.priority() == t.priority()
 }
 
-func (this *Token) lower(t *Token) bool {
-	return isValidPriorityCompared(this,t) && this.priority() < t.priority()
+func (tk *Token) lower(t *Token) bool {
+	return isValidPriorityCompared(tk,t) && tk.priority() < t.priority()
 }
 
-func (this *Token) upper(t *Token) bool {
-	return isValidPriorityCompared(this,t) && this.priority() > t.priority()
+func (tk *Token) upper(t *Token) bool {
+	return isValidPriorityCompared(tk,t) && tk.priority() > t.priority()
 }
 
-func (this *Token) String() string {
-	if this.isArrLiteral() || this.isObjLiteral() {
-		return this.toJSONString()
+func (tk *Token) String() string {
+	if tk.isArrLiteral() || tk.isObjLiteral() {
+		return tk.toJSONString()
 	}
 
-	if this.isFcall() || this.isFdef() {
+	if tk.isFcall() || tk.isFdef() {
 		var buf bytes.Buffer
-		buf.WriteString(this.str)
+		buf.WriteString(tk.str)
 		buf.WriteString("(")
-		if this.ts != nil {
-			for _, token := range this.ts {
+		if tk.ts != nil {
+			for _, token := range tk.ts {
 				buf.WriteString(token.String())
 			}
 		}
@@ -214,15 +214,15 @@ func (this *Token) String() string {
 		return buf.String()
 	}
 
-	if this.isAttribute() || this.isMtcall() {
+	if tk.isAttribute() || tk.isMtcall() {
 		var buf bytes.Buffer
-		buf.WriteString(this.caller)
+		buf.WriteString(tk.caller)
 		buf.WriteString(".")
-		buf.WriteString(this.str)
-		if this.isMtcall() {
+		buf.WriteString(tk.str)
+		if tk.isMtcall() {
 			buf.WriteString("(")
-			if this.ts != nil {
-				for _, token := range this.ts {
+			if tk.ts != nil {
+				for _, token := range tk.ts {
 					buf.WriteString(token.String())
 				}
 			}
@@ -231,12 +231,12 @@ func (this *Token) String() string {
 		return buf.String()
 	}
 
-	if this.isElement() {
+	if tk.isElement() {
 		var buf bytes.Buffer
-		buf.WriteString(this.str)
+		buf.WriteString(tk.str)
 		buf.WriteString("[")
-		if this.ts != nil {
-			for _, token := range this.ts {
+		if tk.ts != nil {
+			for _, token := range tk.ts {
 				buf.WriteString(token.String())
 			}
 		}
@@ -244,27 +244,27 @@ func (this *Token) String() string {
 		return buf.String()
 	}
 
-	if this.isStr() {
-		return fmt.Sprintf(`"%v"`, this.str)
+	if tk.isStr() {
+		return fmt.Sprintf(`"%v"`, tk.str)
 	}
 
-	if this.isAddSelf() {
-		return fmt.Sprintf(`%v ++`, this.str)
+	if tk.isAddSelf() {
+		return fmt.Sprintf(`%v ++`, tk.str)
 	}
 
-	if this.isSubSelf() {
-		return fmt.Sprintf(`%v --`, this.str)
+	if tk.isSubSelf() {
+		return fmt.Sprintf(`%v --`, tk.str)
 	}
 
-	return this.str
+	return tk.str
 }
 
-func (this *Token) toJSONString() string {
-	if this.isArrLiteral() {
+func (tk *Token) toJSONString() string {
+	if tk.isArrLiteral() {
 		var buf bytes.Buffer
 		buf.WriteString("[")
-		if this.ts != nil {
-			for _, token := range this.ts {
+		if tk.ts != nil {
+			for _, token := range tk.ts {
 				if token.isStr() {
 					buf.WriteString(fmt.Sprintf(`"%v"`, token.str))
 				} else {
@@ -276,11 +276,11 @@ func (this *Token) toJSONString() string {
 		return buf.String()
 	}
 
-	if this.isObjLiteral() {
+	if tk.isObjLiteral() {
 		var buf bytes.Buffer
 		buf.WriteString("{")
-		if this.ts != nil {
-			for _, token := range this.ts {
+		if tk.ts != nil {
+			for _, token := range tk.ts {
 				if token.isStr() || token.isIdentifier() {
 					buf.WriteString(fmt.Sprintf(`"%v"`, token.str))
 				} else {
@@ -294,52 +294,52 @@ func (this *Token) toJSONString() string {
 	return ""
 }
 
-func (t *Token) TokenTypeName() string {
+func (this *Token) TokenTypeName() string {
 	var buf bytes.Buffer
-	if t.isStr() {
+	if this.isStr() {
 		buf.WriteString( "string, ")
 	}
-	if t.isIdentifier() {
+	if this.isIdentifier() {
 		buf.WriteString( "identifier, ")
 	}
-	if t.isInt() {
+	if this.isInt() {
 		buf.WriteString( "int, ")
 	}
-	if t.isFloat() {
+	if this.isFloat() {
 		buf.WriteString( "float, ")
 	}
-	if t.isSymbol() {
+	if this.isSymbol() {
 		buf.WriteString( "symbol, ")
 	}
-	if t.isFdef() {
+	if this.isFdef() {
 		buf.WriteString("function define, ")
 	}
-	if t.isFcall() {
+	if this.isFcall() {
 		buf.WriteString("function call, ")
 	}
-	if t.isMtcall() {
+	if this.isMtcall() {
 		buf.WriteString("method call, ")
 	}
-	if t.isAttribute() {
+	if this.isAttribute() {
 		buf.WriteString("attribute, ")
 	}
-	if t.isArrLiteral() {
+	if this.isArrLiteral() {
 		buf.WriteString("array literal, ")
 	}
-	if t.isObjLiteral() {
+	if this.isObjLiteral() {
 		buf.WriteString("object literal, ")
 	}
-	if t.isElement() {
+	if this.isElement() {
 		buf.WriteString("element, ")
 	}
-	if t.isComplex() {
+	if this.isComplex() {
 		buf.WriteString("complex, ")
 	}
 
-	if t.isAddSelf() {
+	if this.isAddSelf() {
 		buf.WriteString("addself, ")
 	}
-	if t.isSubSelf() {
+	if this.isSubSelf() {
 		buf.WriteString("subself, ")
 	}
 	if buf.Len() == 0 {
@@ -348,11 +348,11 @@ func (t *Token) TokenTypeName() string {
 	return strings.TrimRight(strings.TrimSpace(buf.String()), ",")
 }
 
-func (t *Token) lineIndexString() string {
+func (tk *Token) lineIndexString() string {
 	var res bytes.Buffer
-	res.WriteString(fmt.Sprintf("line: %v", t.lineIndex))
-	if t.endLineIndex > t.lineIndex {
-		res.WriteString(fmt.Sprintf(", %v", t.endLineIndex))
+	res.WriteString(fmt.Sprintf("line: %v", tk.lineIndex))
+	if tk.endLineIndex > tk.lineIndex {
+		res.WriteString(fmt.Sprintf(", %v", tk.endLineIndex))
 	}
 	return res.String()
 }

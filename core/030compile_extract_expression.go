@@ -28,8 +28,9 @@ func extractExpression(ts []Token) *Expression {
 	}
 	if expr == nil {
 		runtimeExcption("parseExpressionStatement Exception:", tokensString(ts))
+	} else {
+		expr.raw = ts
 	}
-	expr.raw = ts
 	return expr
 }
 

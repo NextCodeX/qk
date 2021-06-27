@@ -1,6 +1,3 @@
-obj = {}
-k = "name"
-obj[k] = "changlie"
-obj.age = 18
-obj["addr"] = "sz"
-println(obj)
+print("hello qk string \n\n; -\t-\n")
+
+println(reg_match("Go(\w+)", "Hello Gopher, Hello Golang"))
