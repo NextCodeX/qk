@@ -70,10 +70,7 @@ func (arr *JSONArrayImpl) get(index int) *Value {
 }
 
 func (arr *JSONArrayImpl) checkOutofIndex(index int) bool {
-    if index<0 || index >= len(arr.val) {
-        return true
-    }
-    return false
+    return index < 0 || index >= len(arr.val)
 }
 
 func (arr *JSONArrayImpl) values() []*Value {

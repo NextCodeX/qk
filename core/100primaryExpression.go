@@ -19,44 +19,44 @@ type PrimaryExpr struct {
 	t PrimaryExpressionType
 	caller string // 调用者名称
 	name string  // 变量名或者函数名称
-	args []*Expression // 参数变量名
+	args []*Expression // 函数调用参数 / 数组索引
 	res *Value  // 常量值
 }
 
-func (this *PrimaryExpr) isVar() bool {
-	return (this.t & VarPrimaryExpressionType) == VarPrimaryExpressionType
+func (priExpr *PrimaryExpr) isVar() bool {
+	return (priExpr.t & VarPrimaryExpressionType) == VarPrimaryExpressionType
 }
 
-func (this *PrimaryExpr) isConst() bool {
-	return (this.t & ConstPrimaryExpressionType) == ConstPrimaryExpressionType
+func (priExpr *PrimaryExpr) isConst() bool {
+	return (priExpr.t & ConstPrimaryExpressionType) == ConstPrimaryExpressionType
 }
 
-func (this *PrimaryExpr) isArray() bool {
-	return (this.t & ArrayPrimaryExpressionType) == ArrayPrimaryExpressionType
+func (priExpr *PrimaryExpr) isArray() bool {
+	return (priExpr.t & ArrayPrimaryExpressionType) == ArrayPrimaryExpressionType
 }
 
-func (this *PrimaryExpr) isObject() bool {
-	return (this.t & ObjectPrimaryExpressionType) == ObjectPrimaryExpressionType
+func (priExpr *PrimaryExpr) isObject() bool {
+	return (priExpr.t & ObjectPrimaryExpressionType) == ObjectPrimaryExpressionType
 }
 
-func (this *PrimaryExpr) isElement() bool {
-	return (this.t & ElementPrimaryExpressionType) == ElementPrimaryExpressionType
+func (priExpr *PrimaryExpr) isElement() bool {
+	return (priExpr.t & ElementPrimaryExpressionType) == ElementPrimaryExpressionType
 }
 
-func (this *PrimaryExpr) isAttibute() bool {
-	return (this.t & AttibutePrimaryExpressionType) == AttibutePrimaryExpressionType
+func (priExpr *PrimaryExpr) isAttibute() bool {
+	return (priExpr.t & AttibutePrimaryExpressionType) == AttibutePrimaryExpressionType
 }
 
-func (this *PrimaryExpr) isFunctionCall() bool {
-	return (this.t & FunctionCallPrimaryExpressionType) == FunctionCallPrimaryExpressionType
+func (priExpr *PrimaryExpr) isFunctionCall() bool {
+	return (priExpr.t & FunctionCallPrimaryExpressionType) == FunctionCallPrimaryExpressionType
 }
 
-func (this *PrimaryExpr) isMethodCall() bool {
-	return (this.t & MethodCallPrimaryExpressionType) == MethodCallPrimaryExpressionType
+func (priExpr *PrimaryExpr) isMethodCall() bool {
+	return (priExpr.t & MethodCallPrimaryExpressionType) == MethodCallPrimaryExpressionType
 }
 
-func (this *PrimaryExpr) isOther() bool {
-	return (this.t & OtherPrimaryExpressionType) == OtherPrimaryExpressionType
+func (priExpr *PrimaryExpr) isOther() bool {
+	return (priExpr.t & OtherPrimaryExpressionType) == OtherPrimaryExpressionType
 }
 
 

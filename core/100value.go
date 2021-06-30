@@ -8,14 +8,14 @@ import (
 type ValueType int
 
 const (
-    IntValue ValueType = 1 << iota
-    FloatValue
-    BooleanValue
-    StringValue
-    AnyValue
-    ArrayValue
-    ObjectValue
-    NULLValue
+    IntValue ValueType = 1 << iota // 整型
+    FloatValue // 浮点型
+    BooleanValue // 布尔类型
+    StringValue // 字符串
+    AnyValue // 任意值
+    ArrayValue // json 数组
+    ObjectValue // json 对象
+    NULLValue // 空值
 )
 
 // 空值
@@ -109,7 +109,7 @@ func (v *Value) isAnyValue() bool {
 }
 
 func (v *Value) isClass() bool {
-    return v.isAnyValue() && reflect.TypeOf(v.any).AssignableTo(classType())
+    return v.isAnyValue() && reflect.TypeOf(v.any).AssignableTo(ClassType)
 }
 
 func (v *Value) isArrayValue() bool {

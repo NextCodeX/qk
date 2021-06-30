@@ -1,3 +1,109 @@
 print("hello qk string \n\n; -\t-\n")
 
 println(reg_match("Go(\w+)", "Hello Gopher, Hello Golang"))
+
+
+println("2 -> ", fprint(2))
+println("===================")
+println("4 -> ", fprint(4))
+
+fprint(flag) {
+    sum = 0
+    for i=0; i<10; i++ {
+        sum += i
+        if flag == i {
+            return sum
+        }
+    }
+    return sum
+}
+
+println("ftest below -----------------")
+ftest(3, false)
+println("===================")
+ftest(4, true)
+
+ftest(flag, exit) {
+    for i=0; i<20; i++ {
+
+        if i%flag == 2 {
+            println(i, " -> execute continue")
+            continue
+        }
+        if exit && i == 4  {
+            println(i, " -> execute return")
+            return 0
+        }
+        if i > 9 {
+            println(i, " -> execute break")
+            break
+        }
+        println("row -> ", i)
+    }
+    println("func over!")
+}
+
+println("doubleLoopTest below----------------")
+doubleLoopTest(4, false)
+println("=========================")
+doubleLoopTest(4, true)
+
+doubleLoopTest(num, flag) {
+    for i=1; i<5; i++ {
+        for j=1; j<12; j++ {
+            if i*j == 9 {
+                println(i, j, "-> continue")
+                continue
+            }
+            if flag && j == 4 {
+                println(i, j, "-> return 0")
+                return 0
+            }
+            if j == num {
+                println(i, j, "-> break")
+                break
+            }
+            println(i, j, "-> normal")
+        }
+    }
+    println("func over!")
+}
+
+println("foreach break continue test------------------")
+obj = {name:"changlie", age:18, addr:"sz", marriage: false, salary:5000, sex: "male"}
+println("object => ", obj)
+println("### normal: ")
+foreach key, val : obj {
+    println(key, "->", val)
+}
+println("### abnormal: ")
+foreach key, val : obj {
+    if key == "age" {
+        println(key, "->", val, " #continue")
+        continue
+    }
+    if key == "marriage" {
+        println(key, "->", val, " #break")
+        break
+    }
+    println(key, "->", val)
+}
+
+println("========================")
+arr = [1, false, true, 3.14, "changlie"]
+println("### normal: ")
+foreach i, item : arr {
+    println("index:", i, "; item:", item)
+}
+println("### abnormal: ")
+foreach i, item : arr {
+    if i == 1 {
+        println("index:", i, "; item:", item, " #continue")
+        continue
+    }
+    if i == 3 {
+        println("index:", i, "; item:", item, " #break")
+        break
+    }
+    println("index:", i, "; item:", item)
+}

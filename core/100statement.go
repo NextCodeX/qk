@@ -7,17 +7,17 @@ import (
 type StatementType int
 
 const (
-    ExpressionStatement StatementType = 1 << iota
-    IfStatement
-    ForStatement
-    ForeachStatement
-    ForIndexStatement
-    ForItemStatement
-    SwitchStatement
-    MultiStatement
-    ContinueStatement
-    BreakStatement
-    ReturnStatement
+    ExpressionStatement StatementType = 1 << iota // 表达式语句
+    IfStatement // if语句
+    ForStatement // for循环语句
+    ForeachStatement // 遍历语句
+    ForIndexStatement // 索引遍历语句
+    ForItemStatement // 值遍历语句
+    SwitchStatement // switch 语句
+    MultiStatement // 多重语句
+    ContinueStatement // continue 语句
+    BreakStatement // break 语句
+    ReturnStatement // 返回语句
 )
 
 
@@ -27,9 +27,9 @@ type Statement struct {
     preExprTokens []Token // 用于普通for语句
     condExprTokens []Token // 用于if,for语句
     postExprTokens []Token // 用于普通for语句
-    preExpr *Expression
-    condExpr *Expression
-    postExpr *Expression
+    preExpr *Expression  // 用于for语句
+    condExpr *Expression // 用于if,for语句
+    postExpr *Expression // 用于for语句
     condStmts []*Statement // 用于if, switch语句
     defStmt *Statement // 用于if, switch语句
     block []*Statement // stmt核心组成(编译后的信息)

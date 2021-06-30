@@ -23,7 +23,7 @@ func extractExpression(ts []Token) *Expression {
 		expr = parseBinaryExpression(ts)
 
 	default:
-		// 处理多维表达式
+		// 处理多元表达式
 		expr = parseMultivariateExpression(ts)
 	}
 	if expr == nil {
@@ -40,9 +40,11 @@ func parseUnaryExpression(ts []Token) *Expression {
 
 	// 处理自增, 自减
 	if token.isAddSelf() || token.isSubSelf() {
-		op := symbolToken("+")
+		var op Token
 		if token.isSubSelf() {
 			op = symbolToken("-")
+		} else {
+			op = symbolToken("+")
 		}
 		var tmpTokens []Token
 		tmpTokens = append(tmpTokens, token)
@@ -180,6 +182,7 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 		leftTokens, nextIndex := extractTokensByParentheses(ts)
 		tmpvarToken := getTmpVarToken()
 		if !hasSymbol(leftTokens, "(") && len(leftTokens) == 3 {
+			// e.g. (a + b) / 5
 			// 左处理
 			exprTokens = append(leftTokens, tmpvarToken)
 			*exprTokensList = append(*exprTokensList, exprTokens)
@@ -189,6 +192,7 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 			reduceTokensForExpression(res, nextTokens, exprTokensList)
 			return
 		} else {
+			// e.g. (d + (f - c)) * e
 			// 左处理
 			reduceTokensForExpression(&tmpvarToken, leftTokens, exprTokensList)
 
@@ -206,16 +210,15 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 		condBoundry := tmpSize == 2
 		condFinish := condBoundry && i == size-1
 		preCond1 := condBoundry && i < size-1
-		//if preCond1 {
-		//	fmt.Printf("pre.priority:  %v:%v; next.priority: %v:%v \n", last(exprTokens).str, last(exprTokens).priority(), next(ts, i).str, next(ts, i).priority() )
-		//}
 		// 处理根据运算符优先级, 左向归约的情况
 		condShiftLeft1 := preCond1 && last(exprTokens).equal(next(ts, i))
 		condShiftLeft2 := preCond1 && last(exprTokens).lower(next(ts, i))
-		//fmt.Printf("condFinish: %v, preCond1: %v, condShiftLeft1: %v, condShiftLeft2: %v\n", condFinish, preCond1, condShiftLeft1, condShiftLeft2)
 		if condShiftLeft1 || condShiftLeft2 || condFinish {
+			// e.g. c + 7
+			// a = 23
 			exprTokens = append(exprTokens, token)
 			if !condFinish {
+				// e.g. a + 9 + c
 				tmpVarToken := getTmpVarToken()
 				nextTokens := insert(tmpVarToken, ts[i+1:])
 				exprTokens = append(exprTokens, tmpVarToken)
@@ -226,11 +229,11 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 
 		// 处理括号不是第一个token的情况
 		condRightParentheses := preCond1 && token.assertSymbol("(")
-		//fmt.Printf("condRightParentheses: %v; \n", condRightParentheses)
 		if condRightParentheses {
 			rightTokens, nextIndex := extractTokensByParentheses(ts[i:])
 			nextIndex = i + nextIndex // 转换回切片ts的相应索引
 			if nextIndex < size-1 {
+				// e.g. a + (9 * d) - 3; rightTokens -> 9 * d; 9 * d => tmpVarToken1
 				// 因为括号圈的不是右边整个表达式, 故先求括号值, 再通过运算符优先级求值
 				tmpVarToken1 := getTmpVarToken() // 括号内的中间临时值
 				reduceTokensForExpression(&tmpVarToken1, rightTokens, exprTokensList)
@@ -240,13 +243,15 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 
 				nextToken := ts[nextIndex]
 				if last(exprTokens).equal(&nextToken) || last(exprTokens).lower(&nextToken) {
+					// e.g. d * tmp + c / 2
 					// 左优先
-					exprTokens = append(exprTokens, tmpVarToken1) // interval tmp result
+					exprTokens = append(exprTokens, tmpVarToken1) // middle tmp result
 					exprTokens = append(exprTokens, tmpVarToken2) // left expr result.
 
 					nextTokens2 := insert(tmpVarToken2, ts[nextIndex:]) //
 					reduceTokensForExpression(res, nextTokens2, exprTokensList)
 				} else {
+					// e.g. e + tmp * f
 					// 右优先
 					exprTokens = append(exprTokens, tmpVarToken2) // rigtht expr result.
 
@@ -256,6 +261,7 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 				break
 			}
 
+			// e.g. a * (b + 3)
 			// 因为括号圈的是右边整个表达式时
 			tmpVarToken3 := getTmpVarToken()
 			exprTokens = append(exprTokens, tmpVarToken3)
@@ -265,9 +271,11 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 			break
 		}
 
+		// e.g.
+		// a + b * c
+		// a * b - 3
 		// 处理根据运算符优先级, 右向归约的情况
 		condShiftRight1 := preCond1 && last(exprTokens).upper(next(ts, i))
-		//fmt.Printf("condShiftRight1: %v; \n", condShiftRight1)
 		if condShiftRight1 {
 			tmpVarToken := getTmpVarToken()
 			nextTokens := ts[i:]

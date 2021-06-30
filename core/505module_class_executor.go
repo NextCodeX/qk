@@ -14,10 +14,7 @@ type ClassExecutor struct {
 	methods map[string]*FunctionExecutor
 }
 
-func classType() reflect.Type {
-	t := reflect.TypeOf(&ClassExecutor{})
-	return t
-}
+var ClassType = reflect.TypeOf(&ClassExecutor{})
 
 func newClassExecutor(name string, objPtr interface{}, objDoublePtr interface{}) *ClassExecutor {
 	fs := collectFieldInfo(objPtr)
