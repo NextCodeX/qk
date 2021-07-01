@@ -1,0 +1,13 @@
+returnTest(flag) {
+    for i=0; i<9; i++ {
+        if flag && i == 5 {
+            return
+        } else {}
+        println("i -> ", i)
+    }
+}
+
+println("returnTest below -----------")
+returnTest(true)
+println("=================")
+returnTest(false)

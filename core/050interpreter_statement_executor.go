@@ -1,5 +1,6 @@
 package core
 
+// 语句列表类型， 配合StatementResult实现return, continue, break
 type StmtListType int
 const (
 	StmtListTypeFunc StmtListType = 1 << iota
@@ -8,8 +9,9 @@ const (
 	StmtListTypeNormal
 )
 
+// 执行函数
 func executeFunctionStatementList(stmts []*Statement, stack *VariableStack) *Value {
-	defer stack.pop()
+	defer stack.pop() // 函数执行结束后， 删除变量栈(list)最新添加的变量池(map)
 
 	executeStatementList(stmts, stack, StmtListTypeFunc)
 	res := stack.searchVariable(funcResultName)
@@ -23,6 +25,10 @@ func executeStatementList(stmts []*Statement, stack *VariableStack, t StmtListTy
 	var res *StatementResult
 	for _, stmt := range stmts {
 		res = executeStatement(stmt, stack)
+		if res == nil {
+			println("executeStatement return error", tokensString(stmt.raw))
+			break
+		}
 
 		if res.isContinue() {
 			if t == StmtListTypeFor {
@@ -33,6 +39,10 @@ func executeStatementList(stmts []*Statement, stack *VariableStack, t StmtListTy
 			break
 		}
 
+	}
+	// 修复空语句异常
+	if res == nil {
+		res = newStatementResult(StatementNormal, NULL)
 	}
 	return res
 }
@@ -108,9 +118,6 @@ func executeForStatement(stmt *Statement, stack *VariableStack) (res *StatementR
 	if stmt.condExpr != nil {
 		flag = evalBoolExpression(stmt.condExpr, stack)
 	}
-	//for _, st := range stmt.block {
-	//	fmt.Println("stmts: ", tokensString(st.raw))
-	//}
 	for flag {
 
 		res = executeStatementList(stmt.block, stack, StmtListTypeFor)
@@ -119,7 +126,7 @@ func executeForStatement(stmt *Statement, stack *VariableStack) (res *StatementR
 		if res.isBreak() {
 			res.t = StatementNormal
 			return
-		}else if res.isReturn() {
+		} else if res.isReturn() {
 			return
 		}
 
@@ -139,6 +146,7 @@ func executeForeachStatement(stmt *Statement, stack *VariableStack) (res *Statem
 	itr := toIterator(varVal)
 	if itr == nil {
 		runtimeExcption(fpi.iterator, "is not iterator!")
+		return
 	}
 
 	indexs := itr.indexs()
@@ -158,7 +166,7 @@ func executeForeachStatement(stmt *Statement, stack *VariableStack) (res *Statem
 		if res.isBreak() {
 			res.t = StatementNormal
 			return
-		}else if res.isReturn() {
+		} else if res.isReturn() {
 			return
 		}
 	}

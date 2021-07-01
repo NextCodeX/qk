@@ -57,6 +57,9 @@ func parseForPlusStatement(stmt *Statement)  {
 }
 
 func parseReturnStatement(stmt *Statement)  {
+	if len(stmt.raw) < 1 {
+		stmt.raw = insert(newToken("0", Int), stmt.raw)
+	}
 	stmt.raw = insert(symbolToken("="), stmt.raw)
 	stmt.raw = insert(varToken(funcResultName), stmt.raw)
 

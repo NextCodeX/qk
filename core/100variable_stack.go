@@ -2,6 +2,7 @@ package core
 
 import "fmt"
 
+// 变量栈
 type VariableStack struct {
 	list []Variables
 }
@@ -22,16 +23,6 @@ func (stack *VariableStack) pop() {
 		return
 	}
 	stack.list = stack.list[:size-1]
-}
-
-func (stack *VariableStack) clone() *VariableStack {
-	size := len(stack.list)
-	if size<1 {
-		return newVariableStack()
-	}
-
-	newStack := stack.list[:size-1]
-	return &VariableStack{newStack}
 }
 
 func (stack *VariableStack) searchVariable(name string) *Value {

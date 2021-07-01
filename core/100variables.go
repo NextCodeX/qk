@@ -1,6 +1,6 @@
 package core
 
-
+// 变量池
 type Variables map[string]*Value
 
 func newVariables() Variables {

@@ -91,6 +91,10 @@ func extractBreakStatement(currentIndex int, ts []Token) (*Statement, int) {
 func extractReturnStatement(currentIndex int, ts []Token) (*Statement, int) {
 	stmt := &Statement{t:ReturnStatement}
 	size := len(ts)
+	if size < 2 {
+		return stmt, currentIndex + 1
+	}
+
 	var endIndex int
 	for i:=currentIndex+1; i<size; i++ {
 		t := ts[i]

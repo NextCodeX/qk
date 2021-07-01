@@ -107,3 +107,11 @@ foreach i, item : arr {
     }
     println("index:", i, "; item:", item)
 }
+
+a = "hello, 中华人民共和国"
+foreach i, char : a {
+    println(i, "char:", char)
+}
+
+
+returnTest(false)

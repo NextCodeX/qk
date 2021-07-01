@@ -54,7 +54,7 @@ func Compile(stmts StatementList) {
 
 func Interpret() {
 	stack := newVariableStack()
-	stack.push()
+	stack.push() // 执行方法前，向变量栈(list)添加的一个变量池(map)
 	executeFunctionStatementList(mainFunc.block, stack)
 }
 

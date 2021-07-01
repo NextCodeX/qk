@@ -12,13 +12,16 @@ func toIterator(v *Value) Iterator {
 	if v.isObjectValue() {
 		return v.jsonObj
 	}
+	if v.isStringValue() {
+		return newStringIterator(v.str)
+	}
 	return nil
 }
 
 type ForPlusInfo struct {
-	indexName string
-	itemName string
-	iterator string
+	indexName string // 索引变量名
+	itemName string // 值变量名
+	iterator string // 迭代器变量名
 }
 
 func newForPlusInfo(indexName, itemName, iterator string) *ForPlusInfo {

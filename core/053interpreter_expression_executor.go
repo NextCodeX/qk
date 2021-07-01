@@ -90,13 +90,14 @@ func (executor *ExpressionExecutor) recursiveEvalMultiExpression(nextExpr *Expre
 		return executor.evalNewExpression(nextExpr)
 	}
 
-	executor.checkValueExist(left, exprList)
-	executor.checkValueExist(right, exprList)
+	executor.calculateIfNotExist(left, exprList)
+	executor.calculateIfNotExist(right, exprList)
 
 	return executor.evalNewExpression(nextExpr)
 }
 
-func (executor *ExpressionExecutor) checkValueExist(primaryExpr *PrimaryExpr, exprList []*Expression) {
+// 检查相应的变量是否已计算，若未计算则进行计算
+func (executor *ExpressionExecutor) calculateIfNotExist(primaryExpr *PrimaryExpr, exprList []*Expression) {
 	if !primaryExpr.isVar() {
 		return 
 	}
