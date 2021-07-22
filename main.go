@@ -19,8 +19,8 @@ func main() {
 		}
 	}
 
-	qkfile := "examples/db-test-mysql1.qk"
-	//qkfile := getScriptFile()
+	//qkfile := "examples/db-test-mysql1.qk"
+	qkfile := getScriptFile()
 	//changeWorkDirectory()
 
 	bs, _ := ioutil.ReadFile(qkfile)
