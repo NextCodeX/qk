@@ -23,8 +23,9 @@ func (executor *ExpressionExecutor) run() (res *Value) {
 		return executor.executeBinaryExpression()
 	}else if expr.isMultiExpression() {
 		return executor.executeMultiExpression()
+	} else {
+		runtimeExcption("expression is not supported:", expr.RawString())
 	}
-	runtimeExcption("expression is not supported:", expr.RawString())
 	return nil
 }
 

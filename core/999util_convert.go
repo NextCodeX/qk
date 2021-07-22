@@ -80,6 +80,7 @@ func tokenToValue(t *Token) (v *Value) {
 	}
 	if t.isStr() {
 		str := strings.Replace(t.str, "\\\\", "\\", -1)
+		str = strings.Replace(str, "\\r", "\r", -1) // 对 \r 进行转义
 		str = strings.Replace(str, "\\n", "\n", -1) // 对 \n 进行转义
 		str = strings.Replace(str, "\\t", "\t", -1) // 对 \t 进行转义
 		v = newQkValue(str)

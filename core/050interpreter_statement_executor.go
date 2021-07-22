@@ -170,5 +170,7 @@ func executeForeachStatement(stmt *Statement, stack *VariableStack) (res *Statem
 			return
 		}
 	}
+	// fix foreach: empty loop exception
+	res = newStatementResult(StatementNormal, NULL)
 	return res
 }

@@ -1,0 +1,32 @@
+db = mysql("root", "123456", "192.168.1.103:3306/iot?charset=utf8")
+
+rows = db.getRows("select * from uuid")
+forv row : rows {
+    printf("id: %v, type: %v, active: %v \n", row.id, row.type, row.active)
+}
+
+println("new table test!")
+println("========================")
+empsTable = "
+create table if not exists emps(
+id int primary key auto_increment,
+name varchar(50),
+sex varchar(2),
+age int
+)
+"
+
+db.exec(empsTable)
+
+total = db.getValue("select count(*) from emps")
+println("emp total => ", total)
+println("insert condition: ", number(total) < 5)
+if number(total) < 5 {
+    db.insert("insert into emps(name, sex, age) values('qq', 'F', 98) ")
+}
+rows = db.getRows("select * from emps")
+println("emp info -> ", rows)
+forv row1 : rows {
+    // printf("id: %v, name: %v, sex: %v, age: %v \n", row.id, row.name, row.sex, row.age)
+    printf("id: %v, name: %v \n", row1.id, row1.name)
+}
