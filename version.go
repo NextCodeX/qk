@@ -1,3 +1,3 @@
 package main
 
-const version = "vnextVersion..1"
+const version = "v0.1.3"
