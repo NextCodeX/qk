@@ -9,7 +9,7 @@ CREATE TABLE `userinfo` (
 
 db = sqlite("foo.db")
 // db.exec(tableSql)
-db.exec("insert into userinfo(uid, username) values(0908, 'huke')")
+// db.exec("insert into userinfo(uid, username) values(1519, 'fox')")
 rows = db.getRows("select * from userinfo")
 forv row : rows {
     printf("id: %v, name: %v \n", row.uid, row.username)
