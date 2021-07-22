@@ -1,0 +1,16 @@
+tableSql  = "
+CREATE TABLE `userinfo` (
+    `uid` INTEGER PRIMARY KEY AUTOINCREMENT,
+    `username` VARCHAR(64) NULL,
+    `departname` VARCHAR(64) NULL,
+    `created` DATE NULL
+);
+"
+
+db = connDB("sqlite", "foo.db")
+// db.exec(tableSql)
+db.exec("insert into userinfo(uid, username) values(9527, 'tianyoushi')")
+rows = db.getRows("select * from userinfo")
+forv row : rows {
+    printf("id: %v, name: %v \n", row.uid, row.username)
+}

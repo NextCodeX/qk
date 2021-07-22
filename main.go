@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	qkfile := "examples/demo2.qk"
+	qkfile := "examples/db-test-sqlite.qk"
 	//qkfile := getScriptFile()
 	//changeWorkDirectory()
 

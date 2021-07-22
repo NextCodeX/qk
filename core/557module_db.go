@@ -8,6 +8,7 @@ import (
 	//_ "github.com/godror/godror"
 	_ "github.com/lib/pq"
 	//_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 func (mr *ModuleRegister) DBModuleInit() {
@@ -36,11 +37,11 @@ func (ds *DataSource) Exec(args []interface{}) int64 {
 	assert(err != nil, "failed to build db connection:", err)
 	defer db.Close()
 
-	execResult, err := db.Exec(sql, vals)
-	assert(err != nil, "failed to execute sql:", err)
+	execResult, err := db.Exec(sql, vals...)
+	assert(err != nil, "failed to execute sql:", sql, err)
 
 	affected, err := execResult.RowsAffected()
-	assert(err != nil, "failed to update:", err)
+	assert(err != nil, "failed to update:", sql, err)
 	return affected
 }
 
