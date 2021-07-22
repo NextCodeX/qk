@@ -122,7 +122,6 @@ func executeForStatement(stmt *Statement, stack *VariableStack) (res *StatementR
 
 		res = executeStatementList(stmt.block, stack, StmtListTypeFor)
 
-
 		if res.isBreak() {
 			res.t = StatementNormal
 			return
@@ -137,6 +136,8 @@ func executeForStatement(stmt *Statement, stack *VariableStack) (res *StatementR
 			flag = evalBoolExpression(stmt.condExpr, stack)
 		}
 	}
+	// fix: empty loop exception
+	res = newStatementResult(StatementNormal, NULL)
 	return res
 }
 
