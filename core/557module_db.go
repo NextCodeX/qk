@@ -5,6 +5,8 @@ import (
 	"fmt"
 	_ "github.com/denisenkom/go-mssqldb"
 	_ "github.com/go-sql-driver/mysql"
+	"strings"
+
 	//_ "github.com/godror/godror"
 	_ "github.com/lib/pq"
 	//_ "github.com/mattn/go-sqlite3"
@@ -17,7 +19,6 @@ func (mr *ModuleRegister) DBModuleInit() {
 	functionRegister("", fs)
 }
 
-
 // 数据库连接对象
 type DataSource struct {
 	driver string
@@ -26,9 +27,49 @@ type DataSource struct {
 
 type DateSourceConstructor struct{}
 
+func (dsc *DateSourceConstructor) Sqlserver(username, password, url string) *ClassExecutor {
+	seperatorIndex := strings.Index(url, "/")
+	var host, port, dbName string
+	if seperatorIndex < 0 || seperatorIndex == len(url) - 1 {
+		runtimeExcption("error: database name is empty!")
+	} else {
+		netAddress := url[:seperatorIndex]
+		colonIndex := strings.Index(netAddress, ":")
+		if colonIndex < 0 || colonIndex == len(netAddress) - 1 {
+			runtimeExcption("host address format is error!")
+		} else {
+			host = netAddress[:colonIndex]
+			port = netAddress[colonIndex+1:]
+		}
+		dbName = url[seperatorIndex+1:]
+	}
+	// e.g. "server=192.168.1.103;port=1433;database=STG;user id=SA;password=root@123"
+	sourceName := fmt.Sprintf("server=%v;port=%v;database=%v;user id=%v;password=%v", host, port, dbName, username, password)
+	return dsc.ConnDB("mysql", sourceName)
+}
+
+func (dsc *DateSourceConstructor) Mysql(username, password, url string) *ClassExecutor {
+	seperatorIndex := strings.Index(url, "/")
+	var netAddress, uri string
+	if seperatorIndex < 0 {
+		netAddress = url
+		uri = "?charset=utf8"
+	} else {
+		netAddress = url[:seperatorIndex]
+		uri = url[seperatorIndex:]
+	}
+	// e.g. root:root@tcp(192.168.1.103:3306)/tx?charset=utf8
+	sourceName := fmt.Sprintf("%v:%v@tcp(%v)%v", username, password, netAddress, uri)
+	return dsc.ConnDB("mysql", sourceName)
+}
+
+func (dsc *DateSourceConstructor) Sqlite(dbName string) *ClassExecutor {
+	return dsc.ConnDB("sqlite", dbName)
+}
+
 func (dsc *DateSourceConstructor) ConnDB(driverName, sourceName string) *ClassExecutor {
 	ds := &DataSource{driverName, sourceName}
-	return newClassExecutor("date", ds, &ds)
+	return newClassExecutor("db", ds, &ds)
 }
 
 func (ds *DataSource) Exec(args []interface{}) int64 {

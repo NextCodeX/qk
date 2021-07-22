@@ -12,6 +12,13 @@ import (
 )
 
 func main() {
+	if len(os.Args)>1 {
+		if arg := os.Args[1]; arg == "-v" {
+			fmt.Println("Quick version:", version)
+			return
+		}
+	}
+
 	qkfile := "examples/db-test-sqlite.qk"
 	//qkfile := getScriptFile()
 	//changeWorkDirectory()
@@ -45,8 +52,9 @@ func getScriptFile() string {
 	if len(os.Args)>1 {
 		arg := os.Args[1]
 		if strings.HasPrefix(arg, "abs=") {
-			return arg[4:]
+			arg = arg[4:]
 		}
+
 		return filepath.Join(cmdDir, arg)
 	}
 

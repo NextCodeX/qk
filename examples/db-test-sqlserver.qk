@@ -1,0 +1,10 @@
+
+db = connDB("mssql", "server=192.168.1.103;port=1433;database=STG;user id=SA;password=root@123")
+
+rows = db.getRows("select * from account")
+forv row : rows {
+    println(row)
+}
+
+
+
