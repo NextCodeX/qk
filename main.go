@@ -51,6 +51,10 @@ func getScriptFile() string {
 	cmdDir := getCmdDir()
 	if len(os.Args)>1 {
 		arg := os.Args[1]
+		// optimize script running
+		if !strings.HasSuffix(arg, ".qk") {
+			arg = arg + ".qk"
+		}
 		if strings.HasPrefix(arg, "abs=") {
 			arg = arg[4:]
 		}
