@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -12,6 +13,11 @@ import (
 )
 
 func main() {
+	fmt.Println("QK_HOME => ", os.Getenv("QK_HOME"))
+	fmt.Println("GITHUB_TOKEN => ", os.Getenv("GITHUB_TOKEN"))
+	fmt.Println("GOPROXY => ", os.Getenv("GOPROXY"))
+	fmt.Println("===============================================")
+
 	if len(os.Args)>1 {
 		if arg := os.Args[1]; arg == "-v" {
 			fmt.Println("Quick version:", version)
@@ -23,7 +29,10 @@ func main() {
 	qkfile := getScriptFile()
 	//changeWorkDirectory()
 
-	bs, _ := ioutil.ReadFile(qkfile)
+	bs, err := ioutil.ReadFile(qkfile)
+	if err != nil {
+		log.Fatal("failed to read", qkfile, err)
+	}
 	core.Run(bs)
 }
 
@@ -55,11 +64,27 @@ func getScriptFile() string {
 		if !strings.HasSuffix(arg, ".qk") {
 			arg = arg + ".qk"
 		}
-		if strings.HasPrefix(arg, "abs=") {
-			arg = arg[4:]
+		if fileExist(arg) {
+			// absolute path or available relative path
+			return arg
 		}
 
-		return filepath.Join(cmdDir, arg)
+		// workspace path
+		currentDirFile := filepath.Join(cmdDir, arg)
+		if fileExist(currentDirFile) {
+			return currentDirFile
+		}
+
+		// environment path
+		qkHome := os.Getenv("QK_HOME")
+		if qkHome != "" {
+			if envDirFile := filepath.Join(qkHome, arg); fileExist(envDirFile) {
+				return envDirFile
+			}
+		}
+
+		log.Fatal(arg + " is not found!")
+		return ""
 	}
 
 	fs, err := ioutil.ReadDir(cmdDir)
@@ -83,6 +108,12 @@ func getScriptFile() string {
 		os.Exit(5)
 	}
 	return filepath.Join(cmdDir, fnames[0])
+}
+
+// 判断文件是否存在
+func fileExist(path string) bool {
+	_, err := os.Stat(path)
+	return !os.IsNotExist(err)
 }
 
 // 获取命令所在的路径
