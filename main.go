@@ -70,8 +70,7 @@ func getScriptFile() string {
 		}
 
 		// workspace path
-		currentDirFile := filepath.Join(cmdDir, arg)
-		if fileExist(currentDirFile) {
+		if currentDirFile := filepath.Join(cmdDir, arg); fileExist(currentDirFile) {
 			return currentDirFile
 		}
 
