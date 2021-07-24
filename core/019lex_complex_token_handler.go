@@ -1,6 +1,5 @@
 package core
 
-
 // 该函数用于： 去掉无用的';', 合并token生成函数调用token(Fcall), 方法调用token(Mtcall)等复合token
 func parse4ComplexTokens(ts []Token) []Token {
 	var res []Token
@@ -100,40 +99,12 @@ func checkUselessBoundary(currentIndex int, ts []Token, resTs []Token) bool  {
 
 // 判断是否遇到了json数组字面值
 func checkJSONArrayLiteral(currentIndex int, ts []Token) bool {
-	token := ts[currentIndex]
-	if !token.assertSymbol("[") {
-		return false
-	}
-	if currentIndex == 0 && last(ts).assertSymbol("]") {
-		return true
-	}
-	pre, preExist := preToken(currentIndex, ts)
-	if preExist && pre.assertSymbols("=", "(") {
-		return true
-	}
-	if preExist && pre.assertIdentifier("return") {
-		return true
-	}
-	return false
+	return ts[currentIndex].assertSymbol("[") && (currentIndex == 0 || (currentIndex > 0 && (!ts[currentIndex-1].isIdentifier() || ts[currentIndex-1].assertIdentifier("return"))))
 }
 
 // 判断是否遇到了json对象字面值
 func checkJSONObjectLiteral(currentIndex int, ts []Token) bool {
-	token := ts[currentIndex]
-	if !token.assertSymbol("{") {
-		return false
-	}
-	if currentIndex == 0 && last(ts).assertSymbol("}") {
-		return true
-	}
-	pre, preExist := preToken(currentIndex, ts)
-	if preExist && pre.assertSymbols("=", "(") {
-		return true
-	}
-	if preExist && pre.assertIdentifier("return") {
-		return true
-	}
-	return false
+	return ts[currentIndex].assertSymbol("{") && (currentIndex == 0 || (currentIndex > 0 && (!ts[currentIndex-1].isIdentifier() || ts[currentIndex-1].assertIdentifier("return"))))
 }
 
 func extractArrayLiteral(currentIndex int, ts []Token) (t Token, nextIndex int) {
@@ -144,8 +115,13 @@ func extractArrayLiteral(currentIndex int, ts []Token) (t Token, nextIndex int) 
 	var endLineIndex int
 	for i := currentIndex+1; i < size; i++ {
 		token := ts[i]
+		if token.assertSymbol("[") {
+			scopeOpenCount ++
+		}
 		if token.assertSymbol("]") {
 			scopeOpenCount --
+		}
+		if scopeOpenCount == 0 {
 			nextIndex = i + 1
 			endLineIndex = token.lineIndex
 			break
@@ -159,10 +135,13 @@ func extractArrayLiteral(currentIndex int, ts []Token) (t Token, nextIndex int) 
 		msg := printCurrentPositionTokens(ts, currentIndex)
 		runtimeExcption("extract ArrayLiteral Exception: no match final character \"]\"", msg)
 	}
+	elemsLen := len(elems)
+	if elemsLen > 0 && last(elems).assertSymbol(",") {
+		elems = elems[:elemsLen-1]
+	}
 
 	// 合并数组字面值内的复合token
 	elems = parse4ComplexTokens(elems)
-
 	t = Token{
 		str:    "[]",
 		t:      ArrLiteral | Complex,
@@ -201,10 +180,13 @@ func extractObjectLiteral(currentIndex int, ts []Token) (t Token, nextIndex int)
 		msg := printCurrentPositionTokens(ts, currentIndex)
 		runtimeExcption("extract element ObjectLiteral: no match final character \"}\"", msg)
 	}
+	elemsLen := len(elems)
+	if elemsLen > 0 && last(elems).assertSymbol(",") {
+		elems = elems[:elemsLen-1]
+	}
 
 	// 合并对象字面值内的复合token
 	elems = parse4ComplexTokens(elems)
-
 	t = Token{
 		str:    "{}",
 		t:      ObjLiteral | Complex,

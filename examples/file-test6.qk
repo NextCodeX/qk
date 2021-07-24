@@ -1,0 +1,3 @@
+
+props = file_props("/home/xp/ws/test/aprops")
+println("config -> ", props)

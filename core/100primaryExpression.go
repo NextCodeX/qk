@@ -6,6 +6,7 @@ type PrimaryExpressionType int
 const (
 	VarPrimaryExpressionType PrimaryExpressionType = 1 << iota
 	ConstPrimaryExpressionType
+	DynamicStrPrimaryExpressionType
 	ArrayPrimaryExpressionType
 	ObjectPrimaryExpressionType
 	ElementPrimaryExpressionType
@@ -29,6 +30,10 @@ func (priExpr *PrimaryExpr) isVar() bool {
 
 func (priExpr *PrimaryExpr) isConst() bool {
 	return (priExpr.t & ConstPrimaryExpressionType) == ConstPrimaryExpressionType
+}
+
+func (priExpr *PrimaryExpr) isDynamicStr() bool {
+	return (priExpr.t & DynamicStrPrimaryExpressionType) == DynamicStrPrimaryExpressionType
 }
 
 func (priExpr *PrimaryExpr) isArray() bool {

@@ -11,7 +11,7 @@ const DEBUG_MODE = false
 func Run(bs []byte) {
 	// 词法分析
 	ts := ParseTokens(bs)
-	//printTokensByLine(ts)
+	printTokensByLine(ts)
 
 	// 语法分析
 	mainFunc.setRaw(ts)
@@ -19,7 +19,6 @@ func Run(bs []byte) {
 	//printFunc()
 
 	// 解析并执行
-	//fmt.Println("================")
 	Interpret()
 }
 

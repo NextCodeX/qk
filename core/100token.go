@@ -10,17 +10,18 @@ type TokenType int
 const (
 	Identifier  TokenType = 1 << iota // 标识符
 	Str // 字符串类型
+	DynamicStr // 动态字符串类型
 	Int // 整数类型
 	Float  // 浮点类型
 	Symbol  // 符号
 
-	Fcall  // 函数调用
-	Fdef  // 函数 定义
-	Mtcall // 方法调用
+	Fcall  // function call 函数调用
+	Fdef  // function definition 函数 定义
+	Mtcall // method call 方法调用
 	Attribute // 对象属性
 	ArrLiteral // 数组字面值
 	ObjLiteral // 对象字面值
-	Element // 元素，用于指示对象或数组的元素
+	Element // 元素, 用于指示对象或数组的元素
 	Complex // 用于标记复合类型token
 
 	AddSelf // 自增一
@@ -56,6 +57,10 @@ func (tk *Token) isIdentifier() bool {
 
 func (tk *Token) isStr() bool {
 	return (tk.t & Str) == Str
+}
+
+func (tk *Token) isDynamicStr() bool {
+	return (tk.t & DynamicStr) == DynamicStr
 }
 
 func (tk *Token) isInt() bool {
@@ -263,15 +268,7 @@ func (tk *Token) toJSONString() string {
 	if tk.isArrLiteral() {
 		var buf bytes.Buffer
 		buf.WriteString("[")
-		if tk.ts != nil {
-			for _, token := range tk.ts {
-				if token.isStr() {
-					buf.WriteString(fmt.Sprintf(`"%v"`, token.str))
-				} else {
-					buf.WriteString(token.str)
-				}
-			}
-		}
+		buf.WriteString(tokensString(tk.ts))
 		buf.WriteString("]")
 		return buf.String()
 	}
@@ -279,67 +276,59 @@ func (tk *Token) toJSONString() string {
 	if tk.isObjLiteral() {
 		var buf bytes.Buffer
 		buf.WriteString("{")
-		if tk.ts != nil {
-			for _, token := range tk.ts {
-				if token.isStr() || token.isIdentifier() {
-					buf.WriteString(fmt.Sprintf(`"%v"`, token.str))
-				} else {
-					buf.WriteString(token.str)
-				}
-			}
-		}
+		buf.WriteString(tokensString(tk.ts))
 		buf.WriteString("}")
 		return buf.String()
 	}
 	return ""
 }
 
-func (this *Token) TokenTypeName() string {
+func (tk *Token) TokenTypeName() string {
 	var buf bytes.Buffer
-	if this.isStr() {
+	if tk.isStr() {
 		buf.WriteString( "string, ")
 	}
-	if this.isIdentifier() {
+	if tk.isIdentifier() {
 		buf.WriteString( "identifier, ")
 	}
-	if this.isInt() {
+	if tk.isInt() {
 		buf.WriteString( "int, ")
 	}
-	if this.isFloat() {
+	if tk.isFloat() {
 		buf.WriteString( "float, ")
 	}
-	if this.isSymbol() {
+	if tk.isSymbol() {
 		buf.WriteString( "symbol, ")
 	}
-	if this.isFdef() {
+	if tk.isFdef() {
 		buf.WriteString("function define, ")
 	}
-	if this.isFcall() {
+	if tk.isFcall() {
 		buf.WriteString("function call, ")
 	}
-	if this.isMtcall() {
+	if tk.isMtcall() {
 		buf.WriteString("method call, ")
 	}
-	if this.isAttribute() {
+	if tk.isAttribute() {
 		buf.WriteString("attribute, ")
 	}
-	if this.isArrLiteral() {
+	if tk.isArrLiteral() {
 		buf.WriteString("array literal, ")
 	}
-	if this.isObjLiteral() {
+	if tk.isObjLiteral() {
 		buf.WriteString("object literal, ")
 	}
-	if this.isElement() {
+	if tk.isElement() {
 		buf.WriteString("element, ")
 	}
-	if this.isComplex() {
+	if tk.isComplex() {
 		buf.WriteString("complex, ")
 	}
 
-	if this.isAddSelf() {
+	if tk.isAddSelf() {
 		buf.WriteString("addself, ")
 	}
-	if this.isSubSelf() {
+	if tk.isSubSelf() {
 		buf.WriteString("subself, ")
 	}
 	if buf.Len() == 0 {
@@ -369,7 +358,7 @@ func toString4Tokens(ts []Token, start, end int) string {
 func tokensString(ts []Token) string {
 	var buf bytes.Buffer
 	for _, t := range ts {
-		buf.WriteString(t.String() + "  ")
+		buf.WriteString(t.String() + " ")
 	}
 	return buf.String()
 }

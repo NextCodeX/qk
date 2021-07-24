@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"os"
 )
 
 type ExpressionExecutor struct {
@@ -65,16 +66,14 @@ func (executor *ExpressionExecutor) executeElementExpression(primaryExpr *Primar
 		arr := varVal.jsonArr
 		index := toIntValue(argRawVals[0])
 		return arr.get(index)
-	}
-
-	if varVal.isObjectValue() {
+	} else if varVal.isObjectValue() {
 		obj := varVal.jsonObj
 		key := toStringValue(argRawVals[0])
 		return obj.get(key)
+	} else {
+		runtimeExcption(fmt.Sprintf("failed to eval element %v[%v]: %v is not jsonArray or jsonObject", varname, argRawVals[0], varname))
+		return nil
 	}
-
-	runtimeExcption("eval element exception:", executor.expr.RawString())
-	return nil
 }
 
 
@@ -233,7 +232,7 @@ func (executor *ExpressionExecutor) evalAndBinaryExpression() (res *Value) {
 	default:
 		runtimeExcption("evalAndBinaryExpression Exception:", tokensString(expr.raw))
 	}
-	res = newQkValue(tmpVal)
+	res = newQKValue(tmpVal)
 	return res
 }
 
@@ -249,7 +248,7 @@ func (executor *ExpressionExecutor) evalOrBinaryExpression() (res *Value) {
 	default:
 		runtimeExcption("evalOrBinaryExpression Exception:", tokensString(expr.raw))
 	}
-	res = newQkValue(tmpVal)
+	res = newQKValue(tmpVal)
 	return res
 }
 
@@ -275,7 +274,7 @@ func (executor *ExpressionExecutor) evalEqBinaryExpression() (res *Value) {
 	default:
 		tmpVal = false
 	}
-	res = newQkValue(tmpVal)
+	res = newQKValue(tmpVal)
 	return res
 }
 
@@ -301,7 +300,7 @@ func (executor *ExpressionExecutor) evalNeBinaryExpression() (res *Value) {
 	default:
 		tmpVal = false
 	}
-	res = newQkValue(tmpVal)
+	res = newQKValue(tmpVal)
 	return res
 }
 
@@ -325,7 +324,7 @@ func (executor *ExpressionExecutor) evalGtBinaryExpression() (res *Value) {
 	default:
 		tmpVal = false
 	}
-	res = newQkValue(tmpVal)
+	res = newQKValue(tmpVal)
 	return res
 }
 
@@ -349,19 +348,19 @@ func (executor *ExpressionExecutor) evalLtBinaryExpression() (res *Value) {
 	default:
 		tmpVal = false
 	}
-	res = newQkValue(tmpVal)
+	res = newQKValue(tmpVal)
 	return res
 }
 
 func (executor *ExpressionExecutor) evalGeBinaryExpression() (res *Value) {
 	tmpVal := executor.evalGtBinaryExpression().boolean || executor.evalEqBinaryExpression().boolean
-	res = newQkValue(tmpVal)
+	res = newQKValue(tmpVal)
 	return res
 }
 
 func (executor *ExpressionExecutor) evalLeBinaryExpression() (res *Value) {
 	tmpVal := executor.evalLtBinaryExpression().boolean || executor.evalEqBinaryExpression().boolean
-	res = newQkValue(tmpVal)
+	res = newQKValue(tmpVal)
 	return res
 }
 
@@ -482,7 +481,7 @@ func (executor *ExpressionExecutor) evalAddBinaryExpression() (res *Value) {
 		runtimeExcption("unknow operation:", left.val(), "+", right.val(), " -> ", executor.expr.RawString())
 	}
 
-	res = newQkValue(tmpVal)
+	res = newQKValue(tmpVal)
 	return res
 }
 
@@ -506,7 +505,7 @@ func (executor *ExpressionExecutor) evalSubBinaryExpression() (res *Value) {
 	default:
 		runtimeExcption("unknow operation:", left.val(), "-", right.val())
 	}
-	res = newQkValue(tmpVal)
+	res = newQKValue(tmpVal)
 	return res
 }
 
@@ -530,7 +529,7 @@ func (executor *ExpressionExecutor) evalMulBinaryExpression() (res *Value) {
 	default:
 		runtimeExcption("unknow operation:", left.val(), "*", right.val())
 	}
-	res = newQkValue(tmpVal)
+	res = newQKValue(tmpVal)
 	return res
 }
 
@@ -557,7 +556,7 @@ func (executor *ExpressionExecutor) evalDivBinaryExpression() (res *Value) {
 	default:
 		runtimeExcption("unknow operation:", left.val(), "/", right.val())
 	}
-	res = newQkValue(tmpVal)
+	res = newQKValue(tmpVal)
 	return res
 }
 
@@ -575,7 +574,7 @@ func (executor *ExpressionExecutor) evalModBinaryExpression() (res *Value) {
 	default:
 		runtimeExcption("unknow operation:", left.val(), "%", right.val())
 	}
-	res = newQkValue(tmpVal)
+	res = newQKValue(tmpVal)
 	return res
 }
 
@@ -661,34 +660,30 @@ func (executor *ExpressionExecutor) evalPrimaryExpr(primaryExpr *PrimaryExpr) *V
 		v := primaryExpr.res
 		if primaryExpr.isObject() {
 			executor.parseJSONObject(v.jsonObj)
-		}
-		if primaryExpr.isArray() {
+		} else if primaryExpr.isArray() {
 			executor.parseJSONArray(v.jsonArr)
-		}
+		} else if primaryExpr.isDynamicStr() {
+			v = executor.parseDynamicStr(v.str)
+		} else {}
 		return v
-	}
-	if primaryExpr.isVar() {
+	} else if primaryExpr.isVar() {
 		varname := primaryExpr.name
 		varVal := executor.searchVariable(varname)
 		if varVal == nil {
 			return NULL
 		}
 		return varVal
-	}
-	if primaryExpr.isElement() {
+	} else if primaryExpr.isElement() {
 		return executor.executeElementExpression(primaryExpr)
-	}
-	if primaryExpr.isAttibute() {
+	} else if primaryExpr.isAttibute() {
 		return executor.executeAttributeExpression(primaryExpr)
-	}
-	if primaryExpr.isFunctionCall() {
+	} else if primaryExpr.isFunctionCall() {
 		return executor.executeFunctionCallExpression(primaryExpr)
-	}
-	if primaryExpr.isMethodCall() {
+	} else if primaryExpr.isMethodCall() {
 		return executor.executeMethodCallExpression(primaryExpr)
+	} else {
+		return NULL
 	}
-
-	return NULL
 }
 
 func (executor *ExpressionExecutor) executeMethodCallExpression(primaryExpr *PrimaryExpr) (res *Value) {
@@ -714,7 +709,13 @@ func (executor *ExpressionExecutor) executeMethodCallExpression(primaryExpr *Pri
 	return nil
 }
 
-
+func (executor *ExpressionExecutor) parseDynamicStr(raw string) *Value {
+	res := os.Expand(raw, func(key string) string {
+		qkValue := executor.searchVariable(key)
+		return fmt.Sprint(qkValue.val())
+	})
+	return newQKValue(res)
+}
 
 func (executor *ExpressionExecutor) parseJSONObject(object JSONObject) {
 	if object.parsed() {

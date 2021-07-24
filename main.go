@@ -10,6 +10,7 @@ import (
 	"qk/core"
 	"runtime"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -17,6 +18,7 @@ func main() {
 	fmt.Println("GITHUB_TOKEN => ", os.Getenv("GITHUB_TOKEN"))
 	fmt.Println("GOPROXY => ", os.Getenv("GOPROXY"))
 	fmt.Println("===============================================")
+	startupTime := time.Now().UnixNano()
 
 	if len(os.Args)>1 {
 		if arg := os.Args[1]; arg == "-v" {
@@ -25,15 +27,19 @@ func main() {
 		}
 	}
 
-	//qkfile := "examples/db-test-mysql1.qk"
-	qkfile := getScriptFile()
+	qkfile := "examples/string-dynamicString.qk"
+	//qkfile := getScriptFile()
 	//changeWorkDirectory()
 
 	bs, err := ioutil.ReadFile(qkfile)
 	if err != nil {
-		log.Fatal("failed to read", qkfile, err)
+		log.Fatalf("failed to read %v; error info: %v", qkfile, err)
 	}
 	core.Run(bs)
+	//time.Sleep(time.Duration(50) * time.Millisecond)
+
+	duration := time.Now().UnixNano() - startupTime
+	fmt.Printf("\n\nspend: %vns, %.3fms, %.3fs  \n", duration, float64(duration) / 1e6, float64(duration) / 1e9)
 }
 
 // change work dirctory to current command directory

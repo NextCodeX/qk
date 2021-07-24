@@ -11,7 +11,7 @@ func newStringIterator(raw string) *StringIterator {
 	var ss []*Value
 	for _, item := range raw {
 		indexs = append(indexs, i)
-		char := newQkValue(string(item))
+		char := newQKValue(string(item))
 		ss = append(ss, char)
 		i++
 	}

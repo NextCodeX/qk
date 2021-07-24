@@ -73,6 +73,29 @@ func (f *File) Json(filename string) map[string]interface{} {
 	return res
 }
 
+func (f *File) Props(filename string) map[string]interface{} {
+	file, err := os.Open(filename)
+	if err != nil {
+		log.Fatal(fmt.Sprintf("failed to read %v file: %v", filename, err.Error()))
+		return nil
+	}
+	res := make(map[string]interface{})
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := scanner.Text()
+		line = strings.TrimSpace(line)
+
+		if "" == line || strings.HasPrefix(line, "#") || !strings.Contains(line, "=") {
+			continue
+		}
+		arr := strings.Split(line, "=")
+		key := strings.TrimSpace(arr[0])
+		val := strings.TrimSpace(arr[1])
+		res[key] = val
+	}
+	return res
+}
+
 func (f *File) Args(filename string) []interface{} {
 	file, err := os.Open(filename)
 	if err != nil {

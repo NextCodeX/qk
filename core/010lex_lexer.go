@@ -6,6 +6,7 @@ type MachineState int
 const (
 	stateIdentifier MachineState = 1 << iota
 	stateStrLiteral
+	stateDynamicStrLiteral
 	stateInt
 	stateDot
 	stateFloat
@@ -49,10 +50,10 @@ func (lexer *Lexer) run() []Token {
 		if lexer.inStateSingleLineComment() && b != '\n' {
 			continue
 		}
-		if lexer.inStateMutliLineComment() && b != '/' {
+		if lexer.inStateMultiLineComment() && b != '/' {
 			continue
 		}
-		if lexer.inStateStrLiteral() && b != '"' {
+		if (lexer.inStateStrLiteral() && b != '"') || (lexer.inStateDynamicStrLiteral() && b != '`') {
 			lexer.tmpBytesCollect()
 			continue
 		}
@@ -72,6 +73,9 @@ func (lexer *Lexer) run() []Token {
 
 		case b == '"':
 			lexer.whenStringLiterial()
+
+		case b == '`':
+			lexer.whenDynamicStringLiterial()
 
 		case b == '/':
 			lexer.whenDivOrComment()
@@ -125,10 +129,40 @@ func (lexer *Lexer) whenSymBol() {
 	lexer.setState(stateSymbol)
 }
 
+func (lexer *Lexer) whenDynamicStringLiterial() {
+	// 处理字符串字面值
+	if len(lexer.tmpBytes) < 1 {
+		if lexer.inStateDynamicStrLiteral() {
+			// 状态机当前状态是stateStrLiteral，且tmpBytes没有值，说遇到空字符串
+			lexer.ts = append(lexer.ts, Token{
+				lineIndex: lexer.lineIndex,
+				str: "",
+				t:   DynamicStr | Str,
+			})
+			lexer.setState(stateNormal)
+		} else {
+			lexer.setState(stateDynamicStrLiteral)
+		}
+		return
+	}
+
+	lastIndex := len(lexer.tmpBytes)-1
+	last := lexer.tmpBytes[lastIndex]
+	if last != '\\' {
+		// 当前字符为'"', 且前一个字符不就转义字符, 则视为字符串结束
+		lexer.pushLongToken()
+		lexer.setState(stateNormal)
+	} else {
+		// clear escape character
+		lexer.tmpBytes = lexer.tmpBytes[:lastIndex]
+		lexer.tmpBytesCollect()
+	}
+}
+
 func (lexer *Lexer) whenStringLiterial() {
 	// 处理字符串字面值
 	if len(lexer.tmpBytes) < 1 {
-		if lexer.state == stateStrLiteral {
+		if lexer.inStateStrLiteral() {
 			// 状态机当前状态是stateStrLiteral，且tmpBytes没有值，说遇到空字符串
 			lexer.ts = append(lexer.ts, Token{
 				lineIndex: lexer.lineIndex,
@@ -174,7 +208,7 @@ func (lexer *Lexer) whenDivOrComment() {
 	lexer.pushLongToken()
 
 	switch {
-	case !lexer.inStateMutliLineComment() && !lexer.inStatePreComment() && !lexer.inStateSingleLineComment():
+	case !lexer.inStateMultiLineComment() && !lexer.inStatePreComment() && !lexer.inStateSingleLineComment():
 		// 使状态机进入预注释状态
 		lexer.setState(statePreComment)
 		// 捕获除法运算符
@@ -186,7 +220,7 @@ func (lexer *Lexer) whenDivOrComment() {
 		// 并之前添加的'/'token
 		lexer.tailTokenClear()
 
-	case lexer.inStateMutliLineComment() && lexer.bs[lexer.currentIndex-1] == '*':
+	case lexer.inStateMultiLineComment() && lexer.bs[lexer.currentIndex-1] == '*':
 		// 终结状态机的多行注释状态
 		lexer.setState(stateNormal)
 	}
@@ -250,7 +284,7 @@ func (lexer *Lexer) pushSymbolToken() {
 
 func (lexer *Lexer) pushBoundryToken() {
 	size := len(lexer.ts)
-	if size>0 && lexer.ts[size-1].assertSymbols("{", ",") {
+	if size>0 && lexer.ts[size-1].assertSymbols("{", ",", "[", ";") {
 		// 防止添加无用的";",
 		// 前一个token为symbol"}", 因为要考虑json对象字面值的情况
 		return
@@ -273,19 +307,19 @@ func (lexer *Lexer) pushLongToken() {
 	var tokenType TokenType
 	if lexer.inStateFloat() {
 		tokenType = Float
-	}
-	if lexer.inStateInt() {
+	} else if lexer.inStateInt() {
 		if lexer.currentByte == '.' {
 			return
 		}
 		tokenType = Int
-	}
-	if lexer.inStateIdentifier() {
+	} else if lexer.inStateIdentifier() {
 		tokenType = Identifier
-	}
-	if lexer.inStateStrLiteral() {
+	} else if lexer.inStateStrLiteral() {
 		tokenType = Str
-	}
+
+	} else if lexer.inStateDynamicStrLiteral() {
+		tokenType = Str | DynamicStr
+	} else {}
 
 	lexer.ts = append(lexer.ts, Token{
 		lineIndex: lexer.lineIndex,
@@ -298,83 +332,92 @@ func (lexer *Lexer) pushLongToken() {
 
 func (lexer *Lexer) isSymbol() bool {
 	switch lexer.currentByte {
-	case '.': fallthrough
-	case ':': fallthrough
-	case '(': fallthrough
-	case ')': fallthrough
-	case '[': fallthrough
-	case ']': fallthrough
-	case '{': fallthrough
-	case '}': fallthrough
-	case ';': fallthrough
-	case ',': fallthrough
-	case '=': fallthrough
-	case '!': fallthrough
-	case '+': fallthrough
-	case '-': fallthrough
-	case '*': fallthrough
-	case '/': fallthrough
-	case '%': fallthrough
-	case '>': fallthrough
-	case '<': fallthrough
-	case '|': fallthrough
-	case '&':
+	case '.', ':', '(', ')', '[', ']', '{', '}', ';', ',', '=', '!', '+', '-', '*', '/', '%', '>', '<', '|', '&':
 		return true
+	default:
+		return false
 	}
-	return false
 }
 
 
 func (lexer *Lexer) inStateIdentifier() bool {
-	return lexer.state == stateIdentifier
+	return (lexer.state & stateIdentifier) == stateIdentifier
 }
 func (lexer *Lexer) inStateStrLiteral() bool {
-	return lexer.state == stateStrLiteral
+	return (lexer.state & stateStrLiteral) == stateStrLiteral
+}
+func (lexer *Lexer) inStateDynamicStrLiteral() bool {
+	return (lexer.state & stateDynamicStrLiteral) == stateDynamicStrLiteral
 }
 func (lexer *Lexer) inStateInt() bool {
-	return lexer.state == stateInt
+	return (lexer.state & stateInt) == stateInt
 }
 func (lexer *Lexer) inStateDot() bool {
-	return lexer.state == stateDot
+	return (lexer.state & stateDot) == stateDot
 }
 func (lexer *Lexer) inStateFloat() bool {
-	return lexer.state == stateFloat
+	return (lexer.state & stateFloat) == stateFloat
 }
 func (lexer *Lexer) inStateSymbol() bool {
-	return lexer.state == stateSymbol
+	return (lexer.state & stateSymbol) == stateSymbol
 }
 func (lexer *Lexer) inStateSpace() bool {
-	return lexer.state == stateSpace
+	return (lexer.state & stateSpace) == stateSpace
 }
 func (lexer *Lexer) inStatePreComment() bool {
-	return lexer.state == statePreComment
+	return (lexer.state & statePreComment) == statePreComment
 }
 func (lexer *Lexer) inStateSingleLineComment() bool {
-	return lexer.state == stateSingleLineComment
+	return (lexer.state & stateSingleLineComment) == stateSingleLineComment
 }
-func (lexer *Lexer) inStateMutliLineComment() bool {
-	return lexer.state == stateMutliLineComment
+func (lexer *Lexer) inStateMultiLineComment() bool {
+	return (lexer.state & stateMutliLineComment) == stateMutliLineComment
 }
 func (lexer *Lexer) inStateNormal() bool {
-	return lexer.state == stateNormal
+	return (lexer.state & stateNormal) == stateNormal
 }
 
 
 func (lexer *Lexer) CurrentStateName() string {
-	switch {
-	case lexer.state == stateIdentifier: return "Identifier"
-	case lexer.state == stateStrLiteral: return "StrLiteral"
-	case lexer.state == stateInt: return "Int"
-	case lexer.state == stateDot: return "Dot"
-	case lexer.state == stateFloat: return "Float"
-	case lexer.state == stateSymbol: return "Symbol"
-	case lexer.state == stateSpace: return "Space"
-	case lexer.state == statePreComment: return "PreComment"
-	case lexer.state == stateSingleLineComment: return "SingleLineComment"
-	case lexer.state == stateMutliLineComment: return "MutliLineComment"
-	case lexer.state == stateNormal: return "Normal"
+	var stateName string
+	if lexer.inStateDynamicStrLiteral() {
+		stateName += "dynamicStr, "
 	}
-	return "unknow"
+	if lexer.inStateDot() {
+		stateName += "dot, "
+	}
+	if lexer.inStateFloat() {
+		stateName += "float, "
+	}
+	if lexer.inStateIdentifier() {
+		stateName += "identifier, "
+	}
+	if lexer.inStateInt() {
+		stateName += "int, "
+	}
+	if lexer.inStateMultiLineComment() {
+		stateName += "multiLineComment, "
+	}
+	if lexer.inStateNormal() {
+		stateName += "normal, "
+	}
+	if lexer.inStatePreComment() {
+		stateName += "preComment, "
+	}
+	if lexer.inStateSingleLineComment() {
+		stateName += "singleLineComment, "
+	}
+	if lexer.inStateSpace() {
+		stateName += "space, "
+	}
+	if lexer.inStateStrLiteral() {
+		stateName += "strLiteral, "
+	}
+	if lexer.inStateSymbol() {
+		stateName += "symbol, "
+	}
+
+	return stateName
 }
 
 func (lexer *Lexer) CurrentByteString() string {

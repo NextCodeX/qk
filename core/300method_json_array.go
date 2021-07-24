@@ -9,11 +9,11 @@ func evalJSONArrayMethod(arr JSONArray, method string, args []interface{}) (res 
 
 	switch method {
 	case "size":
-		return newQkValue(arr.size())
+		return newQKValue(arr.size())
 
 	case "add":
 		for _, arg := range args {
-			arr.add(newQkValue(arg))
+			arr.add(newQKValue(arg))
 		}
 
 	case "remove":
@@ -35,7 +35,7 @@ func evalJSONArrayMethod(arr JSONArray, method string, args []interface{}) (res 
 			valStr := fmt.Sprintf("%v", val.val())
 			res.WriteString(valStr)
 		}
-		return newQkValue(res.String())
+		return newQKValue(res.String())
 
 	case "sub":
 		// todo

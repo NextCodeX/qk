@@ -79,6 +79,13 @@ func evalStringMethod(str string, method string, args []interface{}) (res *Value
 		tmp := toCommonSlice(strings.Split(str, reg))
 		return toQKValue(tmp)
 
+	case "eic":
+		assert(len(args)<1, "method string.eic must has one parameter.")
+		strB, ok := args[0].(string)
+		assert(!ok, "parameter type error, require eic(string)")
+		res := str == strB || strings.ToLower(str) == strings.ToLower(strB)
+		return toQKValue(res)
+
 	default:
 		runtimeExcption(fmt.Sprintf("string.%v is undefined.", method))
 	}
@@ -86,6 +93,6 @@ func evalStringMethod(str string, method string, args []interface{}) (res *Value
 	if rawVal == nil {
 		return
 	}
-	return newQkValue(rawVal)
+	return newQKValue(rawVal)
 
 }

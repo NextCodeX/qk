@@ -57,42 +57,36 @@ func toCommonSlice(any interface{}) []interface{} {
 }
 
 
-func tokenToValue(t *Token) (v *Value) {
+func tokenToValue(t *Token)  *Value {
 	if t.isArrLiteral() {
 		v := newJSONArray(t.ts)
-		return newQkValue(v)
-	}
-	if t.isObjLiteral() {
+		return newQKValue(v)
+	} else if t.isObjLiteral() {
 		v := newJSONObject(t.ts)
-		return newQkValue(v)
-	}
-	if t.isFloat() {
+		return newQKValue(v)
+	} else if t.isFloat() {
 		f, err := strconv.ParseFloat(t.str, 64)
 		assert(err != nil, "failed to parse float", t.String(), "line:", t.lineIndex)
-		v = newQkValue(f)
-		return
-	}
-	if t.isInt() {
+		return newQKValue(f)
+	} else if t.isInt() {
 		i, err := strconv.Atoi(t.str)
 		assert(err != nil, "failed to parse int", t.String(), "line:", t.lineIndex)
-		v = newQkValue(i)
-		return
-	}
-	if t.isStr() {
+		return newQKValue(i)
+	} else if t.isDynamicStr() {
+		return newQKValue(t.str)
+	} else if t.isStr() {
 		str := strings.Replace(t.str, "\\\\", "\\", -1)
 		str = strings.Replace(str, "\\r", "\r", -1) // 对 \r 进行转义
 		str = strings.Replace(str, "\\n", "\n", -1) // 对 \n 进行转义
 		str = strings.Replace(str, "\\t", "\t", -1) // 对 \t 进行转义
-		v = newQkValue(str)
-		return
-	}
-	if t.isIdentifier() && (t.str == "true" || t.str == "false") {
+		return newQKValue(str)
+	} else if t.isIdentifier() && (t.str == "true" || t.str == "false") {
 		b, err := strconv.ParseBool(t.str)
 		assert(err != nil, t.String(), "line:", t.lineIndex)
-		v = newQkValue(b)
-		return
+		return newQKValue(b)
+	} else {
+		return nil
 	}
-	return nil
 }
 
 func toQKValue(v interface{}) *Value {
@@ -110,12 +104,12 @@ func toQKValue(v interface{}) *Value {
 			if isDecomposable(value) {
 				qkVal = toQKValue(value)
 			} else {
-				qkVal = newQkValue(value)
+				qkVal = newQKValue(value)
 			}
 			mapRes[key] = qkVal
 		}
 		tmp := toJSONObject(mapRes)
-		return newQkValue(tmp)
+		return newQKValue(tmp)
 
 	case reflect.Slice:
 		var arrRes []*Value
@@ -125,15 +119,15 @@ func toQKValue(v interface{}) *Value {
 			if isDecomposable(item) {
 				qkVal = toQKValue(item)
 			} else {
-				qkVal = newQkValue(item)
+				qkVal = newQKValue(item)
 			}
 			arrRes = append(arrRes, qkVal)
 		}
 		tmp := toJSONArray(arrRes)
-		return newQkValue(tmp)
+		return newQKValue(tmp)
 
 	default:
-		return newQkValue(v)
+		return newQKValue(v)
 	}
 }
 

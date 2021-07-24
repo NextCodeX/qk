@@ -143,7 +143,7 @@ func executeForStatement(stmt *Statement, stack *VariableStack) (res *StatementR
 
 func executeForeachStatement(stmt *Statement, stack *VariableStack) (res *StatementResult) {
 	fpi := stmt.fpi
-	varVal := stack.searchVariable(fpi.iterator)
+	varVal := executeExpression(fpi.iterator, stack)
 	itr := toIterator(varVal)
 	if itr == nil {
 		runtimeExcption(fpi.iterator, "is not iterator!")
@@ -154,7 +154,7 @@ func executeForeachStatement(stmt *Statement, stack *VariableStack) (res *Statem
 	for _, index := range indexs {
 
 		if !stmt.isForItemStatement() {
-			i := newQkValue(index)
+			i := newQKValue(index)
 			stack.addLocalVariable(fpi.indexName, i)
 		}
 		if !stmt.isForIndexStatement() {

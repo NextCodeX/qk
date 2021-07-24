@@ -34,7 +34,7 @@ type Value struct {
     jsonObj JSONObject
 }
 
-func newQkValue(rawVal interface{}) *Value {
+func newQKValue(rawVal interface{}) *Value {
     if rawVal == nil {
         return NULL
     }

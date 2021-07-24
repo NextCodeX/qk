@@ -21,9 +21,9 @@ func toIterator(v *Value) Iterator {
 type ForPlusInfo struct {
 	indexName string // 索引变量名
 	itemName string // 值变量名
-	iterator string // 迭代器变量名
+	iterator *Expression // 迭代器表达式
 }
 
-func newForPlusInfo(indexName, itemName, iterator string) *ForPlusInfo {
+func newForPlusInfo(indexName, itemName string, iterator *Expression) *ForPlusInfo {
 	return &ForPlusInfo{indexName, itemName, iterator }
 }

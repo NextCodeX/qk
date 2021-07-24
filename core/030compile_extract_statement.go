@@ -268,7 +268,7 @@ func extractForeachStatement(currentIndex int, ts []Token) (*Statement, int) {
 
 	headerEndIndex := nextSymbolIndex(ts, currentIndex, "{")
 	headerInfo := ts[currentIndex+1: headerEndIndex]
-	stmt.fpi = newForPlusInfo(headerInfo[0].str, headerInfo[2].str, headerInfo[4].str)
+	stmt.fpi = newForPlusInfo(headerInfo[0].str, headerInfo[2].str, extractExpression(headerInfo[4:]))
 
 	stmtEndIndex := scopeEndIndex(ts, currentIndex, "{", "}")
 	stmt.raw = ts[headerEndIndex+1: stmtEndIndex]
@@ -280,7 +280,7 @@ func extractForindexStatement(currentIndex int, ts []Token) (*Statement, int) {
 
 	headerEndIndex := nextSymbolIndex(ts, currentIndex, "{")
 	headerInfo := ts[currentIndex+1: headerEndIndex]
-	stmt.fpi = newForPlusInfo(headerInfo[0].str, "", headerInfo[2].str)
+	stmt.fpi = newForPlusInfo(headerInfo[0].str, "", extractExpression(headerInfo[2:]))
 
 	stmtEndIndex := scopeEndIndex(ts, currentIndex, "{", "}")
 	stmt.raw = ts[headerEndIndex+1: stmtEndIndex]
@@ -292,7 +292,7 @@ func extractForitemStatement(currentIndex int, ts []Token) (*Statement, int) {
 
 	headerEndIndex := nextSymbolIndex(ts, currentIndex, "{")
 	headerInfo := ts[currentIndex+1: headerEndIndex]
-	stmt.fpi = newForPlusInfo("", headerInfo[0].str, headerInfo[2].str)
+	stmt.fpi = newForPlusInfo("", headerInfo[0].str, extractExpression(headerInfo[2:]))
 
 	stmtEndIndex := scopeEndIndex(ts, currentIndex, "{", "}")
 	stmt.raw = ts[headerEndIndex+1: stmtEndIndex]

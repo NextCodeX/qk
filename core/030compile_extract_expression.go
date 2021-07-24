@@ -392,6 +392,9 @@ func parsePrimaryExpression(t *Token) *PrimaryExpr {
 		if t.isArrLiteral() {
 			primaryExprType = primaryExprType | ArrayPrimaryExpressionType
 		}
+		if t.isDynamicStr() {
+			primaryExprType = primaryExprType | DynamicStrPrimaryExpressionType
+		}
 		res = &PrimaryExpr{res: v, t: primaryExprType}
 
 	} else if t.isElement() {
