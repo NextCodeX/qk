@@ -6,7 +6,6 @@ import (
 )
 
 type JSONArray interface {
-    setParsed()
     parsed() bool
     size() int
     add(elem *Value)
@@ -24,7 +23,6 @@ type JSONArray interface {
 type JSONArrayImpl struct {
     val []*Value
     ts []Token
-    parsedFlag bool
 }
 
 func newJSONArray(ts []Token) JSONArray {
@@ -32,11 +30,7 @@ func newJSONArray(ts []Token) JSONArray {
 }
 
 func toJSONArray(v []*Value) JSONArray {
-    return &JSONArrayImpl{val:v, parsedFlag:true}
-}
-
-func (arr *JSONArrayImpl) setParsed() {
-    arr.parsedFlag = true
+    return &JSONArrayImpl{val:v}
 }
 
 func (arr *JSONArrayImpl) parsed() bool {

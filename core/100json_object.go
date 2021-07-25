@@ -24,7 +24,6 @@ type JSONObject interface {
 type JSONObjectImpl struct {
     val map[string]*Value
     ts []Token
-    parsedFlag bool
 }
 
 func newJSONObject(ts []Token) JSONObject {
@@ -32,11 +31,10 @@ func newJSONObject(ts []Token) JSONObject {
 }
 
 func toJSONObject(v map[string]*Value) JSONObject {
-    return &JSONObjectImpl{val:v, parsedFlag:true}
+    return &JSONObjectImpl{val:v}
 }
 
 func (obj *JSONObjectImpl) init() {
-    obj.parsedFlag = true
     obj.val =  make(map[string]*Value)
 }
 

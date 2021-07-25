@@ -796,7 +796,6 @@ func (executor *ExpressionExecutor) parseJSONArray(array JSONArray) {
 		array.add(val)
 		i = nextCommaIndex
 	}
-	array.setParsed()
 }
 
 func (executor *ExpressionExecutor) searchVariable(name string) *Value {
