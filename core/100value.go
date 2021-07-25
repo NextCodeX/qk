@@ -73,6 +73,7 @@ func (v *Value) val() interface{} {
         case v.isStringValue(): return v.str
         case v.isArrayValue(): return v.jsonArr
         case v.isObjectValue(): return v.jsonObj
+        case v.isNULL(): return "null"
         case v.isAnyValue(): {
             si, ok := v.any.(fmt.Stringer)
             if ok {

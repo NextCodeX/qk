@@ -27,8 +27,8 @@ func main() {
 		}
 	}
 
-	//qkfile := "examples/string-dynamicString.qk"
-	qkfile := getScriptFile()
+	qkfile := "examples/string-dynamicString.qk"
+	//qkfile := getScriptFile()
 	//changeWorkDirectory()
 
 	bs, err := ioutil.ReadFile(qkfile)

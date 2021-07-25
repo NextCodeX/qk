@@ -6,10 +6,7 @@ rows = [
 
 forv row : rows {
     println(row)
-    name = row.name
-    age = row.age
-    line = `this age of student ${name} is ${age}`
-    println(line)
+    println(`(final version) The student name is ${row.name}, his age is ${row.age}`)
 }
 
 list=[]

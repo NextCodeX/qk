@@ -22,6 +22,21 @@ func Run(bs []byte) {
 	Interpret()
 }
 
+// 用于程序自举，执行qk代码片段，指定变量𣏾
+func evalScript(src string, stack *VariableStack) *Value {
+	ts := ParseTokens([]byte(src))
+	tsLen := len(ts)
+	if tsLen < 1 {
+		return NULL
+	}
+	if last(ts).assertSymbol(";") {
+		ts = ts[:tsLen-1]
+	}
+	expr := extractExpression(ts)
+	qkValue := executeExpression(expr, stack)
+	return qkValue
+}
+
 func ParseTokens(bs []byte) []Token {
 	// 提取原始token列表
 	ts := parse4PrimaryTokens(bs)

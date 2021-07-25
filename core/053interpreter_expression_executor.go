@@ -711,7 +711,7 @@ func (executor *ExpressionExecutor) executeMethodCallExpression(primaryExpr *Pri
 
 func (executor *ExpressionExecutor) parseDynamicStr(raw string) *Value {
 	res := os.Expand(raw, func(key string) string {
-		qkValue := executor.searchVariable(key)
+		qkValue := evalScript(key, executor.stack)
 		return fmt.Sprint(qkValue.val())
 	})
 	return newQKValue(res)
