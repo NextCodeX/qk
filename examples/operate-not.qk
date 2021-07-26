@@ -1,0 +1,37 @@
+/**/
+flag = false
+if !flag {
+    println("It's test1")
+}
+
+if !0 || true || !!3.14 {
+    println("test twice!")
+    if !!"" {
+        println("error test3")
+    } else {
+        println("right test3")
+    }
+}
+
+i = 5
+if !!i {
+    println("test4 comming!")
+}
+
+if !(!!"" || !false) {
+    println("error test v5")
+} else {
+    println("right test v5")
+}
+
+if !(5>3 || false) || 9 < 4 {
+    println("fail test")
+} else {
+    println("666")
+}
+
+if !!0 || !(!!3 && !!4) {
+    println("game over")
+} else {
+    println("test successfully")
+}

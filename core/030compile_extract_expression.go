@@ -5,16 +5,14 @@ func extractExpression(ts []Token) *Expression {
 
 	// 去括号
 	ts = clearParentheses(ts)
-
 	tlen := len(ts)
-
-	if tlen%2 == 0 {
-		runtimeExcption("error expression:", tokensString(ts))
-	}
-
 	if tlen < 1 {
 		return expr
 	}
+	if tlen%2 == 0 {
+		runtimeExcption("extractExpression#error expression:", tokensString(ts))
+	}
+
 	switch {
 	case tlen == 1:
 		return parseUnaryExpression(ts)
@@ -57,36 +55,7 @@ func parseUnaryExpression(ts []Token) *Expression {
 	expr := &Expression{}
 	primaryExpr := parsePrimaryExpression(&token)
 	expr.left = primaryExpr
-	switch {
-	case token.isObjLiteral():
-		expr.t = JSONObjectExpression
-	case token.isArrLiteral():
-		expr.t = JSONArrayExpression
-	case token.isStr():
-		expr.t = StringExpression
-	case token.isInt():
-		expr.t = IntExpression
-	case token.isFloat():
-		expr.t = FloatExpression
-	case token.isIdentifier():
-		if primaryExpr.isVar() {
-			expr.t = VarExpression
-		} else {
-			expr.t = BooleanExpression
-		}
-	case token.isElement():
-		expr.t = ElementExpression
-	case token.isAttribute():
-		expr.t = AttributeExpression
-	case token.isFcall():
-		expr.t = FunctionCallExpression
-	case token.isMtcall():
-		expr.t = MethodCallExpression
-	default:
-		runtimeExcption("parseUnaryExpression# unknow expression -> ", token.String())
-
-	}
-	expr.t = expr.t | PrimaryExpression
+	expr.t = PrimaryExpression
 	return expr
 }
 
@@ -111,7 +80,7 @@ func parseMultivariateExpression(ts []Token) (expr *Expression) {
 
 	finalExpr := getFinalExpr(exprs, resVarToken)
 
-	expr = &Expression{
+	expr = &Expression {
 		t:         MultiExpression,
 		list:      exprs,
 		finalExpr: finalExpr,
@@ -123,11 +92,11 @@ func getFinalExpr(exprs []*Expression, resVarToken *Token) *Expression {
 	var finalExprTokens *Expression
 	isAssignExpr := resVarToken != nil
 	for _, expr := range exprs {
-		if isAssignExpr && expr.tmpname == resVarToken.str {
+		if isAssignExpr && expr.receiver == resVarToken.str {
 			finalExprTokens = expr
 			break
 		}
-		if !isAssignExpr && expr.tmpname == "" {
+		if !isAssignExpr && expr.receiver == "" {
 			finalExprTokens = expr
 			break
 		}
@@ -412,8 +381,16 @@ func parsePrimaryExpression(t *Token) *PrimaryExpr {
 		exprs := getArgExprsFromToken(t.ts)
 		res = &PrimaryExpr{name: t.str, caller:t.caller, args: exprs, t: MethodCallPrimaryExpressionType}
 
-	} else {
+	} else if t.isExpr() {
+		res = &PrimaryExpr{t: ExprPrimaryExpressionType, ts: t.ts}
+	} else if t.isIdentifier() {
 		res = &PrimaryExpr{name: t.str, t: VarPrimaryExpressionType}
+	} else {
+		runtimeExcption("parsePrimaryExpression: unknown token type!")
+	}
+	if res != nil && t.isNot() {
+		res.t = res.t | NotPrimaryExpressionType
+		res.not = t.not
 	}
 	return res
 }

@@ -23,6 +23,8 @@ const (
 	ObjLiteral // 对象字面值
 	Element // 元素, 用于指示对象或数组的元素
 	Complex // 用于标记复合类型token
+	Expr // 表示这个Token包含了一个Expression
+	Not  // 用于标记需要非处理的一元表达式
 
 	AddSelf // 自增一
 	SubSelf // 自减一
@@ -37,6 +39,7 @@ type Token struct {
 	// token为元素, 函数调用, 函数定义类型时, 存的是参数   ;
 	// token为数组字面值, 对象字面值类型时, 存的是字面值内容
 	ts []Token
+	not bool // 是否进行非处理
 }
 
 func newToken(raw string, t TokenType) Token {
@@ -105,6 +108,14 @@ func (tk *Token) isElement() bool {
 
 func (tk *Token) isComplex() bool {
 	return (tk.t & Complex) == Complex
+}
+
+func (tk *Token) isExpr() bool {
+	return (tk.t & Expr) == Expr
+}
+
+func (tk *Token) isNot() bool {
+	return (tk.t & Not) == Not
 }
 
 func (tk *Token) isAddSelf() bool {
@@ -202,11 +213,10 @@ func (tk *Token) upper(t *Token) bool {
 }
 
 func (tk *Token) String() string {
+	var res string
 	if tk.isArrLiteral() || tk.isObjLiteral() {
-		return tk.toJSONString()
-	}
-
-	if tk.isFcall() || tk.isFdef() {
+		res = tk.toJSONString()
+	} else if tk.isFcall() || tk.isFdef() {
 		var buf bytes.Buffer
 		buf.WriteString(tk.str)
 		buf.WriteString("(")
@@ -216,10 +226,8 @@ func (tk *Token) String() string {
 			}
 		}
 		buf.WriteString(")")
-		return buf.String()
-	}
-
-	if tk.isAttribute() || tk.isMtcall() {
+		res = buf.String()
+	} else if tk.isAttribute() || tk.isMtcall() {
 		var buf bytes.Buffer
 		buf.WriteString(tk.caller)
 		buf.WriteString(".")
@@ -233,10 +241,8 @@ func (tk *Token) String() string {
 			}
 			buf.WriteString(")")
 		}
-		return buf.String()
-	}
-
-	if tk.isElement() {
+		res = buf.String()
+	} else if tk.isElement() {
 		var buf bytes.Buffer
 		buf.WriteString(tk.str)
 		buf.WriteString("[")
@@ -246,22 +252,25 @@ func (tk *Token) String() string {
 			}
 		}
 		buf.WriteString("]")
-		return buf.String()
+		res = buf.String()
+	} else if tk.isExpr() {
+		res = "("+tokensString(tk.ts)+")"
+	} else if tk.isStr() {
+		res = fmt.Sprintf(`"%v"`, tk.str)
+	} else if tk.isAddSelf() {
+		res = fmt.Sprintf(`%v ++`, tk.str)
+	} else if tk.isSubSelf() {
+		res = fmt.Sprintf(`%v --`, tk.str)
+	} else {
+		res = tk.str
 	}
-
-	if tk.isStr() {
-		return fmt.Sprintf(`"%v"`, tk.str)
+	if tk.isNot() {
+		res = "!"+res
+		if !tk.not {
+			res = "!"+res
+		}
 	}
-
-	if tk.isAddSelf() {
-		return fmt.Sprintf(`%v ++`, tk.str)
-	}
-
-	if tk.isSubSelf() {
-		return fmt.Sprintf(`%v --`, tk.str)
-	}
-
-	return tk.str
+	return res
 }
 
 func (tk *Token) toJSONString() string {
@@ -323,6 +332,12 @@ func (tk *Token) TokenTypeName() string {
 	}
 	if tk.isComplex() {
 		buf.WriteString("complex, ")
+	}
+	if tk.isExpr() {
+		buf.WriteString("expression, ")
+	}
+	if tk.isNot() {
+		buf.WriteString("not, ")
 	}
 
 	if tk.isAddSelf() {

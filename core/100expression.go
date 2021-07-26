@@ -2,25 +2,12 @@ package core
 
 import (
     "bytes"
-    "strings"
 )
 
 type ExpressionType int
 
 const (
-    IntExpression ExpressionType = 1 << iota
-    FloatExpression
-    BooleanExpression
-    StringExpression
-    JSONObjectExpression
-    JSONArrayExpression
-    VarExpression
-    AttributeExpression
-    ElementExpression
-    FunctionCallExpression
-    MethodCallExpression
-    PrimaryExpression  // 不可再分的原始表达式
-
+    PrimaryExpression ExpressionType = 1 << iota  // 不可再分的原始表达式
     BinaryExpression // 二元表达式
     MultiExpression // 多元表达式
     AssignExpression // 用于表示赋值的二元表达式
@@ -28,7 +15,6 @@ const (
 
 type OperationType int
 const (
-
     // 逻辑运算
     Opeq OperationType = 1 << iota //等于 equal to
     Opne // not equal to
@@ -58,16 +44,15 @@ const (
 )
 
 type Expression struct {
-    t ExpressionType
-    op OperationType
-    left *PrimaryExpr
-    right *PrimaryExpr
-    list []*Expression
-    finalExpr *Expression
-    listFinish bool
-    raw []Token
-    res Value
-    tmpname string
+    t          ExpressionType // 表达式类型
+    op         OperationType // 表达式操作类型
+    left       *PrimaryExpr
+    right      *PrimaryExpr
+    list       []*Expression // 多元表达式拆分后的二元表达式列表
+    finalExpr  *Expression // 多元表达式中最后执行的表达式
+    raw        []Token // 原始Token列表
+    res        Value  // 常量折叠缓存值
+    receiver   string // 最终赋值变量名
 }
 
 func (expr *Expression) isAssign() bool {
@@ -138,50 +123,6 @@ func (expr *Expression) isMod() bool {
     return (expr.op & Opmod) ==Opmod
 }
 
-func (expr *Expression) isIntExpression() bool {
-    return (expr.t & IntExpression) == IntExpression
-}
-
-func (expr *Expression) isFloatExpression() bool {
-    return (expr.t & FloatExpression) == FloatExpression
-}
-
-func (expr *Expression) isBooleanExpression() bool {
-    return (expr.t & BooleanExpression) == BooleanExpression
-}
-
-func (expr *Expression) isStringExpression() bool {
-    return (expr.t & StringExpression) == StringExpression
-}
-
-func (expr *Expression) isJSONObjectExpression() bool {
-    return (expr.t & JSONObjectExpression) == JSONObjectExpression
-}
-
-func (expr *Expression) isJSONArrayExpression() bool {
-    return (expr.t & JSONArrayExpression) == JSONArrayExpression
-}
-
-func (expr *Expression) isVarExpression() bool {
-    return (expr.t & VarExpression) == VarExpression
-}
-
-func (expr *Expression) isAttributeExpression() bool {
-	return (expr.t & AttributeExpression) == AttributeExpression
-}
-
-func (expr *Expression) isElementExpression() bool {
-	return (expr.t & ElementExpression) == ElementExpression
-}
-
-func (expr *Expression) isFunctionCallExpression() bool {
-    return (expr.t & FunctionCallExpression) == FunctionCallExpression
-}
-
-func (expr *Expression) isMethodCallExpression() bool {
-    return (expr.t & MethodCallExpression) == MethodCallExpression
-}
-
 func (expr *Expression) isPrimaryExpression() bool {
     return (expr.t & PrimaryExpression) == PrimaryExpression
 }
@@ -200,53 +141,7 @@ func (expr *Expression) isAssignExpression() bool {
 
 func (expr *Expression) setTmpname(name string) {
     expr.t = expr.t | AssignExpression
-    expr.tmpname = name
-}
-
-
-func (expr *Expression) TypeString() string {
-    if expr == nil {
-        return ""
-    }
-    var res bytes.Buffer
-    if expr.isIntExpression() {
-        res.WriteString("int expression, ")
-    }
-    if expr.isBooleanExpression() {
-        res.WriteString("bool expression, ")
-    }
-    if expr.isStringExpression() {
-        res.WriteString("string expression, ")
-    }
-    if expr.isPrimaryExpression() {
-        res.WriteString("primary expression, ")
-    }
-    if expr.isVarExpression() {
-        res.WriteString("var expression, ")
-    }
-	if expr.isAttributeExpression() {
-		res.WriteString("attribute expression, ")
-	}
-	if expr.isElementExpression() {
-		res.WriteString("element expression, ")
-	}
-
-    if expr.isFunctionCallExpression() {
-        res.WriteString("function call expression, ")
-    }
-    if expr.isMethodCallExpression() {
-        res.WriteString("method call expression, ")
-    }
-    if expr.isBinaryExpression() {
-        res.WriteString("binary expression, ")
-    }
-    if expr.isMultiExpression() {
-        res.WriteString("multi expression, ")
-    }
-    if expr.isAssignExpression() {
-        res.WriteString("assign expression, ")
-    }
-    return strings.Trim(strings.TrimSpace(res.String()), ",")
+    expr.receiver = name
 }
 
 func (expr *Expression) String() string {

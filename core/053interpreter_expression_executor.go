@@ -16,18 +16,23 @@ func newExpressionExecutor(expr *Expression, stack *VariableStack, tmpVars *Vari
 	return executor
 }
 
-func (executor *ExpressionExecutor) run() (res Value) {
+func (executor *ExpressionExecutor) run() Value {
 	expr := executor.expr
+	var res Value
 	if expr.isPrimaryExpression() {
-		return executor.leftVal()
-	}else if expr.isBinaryExpression() {
-		return executor.executeBinaryExpression()
-	}else if expr.isMultiExpression() {
-		return executor.executeMultiExpression()
+		res = executor.leftVal()
+	} else if expr.isBinaryExpression() {
+		res = executor.executeBinaryExpression()
+	} else if expr.isMultiExpression() {
+		res = executor.executeMultiExpression()
 	} else {
 		runtimeExcption("expression is not supported:", expr.RawString())
 	}
-	return nil
+	if res == nil {
+		res = NULL
+	}
+	return res
+
 }
 
 func (executor *ExpressionExecutor) executeAttributeExpression(primaryExpr *PrimaryExpr) (res Value) {
@@ -115,7 +120,7 @@ func (executor *ExpressionExecutor) calculateIfNotExist(primaryExpr *PrimaryExpr
 
 func (executor *ExpressionExecutor) getNextExprForMultiExpression(varname string, exprList []*Expression) *Expression {
 	for _, subExpr := range exprList {
-		if subExpr.tmpname == varname {
+		if subExpr.receiver == varname {
 			return subExpr
 		}
 	}
@@ -209,7 +214,7 @@ func (executor *ExpressionExecutor) executeBinaryExpression() (res Value) {
 		if res == nil {
 			res = NULL
 		}
-		varname := expr.tmpname
+		varname := expr.receiver
 		executor.addVar(varname, res)
 
 	}
@@ -656,6 +661,8 @@ func (executor *ExpressionExecutor) evalPrimaryExpr(primaryExpr *PrimaryExpr) Va
 	if primaryExpr == nil {
 		return NULL
 	}
+	var res Value
+
 	if primaryExpr.isConst() {
 		v := primaryExpr.res
 		if primaryExpr.isObject() {
@@ -665,24 +672,37 @@ func (executor *ExpressionExecutor) evalPrimaryExpr(primaryExpr *PrimaryExpr) Va
 		} else if primaryExpr.isDynamicStr() {
 			v = executor.parseDynamicStr(goStr(v))
 		} else {}
-		return v
+		res = v
+	} else if primaryExpr.isExpr() {
+		subExpr := extractExpression(primaryExpr.ts)
+		res = executeExpression(subExpr, executor.stack)
 	} else if primaryExpr.isVar() {
 		varname := primaryExpr.name
-		varVal := executor.searchVariable(varname)
-		if varVal == nil {
-			return NULL
-		}
-		return varVal
+		res = executor.searchVariable(varname)
 	} else if primaryExpr.isElement() {
-		return executor.executeElementExpression(primaryExpr)
+		res =  executor.executeElementExpression(primaryExpr)
 	} else if primaryExpr.isAttibute() {
-		return executor.executeAttributeExpression(primaryExpr)
+		res =  executor.executeAttributeExpression(primaryExpr)
 	} else if primaryExpr.isFunctionCall() {
-		return executor.executeFunctionCallExpression(primaryExpr)
+		res =  executor.executeFunctionCallExpression(primaryExpr)
 	} else if primaryExpr.isMethodCall() {
-		return executor.executeMethodCallExpression(primaryExpr)
+		res =  executor.executeMethodCallExpression(primaryExpr)
 	} else {
-		return NULL
+		runtimeExcption("ExpressionExecutor#evalPrimaryExpr: unknown primary expression type")
+	}
+
+	if primaryExpr.isNot() { // 是否为非类型表达式
+		flag := toBoolean(res)
+		if primaryExpr.not { // 是否需要对表达式进行非逻辑运算
+			return newQKValue(!flag)
+		} else {
+			return newQKValue(flag)
+		}
+	} else {
+		if res == nil {
+			res = NULL
+		}
+		return res
 	}
 }
 

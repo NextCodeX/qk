@@ -131,10 +131,35 @@ func toQKValue(v interface{}) Value {
 	}
 }
 
+// 是否为Map或Slice类型
 func isDecomposable(v interface{}) bool {
 	if v == nil {
 		return false
 	}
 	kind := reflect.TypeOf(v).Kind()
 	return kind == reflect.Map || kind == reflect.Slice
+}
+
+func toBoolean(raw Value) bool {
+	if raw == nil || raw.isNULL() {
+		return false
+	}
+	if raw.isInt() {
+		return raw.val().(int64) != 0
+	} else if raw.isFloat() {
+		return raw.val().(float64) != 0
+	} else if raw.isBoolean() {
+		return raw.val().(bool)
+	} else if raw.isString() {
+		return raw.val().(string) != ""
+	} else if raw.isJsonArray() {
+		return raw.val() != nil
+	} else if raw.isJsonObject() {
+		return raw.val() != nil
+	} else if raw.isAny() {
+		return raw.val() != nil
+	} else {
+		runtimeExcption("toBoolean: unknown value type")
+		return false
+	}
 }

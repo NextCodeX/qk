@@ -19,7 +19,7 @@ func Run(bs []byte) {
 	Interpret()
 }
 
-// 用于程序自举，执行qk代码片段，指定变量𣏾
+// 指定变量𣏾, 执行qk代码片段.
 func evalScript(src string, stack *VariableStack) Value {
 	ts := ParseTokens([]byte(src))
 	tsLen := len(ts)

@@ -13,6 +13,8 @@ const (
 	AttibutePrimaryExpressionType
 	FunctionCallPrimaryExpressionType
 	MethodCallPrimaryExpressionType
+	NotPrimaryExpressionType
+	ExprPrimaryExpressionType
 	OtherPrimaryExpressionType PrimaryExpressionType = 0
 )
 
@@ -22,6 +24,8 @@ type PrimaryExpr struct {
 	name string  // 变量名或者函数名称
 	args []*Expression // 函数调用参数 / 数组索引
 	res Value  // 常量值
+	not bool // 是否进行非处理
+	ts []Token // 储存Expression的Token列表
 }
 
 func (priExpr *PrimaryExpr) isVar() bool {
@@ -58,6 +62,14 @@ func (priExpr *PrimaryExpr) isFunctionCall() bool {
 
 func (priExpr *PrimaryExpr) isMethodCall() bool {
 	return (priExpr.t & MethodCallPrimaryExpressionType) == MethodCallPrimaryExpressionType
+}
+
+func (priExpr *PrimaryExpr) isNot() bool {
+	return (priExpr.t & NotPrimaryExpressionType) == NotPrimaryExpressionType
+}
+
+func (priExpr *PrimaryExpr) isExpr() bool {
+	return (priExpr.t & ExprPrimaryExpressionType) == ExprPrimaryExpressionType
 }
 
 func (priExpr *PrimaryExpr) isOther() bool {

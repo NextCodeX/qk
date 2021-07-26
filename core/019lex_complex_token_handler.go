@@ -1,9 +1,20 @@
 package core
 
+type Hover struct {
+	ready bool
+	index int
+	lastLen int
+}
+
+func initHover() *Hover {
+	return &Hover{false, 0, -1}
+}
+
 // 该函数用于： 去掉无用的';', 合并token生成函数调用token(Fcall), 方法调用token(Mtcall)等复合token
 func parse4ComplexTokens(ts []Token) []Token {
 	var res []Token
 	size := len(ts)
+	notOperatorHover := initHover()
 	for i:=0; i<size; {
 		token := ts[i]
 
@@ -13,6 +24,36 @@ func parse4ComplexTokens(ts []Token) []Token {
 		// 处理无用分号
 		if checkUselessBoundary(i, ts, res) {
 			goto endCurrentIterate
+		}
+
+		if token.assertSymbol("!") {
+			notOperatorHover.ready = true
+			notOperatorHover.index ++
+			if notOperatorHover.lastLen == -1 {
+				notOperatorHover.lastLen = len(res)
+			}
+			goto endCurrentIterate
+		} else {
+			if notOperatorHover.ready {
+				lastIndex := len(res) - 1
+				if len(res) == notOperatorHover.lastLen && token.assertSymbol("(")  {
+					endIndex := scopeEndIndex(ts, i, "(", ")")
+					exprTokens := ts[i+1:endIndex]
+					exprTokens = parse4ComplexTokens(exprTokens)
+					res = append(res, Token{
+						t: Expr | Not,
+						ts: exprTokens,
+						not: notOperatorHover.index % 2 == 1,
+					})
+					i = endIndex + 1
+					notOperatorHover = initHover()
+					goto nextLoop
+				} else if res != nil && len(res) > notOperatorHover.lastLen {
+					res[lastIndex].not = notOperatorHover.index % 2 == 1
+					res[lastIndex].t = res[lastIndex].t | Not
+					notOperatorHover = initHover()
+				} else {}
+			}
 		}
 
 		// 捕获数组的字面值Token
@@ -78,6 +119,13 @@ func parse4ComplexTokens(ts []Token) []Token {
 		i++
 	nextLoop:
 	}
+	if notOperatorHover.ready && res != nil && len(res) > notOperatorHover.lastLen {
+		// 𥈱悬停监听有延迟， 需要在循环结束后进行数据进行收尾
+		lastIndex := len(res) - 1
+		res[lastIndex].not = notOperatorHover.index % 2 == 1
+		res[lastIndex].t = res[lastIndex].t | Not
+	}
+
 	return res
 }
 
@@ -109,7 +157,7 @@ func checkJSONArrayLiteral(currentIndex int, ts []Token) bool {
 
 // 判断是否遇到了json对象字面值
 func checkJSONObjectLiteral(currentIndex int, ts []Token) bool {
-	return ts[currentIndex].assertSymbol("{") && (currentIndex == 0 || (currentIndex > 0 && (!ts[currentIndex-1].isIdentifier() || ts[currentIndex-1].assertIdentifier("return"))))
+	return ts[currentIndex].assertSymbol("{") && (currentIndex == 0 || (currentIndex > 0 && ((ts[currentIndex-1].isSymbol() && !ts[currentIndex-1].assertSymbol(")")) || ts[currentIndex-1].assertIdentifier("return"))))
 }
 
 func extractArrayLiteral(currentIndex int, ts []Token) (t Token, nextIndex int) {

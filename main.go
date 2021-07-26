@@ -27,7 +27,7 @@ func main() {
 		}
 	}
 
-	qkfile := "examples/db-test-sqlite.qk"
+	qkfile := "examples/operate-not.qk"
 	//qkfile := getScriptFile()
 	//changeWorkDirectory()
 
