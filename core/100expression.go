@@ -66,136 +66,136 @@ type Expression struct {
     finalExpr *Expression
     listFinish bool
     raw []Token
-    res *Value
+    res Value
     tmpname string
 }
 
-func (this *Expression) isAssign() bool {
-    return (this.op & Opassign) == Opassign
+func (expr *Expression) isAssign() bool {
+    return (expr.op & Opassign) == Opassign
 }
-func (this *Expression) isAssignAfterAdd() bool {
-    return (this.op & OpassignAfterAdd) == OpassignAfterAdd
+func (expr *Expression) isAssignAfterAdd() bool {
+    return (expr.op & OpassignAfterAdd) == OpassignAfterAdd
 }
-func (this *Expression) isAssignAfterSub() bool {
-    return (this.op & OpassignAfterSub) ==OpassignAfterSub
+func (expr *Expression) isAssignAfterSub() bool {
+    return (expr.op & OpassignAfterSub) ==OpassignAfterSub
 }
-func (this *Expression) isAssignAfterMul() bool {
-    return (this.op & OpassignAfterMul) ==OpassignAfterMul
+func (expr *Expression) isAssignAfterMul() bool {
+    return (expr.op & OpassignAfterMul) ==OpassignAfterMul
 }
-func (this *Expression) isAssignAfterDiv() bool {
-    return (this.op & OpassignAfterDiv) ==OpassignAfterDiv
+func (expr *Expression) isAssignAfterDiv() bool {
+    return (expr.op & OpassignAfterDiv) ==OpassignAfterDiv
 }
-func (this *Expression) isAssignAfterMod() bool {
-    return (this.op & OpassignAfterMod) ==OpassignAfterMod
-}
-
-
-
-func (this *Expression) isEq() bool {
-    return (this.op & Opeq) == Opeq
-}
-func (this *Expression) isNe() bool {
-    return (this.op & Opne) == Opne
-}
-func (this *Expression) isGt() bool {
-    return (this.op & Opgt) == Opgt
-}
-func (this *Expression) isLt() bool {
-    return (this.op & Oplt) == Oplt
-}
-func (this *Expression) isGe() bool {
-    return (this.op & Opge) == Opge
-}
-func (this *Expression) isLe() bool {
-    return (this.op & Ople) == Ople
-}
-
-func (this *Expression) isOr() bool {
-    return (this.op & Opor) == Opor
-}
-func (this *Expression) isAnd() bool {
-    return (this.op & Opand) == Opand
+func (expr *Expression) isAssignAfterMod() bool {
+    return (expr.op & OpassignAfterMod) ==OpassignAfterMod
 }
 
 
 
-func (this *Expression) isAdd() bool {
-    return (this.op & Opadd) == Opadd
+func (expr *Expression) isEq() bool {
+    return (expr.op & Opeq) == Opeq
+}
+func (expr *Expression) isNe() bool {
+    return (expr.op & Opne) == Opne
+}
+func (expr *Expression) isGt() bool {
+    return (expr.op & Opgt) == Opgt
+}
+func (expr *Expression) isLt() bool {
+    return (expr.op & Oplt) == Oplt
+}
+func (expr *Expression) isGe() bool {
+    return (expr.op & Opge) == Opge
+}
+func (expr *Expression) isLe() bool {
+    return (expr.op & Ople) == Ople
 }
 
-func (this *Expression) isSub() bool {
-    return (this.op & Opsub) == Opsub
+func (expr *Expression) isOr() bool {
+    return (expr.op & Opor) == Opor
+}
+func (expr *Expression) isAnd() bool {
+    return (expr.op & Opand) == Opand
 }
 
-func (this *Expression) isMul() bool {
-    return (this.op & Opmul) == Opmul
+
+
+func (expr *Expression) isAdd() bool {
+    return (expr.op & Opadd) == Opadd
 }
 
-func (this *Expression) isDiv() bool {
-    return (this.op & Opdiv) == Opdiv
-}
-func (this *Expression) isMod() bool {
-    return (this.op & Opmod) ==Opmod
+func (expr *Expression) isSub() bool {
+    return (expr.op & Opsub) == Opsub
 }
 
-func (this *Expression) isIntExpression() bool {
-    return (this.t & IntExpression) == IntExpression
+func (expr *Expression) isMul() bool {
+    return (expr.op & Opmul) == Opmul
 }
 
-func (this *Expression) isFloatExpression() bool {
-    return (this.t & FloatExpression) == FloatExpression
+func (expr *Expression) isDiv() bool {
+    return (expr.op & Opdiv) == Opdiv
+}
+func (expr *Expression) isMod() bool {
+    return (expr.op & Opmod) ==Opmod
 }
 
-func (this *Expression) isBooleanExpression() bool {
-    return (this.t & BooleanExpression) == BooleanExpression
+func (expr *Expression) isIntExpression() bool {
+    return (expr.t & IntExpression) == IntExpression
 }
 
-func (this *Expression) isStringExpression() bool {
-    return (this.t & StringExpression) == StringExpression
+func (expr *Expression) isFloatExpression() bool {
+    return (expr.t & FloatExpression) == FloatExpression
 }
 
-func (this *Expression) isJSONObjectExpression() bool {
-    return (this.t & JSONObjectExpression) == JSONObjectExpression
+func (expr *Expression) isBooleanExpression() bool {
+    return (expr.t & BooleanExpression) == BooleanExpression
 }
 
-func (this *Expression) isJSONArrayExpression() bool {
-    return (this.t & JSONArrayExpression) == JSONArrayExpression
+func (expr *Expression) isStringExpression() bool {
+    return (expr.t & StringExpression) == StringExpression
 }
 
-func (this *Expression) isVarExpression() bool {
-    return (this.t & VarExpression) == VarExpression
+func (expr *Expression) isJSONObjectExpression() bool {
+    return (expr.t & JSONObjectExpression) == JSONObjectExpression
 }
 
-func (this *Expression) isAttributeExpression() bool {
-	return (this.t & AttributeExpression) == AttributeExpression
+func (expr *Expression) isJSONArrayExpression() bool {
+    return (expr.t & JSONArrayExpression) == JSONArrayExpression
 }
 
-func (this *Expression) isElementExpression() bool {
-	return (this.t & ElementExpression) == ElementExpression
+func (expr *Expression) isVarExpression() bool {
+    return (expr.t & VarExpression) == VarExpression
 }
 
-func (this *Expression) isFunctionCallExpression() bool {
-    return (this.t & FunctionCallExpression) == FunctionCallExpression
+func (expr *Expression) isAttributeExpression() bool {
+	return (expr.t & AttributeExpression) == AttributeExpression
 }
 
-func (this *Expression) isMethodCallExpression() bool {
-    return (this.t & MethodCallExpression) == MethodCallExpression
+func (expr *Expression) isElementExpression() bool {
+	return (expr.t & ElementExpression) == ElementExpression
 }
 
-func (this *Expression) isPrimaryExpression() bool {
-    return (this.t & PrimaryExpression) == PrimaryExpression
+func (expr *Expression) isFunctionCallExpression() bool {
+    return (expr.t & FunctionCallExpression) == FunctionCallExpression
 }
 
-func (this *Expression) isBinaryExpression() bool {
-    return (this.t & BinaryExpression) == BinaryExpression
+func (expr *Expression) isMethodCallExpression() bool {
+    return (expr.t & MethodCallExpression) == MethodCallExpression
 }
 
-func (this *Expression) isMultiExpression() bool {
-    return (this.t & MultiExpression) == MultiExpression
+func (expr *Expression) isPrimaryExpression() bool {
+    return (expr.t & PrimaryExpression) == PrimaryExpression
 }
 
-func (this *Expression) isAssignExpression() bool {
-    return (this.t & AssignExpression) == AssignExpression
+func (expr *Expression) isBinaryExpression() bool {
+    return (expr.t & BinaryExpression) == BinaryExpression
+}
+
+func (expr *Expression) isMultiExpression() bool {
+    return (expr.t & MultiExpression) == MultiExpression
+}
+
+func (expr *Expression) isAssignExpression() bool {
+    return (expr.t & AssignExpression) == AssignExpression
 }
 
 func (expr *Expression) setTmpname(name string) {

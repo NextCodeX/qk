@@ -1,129 +1,116 @@
 package core
 
-import (
-    "fmt"
-    "reflect"
-)
-
 type ValueType int
 
-const (
-    IntValue ValueType = 1 << iota // 整型
-    FloatValue // 浮点型
-    BooleanValue // 布尔类型
-    StringValue // 字符串
-    AnyValue // 任意值
-    ArrayValue // json 数组
-    ObjectValue // json 对象
-    NULLValue // 空值
-)
 
 // 空值
-var NULL = &Value{
-    t:           NULLValue,
+var NULL = newNULLValue()
+
+type Value interface {
+   val() interface{}
+   isNULL() bool
+   isInt() bool
+   isFloat() bool
+   isBoolean() bool
+   isString() bool
+   isAny() bool
+   isClass() bool
+   isJsonArray() bool
+   isJsonObject() bool
 }
 
-type Value struct {
-    t ValueType
-    integer int
-    decimal float64
-    boolean bool
-    str string
-    any interface{}
-    jsonArr JSONArray
-    jsonObj JSONObject
-}
-
-func newQKValue(rawVal interface{}) *Value {
+func newQKValue(rawVal interface{}) Value {
     if rawVal == nil {
         return NULL
     }
-    var val *Value
+    var val Value
     switch v := rawVal.(type) {
     case int:
-        val = &Value{t: IntValue, integer: v}
+        val = newIntValue(int64(v))
     case int64:
-        val = &Value{t: IntValue, integer: int(v)}
+        val = newIntValue(v)
     case int32:
-        val = &Value{t: IntValue, integer: int(v)}
+        val = newIntValue(int64(v))
     case float64:
-        val = &Value{t: FloatValue, decimal: v}
+        val = newFloatValue(v)
     case float32:
-        val = &Value{t: FloatValue, decimal: float64(v)}
+        val = newFloatValue(float64(v))
     case bool:
-        val = &Value{t: BooleanValue, boolean: v}
+        val = newBooleanValue(v)
     case string:
-        val = &Value{t: StringValue, str: v}
+        val = newStringValue(v)
     case JSONArray:
-        val = &Value{t: ArrayValue, jsonArr: v}
+        val = v
     case JSONObject:
-        val = &Value{t: ObjectValue, jsonObj: v}
+        val = v
     default:
-        val = &Value{t: AnyValue, any: v}
+        val = newAnyValue(v)
     }
     return val
 }
 
-
-func (v *Value) val() interface{} {
-    switch {
-        case v.isIntValue(): return v.integer
-        case v.isFloatValue(): return v.decimal
-        case v.isBooleanValue(): return v.boolean
-        case v.isStringValue(): return v.str
-        case v.isArrayValue(): return v.jsonArr
-        case v.isObjectValue(): return v.jsonObj
-        case v.isNULL(): return "null"
-        case v.isAnyValue(): {
-            si, ok := v.any.(fmt.Stringer)
-            if ok {
-                return si.String()
-            }
-            return v.any
-        }
+func goInt(val Value) int64 {
+    if v, ok := val.(*IntValue); ok {
+        return v.goValue
+    } else {
+        runtimeExcption("value is not int")
+        return -1
     }
-    return nil
 }
 
-func (v *Value) isNULL() bool {
-    return (v.t & NULLValue) == NULLValue
+func goFloat(val Value) float64 {
+    if v, ok := val.(*FloatValue); ok {
+        return v.goValue
+    } else {
+        runtimeExcption("value is not float")
+        return -1
+    }
 }
 
-func (v *Value) isIntValue() bool {
-    return (v.t & IntValue) == IntValue
+func goBool(val Value) bool {
+    if v, ok := val.(*BooleanValue); ok {
+        return v.goValue
+    } else {
+        runtimeExcption("value is not boolean")
+        return false
+    }
 }
 
-func (v *Value) isFloatValue() bool {
-    return (v.t & FloatValue) == FloatValue
+func goStr(val Value) string {
+    if v, ok := val.(*StringValue); ok {
+        return v.goValue
+    } else {
+        runtimeExcption("value is not string")
+        return ""
+    }
 }
 
-func (v *Value) isBooleanValue() bool {
-    return (v.t & BooleanValue) == BooleanValue
+func goAny(val Value) interface{} {
+    if v, ok := val.(*AnyValue); ok {
+        return v.goValue
+    } else {
+        runtimeExcption("value is not any type")
+        return nil
+    }
 }
 
-func (v *Value) isStringValue() bool {
-    return (v.t & StringValue) == StringValue
+func goArr(val Value) JSONArray {
+    if v, ok := val.(JSONArray); ok {
+        return v
+    } else {
+        runtimeExcption("value is not json array")
+        return nil
+    }
 }
 
-func (v *Value) isAnyValue() bool {
-    return (v.t & AnyValue) == AnyValue
+func goObj(val Value) JSONObject {
+    if v, ok := val.(JSONObject); ok {
+        return v
+    } else {
+        runtimeExcption("value is not json object")
+        return nil
+    }
 }
-
-func (v *Value) isClass() bool {
-    return v.isAnyValue() && reflect.TypeOf(v.any).AssignableTo(ClassType)
-}
-
-func (v *Value) isArrayValue() bool {
-    return (v.t & ArrayValue) == ArrayValue
-}
-
-func (v *Value) isObjectValue() bool {
-    return (v.t & ObjectValue) == ObjectValue
-}
-
-
-
-
 
 
 

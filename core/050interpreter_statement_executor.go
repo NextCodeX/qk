@@ -10,7 +10,7 @@ const (
 )
 
 // 执行函数
-func executeFunctionStatementList(stmts []*Statement, stack *VariableStack) *Value {
+func executeFunctionStatementList(stmts []*Statement, stack *VariableStack) Value {
 	defer stack.pop() // 函数执行结束后， 删除变量栈(list)最新添加的变量池(map)
 
 	executeStatementList(stmts, stack, StmtListTypeFunc)
@@ -80,7 +80,7 @@ func executeStatement(stmt *Statement, stack *VariableStack) *StatementResult {
 	return res
 }
 
-func executeExpression(expr *Expression, stack *VariableStack) (res *Value) {
+func executeExpression(expr *Expression, stack *VariableStack) (res Value) {
 	tmpVars := newVariables()
 	exprExecutor := newExpressionExecutor(expr, stack, &tmpVars)
 	return exprExecutor.run()
@@ -88,10 +88,10 @@ func executeExpression(expr *Expression, stack *VariableStack) (res *Value) {
 
 func evalBoolExpression(expr *Expression, stack *VariableStack) bool {
 	val := executeExpression(expr, stack)
-	if !val.isBooleanValue() {
+	if !val.isBoolean() {
 		runtimeExcption(tokensString(expr.raw), " is not bool expression!")
 	}
-	return val.boolean
+	return goBool(val)
 }
 
 func executeIfStatement(stmt *Statement, stack *VariableStack) (res *StatementResult) {

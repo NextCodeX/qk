@@ -22,10 +22,6 @@ func runtimeExcption(raw ...interface{}){
 		}
 		msg = append(msg, item)
 	}
-	if DEBUG_MODE {
-		panic(fmt.Sprintln(msg...))
-		return
-	}
 	fmt.Println(msg...)
 	os.Exit(2)
 }

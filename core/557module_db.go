@@ -198,10 +198,10 @@ func (ds *DataSource) GetRow(args []interface{}) map[string]interface{} {
 		list = append(list, row)
 		rowCount++
 	}
-	if len(list) < 1 {
-		return nil
-	} else {
+	if len(list) > 0 {
 		return list[0]
+	} else {
+		return nil
 	}
 }
 

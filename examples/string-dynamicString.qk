@@ -1,3 +1,9 @@
+student={
+name:"tank",
+age:19,
+}
+println("student info:", student)
+
 rows = [
 {name:"changlie", age:18},
 {name:"philip", age:30},
@@ -27,7 +33,6 @@ obj = {
 list: ["cat", "dog", "lion"],
 name: "zoo",
 }
-
 animals = obj.list
 println("total", animals.size())
 println("in", obj.name)

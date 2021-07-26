@@ -6,7 +6,7 @@ func isPrint(funcName string) bool {
 	return match(funcName, "println", "printf", "print")
 }
 
-func executePrintFunc(funcName string, args []interface{}) (res *Value) {
+func executePrintFunc(funcName string, args []interface{}) (res Value) {
 	argCount := len(args)
 	if funcName == "println" {
 		fmt.Println(args...)

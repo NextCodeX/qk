@@ -1,6 +1,6 @@
 package core
 
-func evalJSONObjectMethod(obj JSONObject, method string, args []interface{}) (res *Value) {
+func evalJSONObjectMethod(obj JSONObject, method string, args []interface{}) (res Value) {
 	if method == "size" {
 		return newQKValue(obj.size())
 	}

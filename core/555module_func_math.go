@@ -10,8 +10,8 @@ import (
 )
 
 func (mr *ModuleRegister) MathModuleInit() {
-	math := &QKMath{}
-	fmath := collectFunctionInfo(&math)
+	mt := &QKMath{}
+	fmath := collectFunctionInfo(&mt)
 	functionRegister("", fmath)
 }
 

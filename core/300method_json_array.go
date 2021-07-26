@@ -5,7 +5,7 @@ import (
 	"bytes"
 )
 
-func evalJSONArrayMethod(arr JSONArray, method string, args []interface{}) (res *Value) {
+func evalJSONArrayMethod(arr JSONArray, method string, args []interface{}) (res Value) {
 
 	switch method {
 	case "size":

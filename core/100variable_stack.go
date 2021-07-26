@@ -25,7 +25,7 @@ func (stack *VariableStack) pop() {
 	stack.list = stack.list[:size-1]
 }
 
-func (stack *VariableStack) searchVariable(name string) *Value {
+func (stack *VariableStack) searchVariable(name string) Value {
 	for i:=len(stack.list)-1; i>=0; i-- {
 		vars := stack.list[i]
 		res := vars.get(name)
@@ -37,7 +37,7 @@ func (stack *VariableStack) searchVariable(name string) *Value {
 	return nil
 }
 
-func (stack *VariableStack) addLocalVariable(name string, val *Value) {
+func (stack *VariableStack) addLocalVariable(name string, val Value) {
 	size := len(stack.list)
 	if size<1 {
 		runtimeExcption("stack is empty!")

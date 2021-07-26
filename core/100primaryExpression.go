@@ -21,7 +21,7 @@ type PrimaryExpr struct {
 	caller string // 调用者名称
 	name string  // 变量名或者函数名称
 	args []*Expression // 函数调用参数 / 数组索引
-	res *Value  // 常量值
+	res Value  // 常量值
 }
 
 func (priExpr *PrimaryExpr) isVar() bool {

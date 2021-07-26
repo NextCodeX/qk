@@ -11,18 +11,19 @@ type JSONObject interface {
     size() int
     exist(key string) bool
     remove(key string)
-    put(key string, value *Value)
-    get(key string) *Value
+    put(key string, value Value)
+    get(key string) Value
     keys() []string
-    values() []*Value
+    values() []Value
     tokens() []Token
     String() string
 	toJSONObjectString() string
     Iterator
+    Value
 }
 
 type JSONObjectImpl struct {
-    val map[string]*Value
+    valMap map[string]Value
     ts []Token
 }
 
@@ -30,38 +31,38 @@ func newJSONObject(ts []Token) JSONObject {
     return &JSONObjectImpl{ts:ts}
 }
 
-func toJSONObject(v map[string]*Value) JSONObject {
-    return &JSONObjectImpl{val:v}
+func toJSONObject(v map[string]Value) JSONObject {
+    return &JSONObjectImpl{valMap:v}
 }
 
 func (obj *JSONObjectImpl) init() {
-    obj.val =  make(map[string]*Value)
+    obj.valMap =  make(map[string]Value)
 }
 
 func (obj *JSONObjectImpl) parsed() bool {
-    return obj.val != nil
+    return obj.valMap != nil
 }
 
 func (obj *JSONObjectImpl) size() int {
-    return len(obj.val)
+    return len(obj.valMap)
 }
 
 func (obj *JSONObjectImpl) remove(key string) {
-    delete(obj.val, key)
+    delete(obj.valMap, key)
 }
 
 func (obj *JSONObjectImpl) exist(key string) bool {
-    _, ok := obj.val[key]
+    _, ok := obj.valMap[key]
     return ok
 }
 
-func (obj *JSONObjectImpl) put(key string, value *Value) {
-    obj.val[key] = value
+func (obj *JSONObjectImpl) put(key string, value Value) {
+    obj.valMap[key] = value
 }
 
 
-func (obj *JSONObjectImpl) get(key string) *Value {
-    v, ok := obj.val[key]
+func (obj *JSONObjectImpl) get(key string) Value {
+    v, ok := obj.valMap[key]
     if ok {
         return v
     }
@@ -70,15 +71,15 @@ func (obj *JSONObjectImpl) get(key string) *Value {
 
 func (obj *JSONObjectImpl) keys() []string {
     var keys []string
-    for key := range obj.val {
+    for key := range obj.valMap {
         keys = append(keys, key)
     }
     return keys
 }
 
-func (obj *JSONObjectImpl) values() []*Value {
-    var vals []*Value
-    for _, v := range obj.val {
+func (obj *JSONObjectImpl) values() []Value {
+    var vals []Value
+    for _, v := range obj.valMap {
         vals = append(vals, v)
     }
     return vals
@@ -96,15 +97,15 @@ func (obj *JSONObjectImpl) toJSONObjectString() string {
 	var res bytes.Buffer
 	res.WriteString("{")
 	var i int
-	for k, v := range obj.val {
+	for k, v := range obj.valMap {
 		kstr := fmt.Sprintf(`"%v"`, k)
 		var rawVal interface{}
-		if v.isStringValue() {
-			rawVal = fmt.Sprintf(`"%v"`, v.str)
-		} else if v.isObjectValue() {
-			rawVal = v.jsonObj.toJSONObjectString()
-		} else if v.isArrayValue() {
-			rawVal = v.jsonArr.toJSONArrayString()
+		if v.isString() {
+			rawVal = fmt.Sprintf(`"%v"`, goStr(v))
+		} else if v.isJsonObject() {
+			rawVal = goObj(v).toJSONObjectString()
+		} else if v.isJsonArray() {
+			rawVal = goArr(v).toJSONArrayString()
 		} else {
 			rawVal = v.val()
 		}
@@ -122,15 +123,49 @@ func (obj *JSONObjectImpl) toJSONObjectString() string {
 
 func (obj *JSONObjectImpl) indexs() []interface{} {
     var res []interface{}
-    for key := range obj.val {
+    for key := range obj.valMap {
         res = append(res, key)
     }
     return res
 }
 
-func (obj *JSONObjectImpl) getItem(index interface{}) *Value {
+func (obj *JSONObjectImpl) getItem(index interface{}) Value {
     key := index.(string)
-    return obj.val[key]
+    return obj.valMap[key]
 }
+
+
+func (obj *JSONObjectImpl) val() interface{} {
+	return obj
+}
+func (obj *JSONObjectImpl) isNULL() bool {
+	return false
+}
+func (obj *JSONObjectImpl) isInt() bool {
+	return false
+}
+func (obj *JSONObjectImpl) isFloat() bool {
+	return false
+}
+func (obj *JSONObjectImpl) isBoolean() bool {
+	return false
+}
+func (obj *JSONObjectImpl) isString() bool {
+	return false
+}
+func (obj *JSONObjectImpl) isAny() bool {
+	return false
+}
+func (obj *JSONObjectImpl) isClass() bool {
+	return false
+}
+func (obj *JSONObjectImpl) isJsonArray() bool {
+	return false
+}
+func (obj *JSONObjectImpl) isJsonObject() bool {
+	return true
+}
+
+
 
 

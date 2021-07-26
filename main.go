@@ -27,7 +27,7 @@ func main() {
 		}
 	}
 
-	qkfile := "examples/string-dynamicString.qk"
+	qkfile := "examples/db-test-sqlite.qk"
 	//qkfile := getScriptFile()
 	//changeWorkDirectory()
 

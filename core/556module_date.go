@@ -11,7 +11,7 @@ func (mr *ModuleRegister) DateModuleInit() {
 	functionRegister("", fs)
 }
 
-const COMMON_DATETIME_FORMAT = "2006-01-02 15:04:05"
+const CommonDatetimeFormat = "2006-01-02 15:04:05"
 
 type Datetime struct {
 	val       time.Time
@@ -32,7 +32,7 @@ func (dt *Datetime) Format(tmpl string) string {
 }
 
 func (dt *Datetime) String() string {
-	return dt.val.Format(COMMON_DATETIME_FORMAT)
+	return dt.val.Format(CommonDatetimeFormat)
 }
 
 type DatetimeConstructor struct{}
@@ -40,7 +40,7 @@ type DatetimeConstructor struct{}
 // current datetime qk object
 func (dtc *DatetimeConstructor) Now() *ClassExecutor {
 	now := time.Now()
-	dt := &Datetime{now, now.Unix(), now.Format(COMMON_DATETIME_FORMAT)}
+	dt := &Datetime{now, now.Unix(), now.Format(CommonDatetimeFormat)}
 	return newClassExecutor("date", dt, &dt)
 }
 

@@ -57,7 +57,7 @@ func toCommonSlice(any interface{}) []interface{} {
 }
 
 
-func tokenToValue(t *Token)  *Value {
+func tokenToValue(t *Token)  Value {
 	if t.isArrLiteral() {
 		v := newJSONArray(t.ts)
 		return newQKValue(v)
@@ -89,7 +89,7 @@ func tokenToValue(t *Token)  *Value {
 	}
 }
 
-func toQKValue(v interface{}) *Value {
+func toQKValue(v interface{}) Value {
 	if v == nil {
 		return NULL
 	}
@@ -97,10 +97,10 @@ func toQKValue(v interface{}) *Value {
 	kind := typ.Kind()
 	switch kind {
 	case reflect.Map:
-		mapRes := make(map[string]*Value)
+		mapRes := make(map[string]Value)
 		m := v.(map[string]interface{})
 		for key, value := range m {
-			var qkVal *Value
+			var qkVal Value
 			if isDecomposable(value) {
 				qkVal = toQKValue(value)
 			} else {
@@ -112,10 +112,10 @@ func toQKValue(v interface{}) *Value {
 		return newQKValue(tmp)
 
 	case reflect.Slice:
-		var arrRes []*Value
+		var arrRes []Value
 		list := v.([]interface{})
 		for _, item := range list {
-			var qkVal *Value
+			var qkVal Value
 			if isDecomposable(item) {
 				qkVal = toQKValue(item)
 			} else {

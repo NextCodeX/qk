@@ -5,13 +5,10 @@ var (
 	mainFunc = newFunc("main")
 )
 
-//const DEBUG_MODE = true
-const DEBUG_MODE = false
-
 func Run(bs []byte) {
 	// 词法分析
 	ts := ParseTokens(bs)
-	//printTokensByLine(ts)
+	printTokensByLine(ts)
 
 	// 语法分析
 	mainFunc.setRaw(ts)
@@ -23,7 +20,7 @@ func Run(bs []byte) {
 }
 
 // 用于程序自举，执行qk代码片段，指定变量𣏾
-func evalScript(src string, stack *VariableStack) *Value {
+func evalScript(src string, stack *VariableStack) Value {
 	ts := ParseTokens([]byte(src))
 	tsLen := len(ts)
 	if tsLen < 1 {
@@ -31,6 +28,9 @@ func evalScript(src string, stack *VariableStack) *Value {
 	}
 	if last(ts).assertSymbol(";") {
 		ts = ts[:tsLen-1]
+	}
+	if len(ts) < 1 {
+		return NULL
 	}
 	expr := extractExpression(ts)
 	qkValue := executeExpression(expr, stack)

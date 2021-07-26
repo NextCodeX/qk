@@ -2,18 +2,18 @@ package core
 
 type Iterator interface {
 	indexs() []interface{}
-	getItem(interface{}) *Value
+	getItem(interface{}) Value
 }
 
-func toIterator(v *Value) Iterator {
-	if v.isArrayValue() {
-		return v.jsonArr
+func toIterator(v Value) Iterator {
+	if v.isJsonArray() {
+		return goArr(v)
 	}
-	if v.isObjectValue() {
-		return v.jsonObj
+	if v.isJsonObject() {
+		return goObj(v)
 	}
-	if v.isStringValue() {
-		return newStringIterator(v.str)
+	if v.isString() {
+		return newStringIterator(goStr(v))
 	}
 	return nil
 }

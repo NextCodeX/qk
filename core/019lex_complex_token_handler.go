@@ -88,6 +88,11 @@ func checkUselessBoundary(currentIndex int, ts []Token, resTs []Token) bool  {
 	}
 	last, lastExist := lastToken(resTs)
 	if lastExist && last.assertSymbols("{", "}", ";", "=") {
+		// 为什么symbol ";" 前面不可以有symbol "}"呢？
+		// 因为如果symbol ";" 有symbol "}"的话，
+		// 这个symbol "}" 只会是各种语句或函数的结束符，
+		// 不会是json object字面值的结束符，因为json object字面值已经转成一个复合token
+		// 所以就应该消除
 		return true
 	}
 	next, nextExist := nextToken(currentIndex, ts)

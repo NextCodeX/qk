@@ -16,7 +16,7 @@ func newExpressionExecutor(expr *Expression, stack *VariableStack, tmpVars *Vari
 	return executor
 }
 
-func (executor *ExpressionExecutor) run() (res *Value) {
+func (executor *ExpressionExecutor) run() (res Value) {
 	expr := executor.expr
 	if expr.isPrimaryExpression() {
 		return executor.leftVal()
@@ -30,7 +30,7 @@ func (executor *ExpressionExecutor) run() (res *Value) {
 	return nil
 }
 
-func (executor *ExpressionExecutor) executeAttributeExpression(primaryExpr *PrimaryExpr) (res *Value) {
+func (executor *ExpressionExecutor) executeAttributeExpression(primaryExpr *PrimaryExpr) (res Value) {
 	varname := primaryExpr.caller
 	attrname := primaryExpr.name
 	varVal := executor.searchVariable(varname)
@@ -38,36 +38,36 @@ func (executor *ExpressionExecutor) executeAttributeExpression(primaryExpr *Prim
 		return NULL
 	}
 
-	if varVal.isArrayValue() {
-		arr := varVal.jsonArr
+	if varVal.isJsonArray() {
+		arr := goArr(varVal)
 		index := toIntValue(attrname)
 		return arr.get(index)
 	}
 
-	if varVal.isObjectValue() {
-		obj := varVal.jsonObj
+	if varVal.isJsonObject() {
+		obj := goObj(varVal)
 		return obj.get(attrname)
 	}
 
 	if varVal.isClass() {
-		return evalClassField(varVal.any, attrname)
+		return evalClassField(goAny(varVal), attrname)
 	}
 
 	runtimeExcption("eval attribute exception:", executor.expr.RawString())
 	return nil
 }
 
-func (executor *ExpressionExecutor) executeElementExpression(primaryExpr *PrimaryExpr) (res *Value) {
+func (executor *ExpressionExecutor) executeElementExpression(primaryExpr *PrimaryExpr) (res Value) {
 	varname := primaryExpr.name
 	varVal := executor.searchVariable(varname)
 
 	argRawVals := executor.toGoTypeValues(primaryExpr.args)
-	if varVal.isArrayValue() {
-		arr := varVal.jsonArr
+	if varVal.isJsonArray() {
+		arr := goArr(varVal)
 		index := toIntValue(argRawVals[0])
 		return arr.get(index)
-	} else if varVal.isObjectValue() {
-		obj := varVal.jsonObj
+	} else if varVal.isJsonObject() {
+		obj := goObj(varVal)
 		key := toStringValue(argRawVals[0])
 		return obj.get(key)
 	} else {
@@ -77,13 +77,13 @@ func (executor *ExpressionExecutor) executeElementExpression(primaryExpr *Primar
 }
 
 
-func (executor *ExpressionExecutor) executeMultiExpression() (res *Value) {
+func (executor *ExpressionExecutor) executeMultiExpression() (res Value) {
 	expr := executor.expr
 	return executor.recursiveEvalMultiExpression(expr.finalExpr, expr.list)
 }
 
 
-func (executor *ExpressionExecutor) recursiveEvalMultiExpression(nextExpr *Expression, exprList []*Expression) *Value {
+func (executor *ExpressionExecutor) recursiveEvalMultiExpression(nextExpr *Expression, exprList []*Expression) Value {
 	left := nextExpr.left
 	right := nextExpr.right
 	if left.isConst() && right.isConst() {
@@ -122,7 +122,7 @@ func (executor *ExpressionExecutor) getNextExprForMultiExpression(varname string
 	return nil
 }
 
-func (executor *ExpressionExecutor) executeFunctionCallExpression(primaryExpr *PrimaryExpr) (res *Value) {
+func (executor *ExpressionExecutor) executeFunctionCallExpression(primaryExpr *PrimaryExpr) (res Value) {
 	functionName := primaryExpr.name
 	args := primaryExpr.args
 
@@ -144,7 +144,7 @@ func (executor *ExpressionExecutor) executeFunctionCallExpression(primaryExpr *P
 	return nil
 }
 
-func (executor *ExpressionExecutor) executeCustomFunction(f *Function, args []*Value) (res *Value) {
+func (executor *ExpressionExecutor) executeCustomFunction(f *Function, args []Value) (res Value) {
 	executor.stack.push()
 	for i, paramName := range f.paramNames {
 		arg := args[i]
@@ -155,7 +155,7 @@ func (executor *ExpressionExecutor) executeCustomFunction(f *Function, args []*V
 	return res
 }
 
-func (executor *ExpressionExecutor) executeBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) executeBinaryExpression() (res Value) {
 	expr := executor.expr
 	if expr.res != nil && expr.left.isConst() && expr.right.isConst() {
 		return expr.res
@@ -220,14 +220,14 @@ func (executor *ExpressionExecutor) executeBinaryExpression() (res *Value) {
 	return res
 }
 
-func (executor *ExpressionExecutor) evalAndBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) evalAndBinaryExpression() (res Value) {
 	expr := executor.expr
 	left := executor.leftVal()
 	right := executor.rightVal()
 	var tmpVal interface{}
 	switch {
-	case left.isBooleanValue() && right.isBooleanValue():
-		tmpVal = left.boolean && right.boolean
+	case left.isBoolean() && right.isBoolean():
+		tmpVal = goBool(left) && goBool(right)
 
 	default:
 		runtimeExcption("evalAndBinaryExpression Exception:", tokensString(expr.raw))
@@ -236,14 +236,14 @@ func (executor *ExpressionExecutor) evalAndBinaryExpression() (res *Value) {
 	return res
 }
 
-func (executor *ExpressionExecutor) evalOrBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) evalOrBinaryExpression() (res Value) {
 	expr := executor.expr
 	left := executor.leftVal()
 	right := executor.rightVal()
 	var tmpVal interface{}
 	switch {
-	case left.isBooleanValue() && right.isBooleanValue():
-		tmpVal = left.boolean || right.boolean
+	case left.isBoolean() && right.isBoolean():
+		tmpVal = goBool(left) || goBool(right)
 
 	default:
 		runtimeExcption("evalOrBinaryExpression Exception:", tokensString(expr.raw))
@@ -252,24 +252,24 @@ func (executor *ExpressionExecutor) evalOrBinaryExpression() (res *Value) {
 	return res
 }
 
-func (executor *ExpressionExecutor) evalEqBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) evalEqBinaryExpression() (res Value) {
 	left := executor.leftVal()
 	right := executor.rightVal()
 	var tmpVal interface{}
 	switch {
-	case left.isBooleanValue() && right.isBooleanValue():
-		tmpVal = left.boolean == left.boolean
-	case left.isIntValue() && right.isIntValue():
-		tmpVal = left.integer == right.integer
-	case left.isFloatValue() && right.isFloatValue():
-		tmpVal = left.decimal == right.decimal
-	case left.isStringValue() && right.isStringValue():
-		tmpVal = left.str == right.str
+	case left.isBoolean() && right.isBoolean():
+		tmpVal = goBool(left) == goBool(right)
+	case left.isInt() && right.isInt():
+		tmpVal = goInt(left) == goInt(right)
+	case left.isFloat() && right.isFloat():
+		tmpVal = goFloat(left) == goFloat(right)
+	case left.isString() && right.isString():
+		tmpVal = goStr(left) == goStr(right)
 
-	case left.isFloatValue() && right.isIntValue():
-		tmpVal = left.decimal == float64(right.integer)
-	case left.isIntValue() && right.isFloatValue():
-		tmpVal = float64(left.integer) == right.decimal
+	case left.isFloat() && right.isInt():
+		tmpVal = goFloat(left) == float64(goInt(right))
+	case left.isInt() && right.isFloat():
+		tmpVal = float64(goInt(left)) == goFloat(right)
 
 	default:
 		tmpVal = false
@@ -278,24 +278,24 @@ func (executor *ExpressionExecutor) evalEqBinaryExpression() (res *Value) {
 	return res
 }
 
-func (executor *ExpressionExecutor) evalNeBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) evalNeBinaryExpression() (res Value) {
 	left := executor.leftVal()
 	right := executor.rightVal()
 	var tmpVal interface{}
 	switch {
-	case left.isBooleanValue() && right.isBooleanValue():
-		tmpVal = left.boolean != left.boolean
-	case left.isIntValue() && right.isIntValue():
-		tmpVal = left.integer != right.integer
-	case left.isFloatValue() && right.isFloatValue():
-		tmpVal = left.decimal != right.decimal
-	case left.isStringValue() && right.isStringValue():
-		tmpVal = left.str != right.str
+	case left.isBoolean() && right.isBoolean():
+		tmpVal = goBool(left) != goBool(right)
+	case left.isInt() && right.isInt():
+		tmpVal = goInt(left) != goInt(right)
+	case left.isFloat() && right.isFloat():
+		tmpVal = goFloat(left) != goFloat(right)
+	case left.isString() && right.isString():
+		tmpVal = goStr(left) != goStr(right)
 
-	case left.isFloatValue() && right.isIntValue():
-		tmpVal = left.decimal != float64(right.integer)
-	case left.isIntValue() && right.isFloatValue():
-		tmpVal = float64(left.integer) != right.decimal
+	case left.isFloat() && right.isInt():
+		tmpVal = goFloat(left) != float64(goInt(right))
+	case left.isInt() && right.isFloat():
+		tmpVal = float64(goInt(left)) != goFloat(right)
 
 	default:
 		tmpVal = false
@@ -304,22 +304,22 @@ func (executor *ExpressionExecutor) evalNeBinaryExpression() (res *Value) {
 	return res
 }
 
-func (executor *ExpressionExecutor) evalGtBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) evalGtBinaryExpression() (res Value) {
 	left := executor.leftVal()
 	right := executor.rightVal()
 	var tmpVal interface{}
 	switch {
-	case left.isIntValue() && right.isIntValue():
-		tmpVal = left.integer > right.integer
-	case left.isFloatValue() && right.isFloatValue():
-		tmpVal = left.decimal > right.decimal
-	case left.isStringValue() && right.isStringValue():
-		tmpVal = left.str > right.str
+	case left.isInt() && right.isInt():
+		tmpVal = goInt(left) > goInt(right)
+	case left.isFloat() && right.isFloat():
+		tmpVal = goFloat(left) > goFloat(right)
+	case left.isString() && right.isString():
+		tmpVal = goStr(left) > goStr(right)
 
-	case left.isFloatValue() && right.isIntValue():
-		tmpVal = left.decimal > float64(right.integer)
-	case left.isIntValue() && right.isFloatValue():
-		tmpVal = float64(left.integer) > right.decimal
+	case left.isFloat() && right.isInt():
+		tmpVal = goFloat(left) > float64(goInt(right))
+	case left.isInt() && right.isFloat():
+		tmpVal = float64(goInt(left)) > goFloat(right)
 
 	default:
 		tmpVal = false
@@ -328,22 +328,22 @@ func (executor *ExpressionExecutor) evalGtBinaryExpression() (res *Value) {
 	return res
 }
 
-func (executor *ExpressionExecutor) evalLtBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) evalLtBinaryExpression() (res Value) {
 	left := executor.leftVal()
 	right := executor.rightVal()
 	var tmpVal interface{}
 	switch {
-	case left.isIntValue() && right.isIntValue():
-		tmpVal = left.integer < right.integer
-	case left.isFloatValue() && right.isFloatValue():
-		tmpVal = left.decimal < right.decimal
-	case left.isStringValue() && right.isStringValue():
-		tmpVal = left.str < right.str
+	case left.isInt() && right.isInt():
+		tmpVal = goInt(left) < goInt(right)
+	case left.isFloat() && right.isFloat():
+		tmpVal = goFloat(left) < goFloat(right)
+	case left.isString() && right.isString():
+		tmpVal = goStr(left) < goStr(right)
 
-	case left.isFloatValue() && right.isIntValue():
-		tmpVal = left.decimal < float64(right.integer)
-	case left.isIntValue() && right.isFloatValue():
-		tmpVal = float64(left.integer) < right.decimal
+	case left.isFloat() && right.isInt():
+		tmpVal = goFloat(left) < float64(goInt(right))
+	case left.isInt() && right.isFloat():
+		tmpVal = float64(goInt(left)) < goFloat(right)
 
 	default:
 		tmpVal = false
@@ -352,19 +352,19 @@ func (executor *ExpressionExecutor) evalLtBinaryExpression() (res *Value) {
 	return res
 }
 
-func (executor *ExpressionExecutor) evalGeBinaryExpression() (res *Value) {
-	tmpVal := executor.evalGtBinaryExpression().boolean || executor.evalEqBinaryExpression().boolean
+func (executor *ExpressionExecutor) evalGeBinaryExpression() (res Value) {
+	tmpVal := goBool(executor.evalGtBinaryExpression()) || goBool(executor.evalEqBinaryExpression())
 	res = newQKValue(tmpVal)
 	return res
 }
 
-func (executor *ExpressionExecutor) evalLeBinaryExpression() (res *Value) {
-	tmpVal := executor.evalLtBinaryExpression().boolean || executor.evalEqBinaryExpression().boolean
+func (executor *ExpressionExecutor) evalLeBinaryExpression() (res Value) {
+	tmpVal := goBool(executor.evalLtBinaryExpression()) || goBool(executor.evalEqBinaryExpression())
 	res = newQKValue(tmpVal)
 	return res
 }
 
-func (executor *ExpressionExecutor) evalAssignAfterAddBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) evalAssignAfterAddBinaryExpression() (res Value) {
 	expr := executor.expr
 	res = executor.evalAddBinaryExpression()
 
@@ -373,7 +373,7 @@ func (executor *ExpressionExecutor) evalAssignAfterAddBinaryExpression() (res *V
 	return res
 }
 
-func (executor *ExpressionExecutor) evalAssignAfterSubBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) evalAssignAfterSubBinaryExpression() (res Value) {
 	expr := executor.expr
 	res = executor.evalSubBinaryExpression()
 
@@ -382,7 +382,7 @@ func (executor *ExpressionExecutor) evalAssignAfterSubBinaryExpression() (res *V
 	return res
 }
 
-func (executor *ExpressionExecutor) evalAssignAfterMulBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) evalAssignAfterMulBinaryExpression() (res Value) {
 	expr := executor.expr
 	res = executor.evalMulBinaryExpression()
 
@@ -391,7 +391,7 @@ func (executor *ExpressionExecutor) evalAssignAfterMulBinaryExpression() (res *V
 	return res
 }
 
-func (executor *ExpressionExecutor) evalAssignAfterDivBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) evalAssignAfterDivBinaryExpression() (res Value) {
 	expr := executor.expr
 	res = executor.evalDivBinaryExpression()
 
@@ -400,7 +400,7 @@ func (executor *ExpressionExecutor) evalAssignAfterDivBinaryExpression() (res *V
 	return res
 }
 
-func (executor *ExpressionExecutor) evalAssignAfterModBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) evalAssignAfterModBinaryExpression() (res Value) {
 	expr := executor.expr
 	res = executor.evalModBinaryExpression()
 
@@ -409,7 +409,7 @@ func (executor *ExpressionExecutor) evalAssignAfterModBinaryExpression() (res *V
 	return res
 }
 
-func (executor *ExpressionExecutor) evalAssignBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) evalAssignBinaryExpression() (res Value) {
 	expr := executor.expr
 	primaryExpr := expr.left
 	res = executor.rightVal()
@@ -419,15 +419,15 @@ func (executor *ExpressionExecutor) evalAssignBinaryExpression() (res *Value) {
 	if primaryExpr.isElement() {
 		varVal := executor.searchVariable(varname)
 		argRawVals := executor.toGoTypeValues(primaryExpr.args)
-		if varVal.isArrayValue() {
+		if varVal.isJsonArray() {
 			index := toIntValue(argRawVals[0])
-			arr := varVal.jsonArr
+			arr := goArr(varVal)
 			arr.set(index, res)
 			return
 		}
-		if varVal.isObjectValue() {
+		if varVal.isJsonObject() {
 			key := toStringValue(argRawVals[0])
-			obj := varVal.jsonObj
+			obj := goObj(varVal)
 			obj.put(key, res)
 			return
 		}
@@ -436,14 +436,14 @@ func (executor *ExpressionExecutor) evalAssignBinaryExpression() (res *Value) {
 		varname = primaryExpr.caller
 		attrname := primaryExpr.name
 		varVal := executor.searchVariable(varname)
-		if varVal.isObjectValue() {
-			obj := varVal.jsonObj
+		if varVal.isJsonObject() {
+			obj := goObj(varVal)
 			obj.put(attrname, res)
 			return
 		}
-		if varVal.isArrayValue() {
+		if varVal.isJsonArray() {
 			index := toIntValue(attrname)
-			arr := varVal.jsonArr
+			arr := goArr(varVal)
 			arr.set(index, res)
 			return
 		}
@@ -457,24 +457,24 @@ func (executor *ExpressionExecutor) evalAssignBinaryExpression() (res *Value) {
 	return res
 }
 
-func (executor *ExpressionExecutor) evalAddBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) evalAddBinaryExpression() (res Value) {
 	left := executor.leftVal()
 	right := executor.rightVal()
 	var tmpVal interface{}
 	switch {
-	case left.isIntValue() && right.isIntValue():
-		tmpVal = left.integer + right.integer
+	case left.isInt() && right.isInt():
+		tmpVal = goInt(left) + goInt(right)
 
-	case left.isFloatValue() && right.isFloatValue():
-		tmpVal = left.decimal + right.decimal
+	case left.isFloat() && right.isFloat():
+		tmpVal = goFloat(left) + goFloat(right)
 
-	case left.isFloatValue() && right.isIntValue():
-		tmpVal = left.decimal + float64(right.integer)
+	case left.isFloat() && right.isInt():
+		tmpVal = goFloat(left) + float64(goInt(right))
 
-	case left.isIntValue() && right.isFloatValue():
-		tmpVal = float64(left.integer) + right.decimal
+	case left.isInt() && right.isFloat():
+		tmpVal = float64(goInt(left)) + goFloat(right)
 
-	case left.isStringValue() || right.isStringValue():
+	case left.isString() || right.isString():
 		tmpVal = fmt.Sprintf("%v%v", left.val(), right.val())
 
 	default:
@@ -485,22 +485,22 @@ func (executor *ExpressionExecutor) evalAddBinaryExpression() (res *Value) {
 	return res
 }
 
-func (executor *ExpressionExecutor) evalSubBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) evalSubBinaryExpression() (res Value) {
 	left := executor.leftVal()
 	right := executor.rightVal()
 	var tmpVal interface{}
 	switch {
-	case left.isIntValue() && right.isIntValue():
-		tmpVal = left.integer - right.integer
+	case left.isInt() && right.isInt():
+		tmpVal = goInt(left) - goInt(right)
 
-	case left.isFloatValue() && right.isFloatValue():
-		tmpVal = left.decimal - right.decimal
+	case left.isFloat() && right.isFloat():
+		tmpVal = goFloat(left) - goFloat(right)
 
-	case left.isFloatValue() && right.isIntValue():
-		tmpVal = left.decimal - float64(right.integer)
+	case left.isFloat() && right.isInt():
+		tmpVal = goFloat(left) - float64(goInt(right))
 
-	case left.isIntValue() && right.isFloatValue():
-		tmpVal = float64(left.integer) - right.decimal
+	case left.isInt() && right.isFloat():
+		tmpVal = float64(goInt(left)) - goFloat(right)
 
 	default:
 		runtimeExcption("unknow operation:", left.val(), "-", right.val())
@@ -509,22 +509,22 @@ func (executor *ExpressionExecutor) evalSubBinaryExpression() (res *Value) {
 	return res
 }
 
-func (executor *ExpressionExecutor) evalMulBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) evalMulBinaryExpression() (res Value) {
 	left := executor.leftVal()
 	right := executor.rightVal()
 	var tmpVal interface{}
 	switch {
-	case left.isIntValue() && right.isIntValue():
-		tmpVal = left.integer * right.integer
+	case left.isInt() && right.isInt():
+		tmpVal = goInt(left) * goInt(right)
 
-	case left.isFloatValue() && right.isFloatValue():
-		tmpVal = left.decimal * right.decimal
+	case left.isFloat() && right.isFloat():
+		tmpVal = goFloat(left) * goFloat(right)
 
-	case left.isFloatValue() && right.isIntValue():
-		tmpVal = left.decimal * float64(right.integer)
+	case left.isFloat() && right.isInt():
+		tmpVal = goFloat(left) * float64(goInt(right))
 
-	case left.isIntValue() && right.isFloatValue():
-		tmpVal = float64(left.integer) * right.decimal
+	case left.isInt() && right.isFloat():
+		tmpVal = float64(goInt(left)) * goFloat(right)
 
 	default:
 		runtimeExcption("unknow operation:", left.val(), "*", right.val())
@@ -533,7 +533,7 @@ func (executor *ExpressionExecutor) evalMulBinaryExpression() (res *Value) {
 	return res
 }
 
-func (executor *ExpressionExecutor) evalDivBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) evalDivBinaryExpression() (res Value) {
 	left := executor.leftVal()
 	right := executor.rightVal()
 
@@ -541,17 +541,17 @@ func (executor *ExpressionExecutor) evalDivBinaryExpression() (res *Value) {
 
 	var tmpVal interface{}
 	switch {
-	case left.isIntValue() && right.isIntValue():
-		tmpVal = left.integer / right.integer
+	case left.isInt() && right.isInt():
+		tmpVal = goInt(left) / goInt(right)
 
-	case left.isFloatValue() && right.isFloatValue():
-		tmpVal = left.decimal / right.decimal
+	case left.isFloat() && right.isFloat():
+		tmpVal = goFloat(left) / goFloat(right)
 
-	case left.isFloatValue() && right.isIntValue():
-		tmpVal = left.decimal / float64(right.integer)
+	case left.isFloat() && right.isInt():
+		tmpVal = goFloat(left) / float64(goInt(right))
 
-	case left.isIntValue() && right.isFloatValue():
-		tmpVal = float64(left.integer) / right.decimal
+	case left.isInt() && right.isFloat():
+		tmpVal = float64(goInt(left)) / goFloat(right)
 
 	default:
 		runtimeExcption("unknow operation:", left.val(), "/", right.val())
@@ -560,7 +560,7 @@ func (executor *ExpressionExecutor) evalDivBinaryExpression() (res *Value) {
 	return res
 }
 
-func (executor *ExpressionExecutor) evalModBinaryExpression() (res *Value) {
+func (executor *ExpressionExecutor) evalModBinaryExpression() (res Value) {
 	left := executor.leftVal()
 	right := executor.rightVal()
 
@@ -568,8 +568,8 @@ func (executor *ExpressionExecutor) evalModBinaryExpression() (res *Value) {
 
 	var tmpVal interface{}
 	switch {
-	case left.isIntValue() && right.isIntValue():
-		tmpVal = left.integer % right.integer
+	case left.isInt() && right.isInt():
+		tmpVal = goInt(left) % goInt(right)
 
 	default:
 		runtimeExcption("unknow operation:", left.val(), "%", right.val())
@@ -578,13 +578,13 @@ func (executor *ExpressionExecutor) evalModBinaryExpression() (res *Value) {
 	return res
 }
 
-func (executor *ExpressionExecutor) checkDivZeroOperation(val *Value) {
+func (executor *ExpressionExecutor) checkDivZeroOperation(val Value) {
 	var flag bool
-	if val.isIntValue() {
-		flag = val.integer == 0
+	if val.isInt() {
+		flag = goInt(val) == 0
 	}
-	if val.isFloatValue() {
-		flag = val.decimal == 0
+	if val.isFloat() {
+		flag = goFloat(val) == 0
 	}
 	if flag {
 		runtimeExcption("Invalid Operation: divide zero")
@@ -627,8 +627,8 @@ func (executor *ExpressionExecutor) toGoTypeValues(exprs []*Expression) []interf
 	return res
 }
 
-func (executor *ExpressionExecutor) evalValues(exprs []*Expression) []*Value {
-	var res []*Value
+func (executor *ExpressionExecutor) evalValues(exprs []*Expression) []Value {
+	var res []Value
 	for _, expr := range exprs {
 		if expr == nil {
 			continue
@@ -639,31 +639,31 @@ func (executor *ExpressionExecutor) evalValues(exprs []*Expression) []*Value {
 	return res
 }
 
-func (executor *ExpressionExecutor) evalNewExpression(nextExpr *Expression) *Value {
+func (executor *ExpressionExecutor) evalNewExpression(nextExpr *Expression) Value {
 	exprExecutor := newExpressionExecutor(nextExpr, executor.stack, executor.tmpVars)
 	return exprExecutor.run()
 }
 
-func (executor *ExpressionExecutor) leftVal() *Value {
+func (executor *ExpressionExecutor) leftVal() Value {
 	return executor.evalPrimaryExpr(executor.expr.left)
 }
 
-func (executor *ExpressionExecutor) rightVal() *Value {
+func (executor *ExpressionExecutor) rightVal() Value {
 	return executor.evalPrimaryExpr(executor.expr.right)
 }
 
-func (executor *ExpressionExecutor) evalPrimaryExpr(primaryExpr *PrimaryExpr) *Value {
+func (executor *ExpressionExecutor) evalPrimaryExpr(primaryExpr *PrimaryExpr) Value {
 	if primaryExpr == nil {
 		return NULL
 	}
 	if primaryExpr.isConst() {
 		v := primaryExpr.res
 		if primaryExpr.isObject() {
-			executor.parseJSONObject(v.jsonObj)
+			executor.parseJSONObject(goObj(v))
 		} else if primaryExpr.isArray() {
-			executor.parseJSONArray(v.jsonArr)
+			executor.parseJSONArray(goArr(v))
 		} else if primaryExpr.isDynamicStr() {
-			v = executor.parseDynamicStr(v.str)
+			v = executor.parseDynamicStr(goStr(v))
 		} else {}
 		return v
 	} else if primaryExpr.isVar() {
@@ -686,30 +686,30 @@ func (executor *ExpressionExecutor) evalPrimaryExpr(primaryExpr *PrimaryExpr) *V
 	}
 }
 
-func (executor *ExpressionExecutor) executeMethodCallExpression(primaryExpr *PrimaryExpr) (res *Value) {
+func (executor *ExpressionExecutor) executeMethodCallExpression(primaryExpr *PrimaryExpr) (res Value) {
 	caller := primaryExpr.caller
 	methodName := primaryExpr.name
 	args := primaryExpr.args
 
 	variable := executor.stack.searchVariable(caller)
 	argRawVals := executor.toGoTypeValues(args)
-	if variable.isArrayValue() {
-		return evalJSONArrayMethod(variable.jsonArr, methodName, argRawVals)
+	if variable.isJsonArray() {
+		return evalJSONArrayMethod(goArr(variable), methodName, argRawVals)
 	}
-	if variable.isObjectValue() {
-		return evalJSONObjectMethod(variable.jsonObj, methodName, argRawVals)
+	if variable.isJsonObject() {
+		return evalJSONObjectMethod(goObj(variable), methodName, argRawVals)
 	}
-	if variable.isStringValue() {
-		return evalStringMethod(variable.str, methodName, argRawVals)
+	if variable.isString() {
+		return evalStringMethod(goStr(variable), methodName, argRawVals)
 	}
 	if variable.isClass() {
-		return evalClassMethod(variable.any, methodName, argRawVals)
+		return evalClassMethod(goAny(variable), methodName, argRawVals)
 	}
 
 	return nil
 }
 
-func (executor *ExpressionExecutor) parseDynamicStr(raw string) *Value {
+func (executor *ExpressionExecutor) parseDynamicStr(raw string) Value {
 	res := os.Expand(raw, func(key string) string {
 		qkValue := evalScript(key, executor.stack)
 		return fmt.Sprint(qkValue.val())
@@ -798,7 +798,7 @@ func (executor *ExpressionExecutor) parseJSONArray(array JSONArray) {
 	}
 }
 
-func (executor *ExpressionExecutor) searchVariable(name string) *Value {
+func (executor *ExpressionExecutor) searchVariable(name string) Value {
 	if isTmpVar(name) {
 		return executor.searchTmpVariable(name)
 	}
@@ -806,11 +806,11 @@ func (executor *ExpressionExecutor) searchVariable(name string) *Value {
 	return executor.stack.searchVariable(name)
 }
 
-func (executor *ExpressionExecutor) searchTmpVariable(name string) *Value {
+func (executor *ExpressionExecutor) searchTmpVariable(name string) Value {
 	return executor.tmpVars.get(name)
 }
 
-func (executor *ExpressionExecutor) addVar(name string, val *Value)  {
+func (executor *ExpressionExecutor) addVar(name string, val Value)  {
 	if isTmpVar(name) {
 		executor.addTmpVar(name, val)
 		return
@@ -819,7 +819,7 @@ func (executor *ExpressionExecutor) addVar(name string, val *Value)  {
 	executor.stack.addLocalVariable(name, val)
 }
 
-func (executor *ExpressionExecutor) addTmpVar(name string, val *Value)  {
+func (executor *ExpressionExecutor) addTmpVar(name string, val Value)  {
 	executor.tmpVars.add(name,  val)
 }
 

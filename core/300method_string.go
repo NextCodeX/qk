@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-func evalStringMethod(str string, method string, args []interface{}) (res *Value) {
+func evalStringMethod(str string, method string, args []interface{}) (res Value) {
 	var rawVal interface{}
 	argCount := len(args)
 	switch method {
