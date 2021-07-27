@@ -23,6 +23,8 @@ const (
 	ObjLiteral // 对象字面值
 	Element // 元素, 用于指示对象或数组的元素
 	Complex // 用于标记复合类型token
+	ChainCall // 链式调用
+	SubList // 列表截取
 	Expr // 表示这个Token包含了一个Expression
 	Not  // 用于标记需要非处理的一元表达式
 
@@ -39,6 +41,8 @@ type Token struct {
 	// token为元素, 函数调用, 函数定义类型时, 存的是参数   ;
 	// token为数组字面值, 对象字面值类型时, 存的是字面值内容
 	ts []Token
+	chainTokens []Token
+	endExpr []Token
 	not bool // 是否进行非处理
 }
 
@@ -110,6 +114,14 @@ func (tk *Token) isComplex() bool {
 	return (tk.t & Complex) == Complex
 }
 
+func (tk *Token) isSubList() bool {
+	return (tk.t & SubList) == SubList
+}
+
+func (tk *Token) isChainCall() bool {
+	return (tk.t & ChainCall) == ChainCall
+}
+
 func (tk *Token) isExpr() bool {
 	return (tk.t & Expr) == Expr
 }
@@ -158,7 +170,7 @@ func (tk *Token) priority() int {
 	switch {
 	//case this.assertSymbols("(", ")", "[","]", "."):
 	//    res = 1
-	//case this.assertSymbols("!", "+", "-", " ", "++", "--"):
+	//case this.assertSymbols("!", "+", "-", "++", "--"):
 	//! +(正)  -(负)   ++ -- , 结合性：从右向左
 	//res = 2
 	case tk.assertSymbols("*", "/", "%"):
@@ -214,7 +226,20 @@ func (tk *Token) upper(t *Token) bool {
 
 func (tk *Token) String() string {
 	var res string
-	if tk.isArrLiteral() || tk.isObjLiteral() {
+	if tk.isChainCall() {
+		var buf bytes.Buffer
+		tmp := tk.t
+		tk.t = ^ChainCall & tk.t
+		buf.WriteString(tk.String())
+		if tk.chainTokens != nil {
+			for _, token := range tk.chainTokens {
+				buf.WriteString(".")
+				buf.WriteString(token.String())
+			}
+		}
+		tk.t = tmp
+		res = buf.String()
+	} else if tk.isArrLiteral() || tk.isObjLiteral() {
 		res = tk.toJSONString()
 	} else if tk.isFcall() || tk.isFdef() {
 		var buf bytes.Buffer
@@ -299,6 +324,9 @@ func (tk *Token) TokenTypeName() string {
 	}
 	if tk.isIdentifier() {
 		buf.WriteString( "identifier, ")
+	}
+	if tk.isChainCall() {
+		buf.WriteString( "chain call, ")
 	}
 	if tk.isInt() {
 		buf.WriteString( "int, ")

@@ -40,7 +40,6 @@ const (
     OpassignAfterMul // 相乘后赋值
     OpassignAfterDiv // 相除后赋值
     OpassignAfterMod // 求余后赋值
-
 )
 
 type Expression struct {

@@ -9,6 +9,7 @@ const (
 	DynamicStrPrimaryExpressionType
 	ArrayPrimaryExpressionType
 	ObjectPrimaryExpressionType
+	ChainCallPrimaryExpressionType
 	ElementPrimaryExpressionType
 	AttibutePrimaryExpressionType
 	FunctionCallPrimaryExpressionType
@@ -23,9 +24,11 @@ type PrimaryExpr struct {
 	caller string // 调用者名称
 	name string  // 变量名或者函数名称
 	args []*Expression // 函数调用参数 / 数组索引
+	chain []*PrimaryExpr
 	res Value  // 常量值
 	not bool // 是否进行非处理
-	ts []Token // 储存Expression的Token列表
+	ts []Token // 储存Expression的Token列表, ChainCall 所需的Token
+	head *Expression // ChainCall 的头表达式
 }
 
 func (priExpr *PrimaryExpr) isVar() bool {
@@ -46,6 +49,10 @@ func (priExpr *PrimaryExpr) isArray() bool {
 
 func (priExpr *PrimaryExpr) isObject() bool {
 	return (priExpr.t & ObjectPrimaryExpressionType) == ObjectPrimaryExpressionType
+}
+
+func (priExpr *PrimaryExpr) isChainCall() bool {
+	return (priExpr.t & ChainCallPrimaryExpressionType) == ChainCallPrimaryExpressionType
 }
 
 func (priExpr *PrimaryExpr) isElement() bool {

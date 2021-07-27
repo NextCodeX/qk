@@ -27,4 +27,4 @@ if false && test1(2) {
 } else {
     println("success 2")
 }
-test1("finally!!!")
+println("run test function: ", test1("finally!!!"))

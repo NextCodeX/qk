@@ -92,13 +92,13 @@ func (executor *ExpressionExecutor) recursiveEvalMultiExpression(nextExpr *Expre
 	left := nextExpr.left
 	right := nextExpr.right
 	if left.isConst() && right.isConst() {
-		return executor.evalNewExpression(nextExpr)
+		return executor.evalSubExpression(nextExpr)
 	}
 
 	executor.calculateIfNotExist(left, exprList)
 	executor.calculateIfNotExist(right, exprList)
 
-	return executor.evalNewExpression(nextExpr)
+	return executor.evalSubExpression(nextExpr)
 }
 
 // 检查相应的变量是否已计算，若未计算则进行计算
@@ -653,7 +653,7 @@ func (executor *ExpressionExecutor) toGoTypeValues(exprs []*Expression) []interf
 		if expr == nil {
 			continue
 		}
-		val := executor.evalNewExpression(expr)
+		val := executor.evalSubExpression(expr)
 		rawVal := val.val()
 		res = append(res, rawVal)
 	}
@@ -666,13 +666,13 @@ func (executor *ExpressionExecutor) evalValues(exprs []*Expression) []Value {
 		if expr == nil {
 			continue
 		}
-		val := executor.evalNewExpression(expr)
+		val := executor.evalSubExpression(expr)
 		res = append(res, val)
 	}
 	return res
 }
 
-func (executor *ExpressionExecutor) evalNewExpression(nextExpr *Expression) Value {
+func (executor *ExpressionExecutor) evalSubExpression(nextExpr *Expression) Value {
 	exprExecutor := newExpressionExecutor(nextExpr, executor.stack, executor.tmpVars)
 	return exprExecutor.run()
 }
@@ -702,8 +702,9 @@ func (executor *ExpressionExecutor) evalPrimaryExpr(primaryExpr *PrimaryExpr) Va
 		} else {}
 		res = v
 	} else if primaryExpr.isExpr() {
-		subExpr := extractExpression(primaryExpr.ts)
-		res = executeExpression(subExpr, executor.stack)
+		res = executeExpression(primaryExpr.head, executor.stack)
+	} else if primaryExpr.isChainCall() {
+		res = executor.evalChainCall(primaryExpr)
 	} else if primaryExpr.isVar() {
 		varname := primaryExpr.name
 		res = executor.searchVariable(varname)
@@ -803,7 +804,7 @@ func (executor *ExpressionExecutor) parseJSONObject(object JSONObject) {
 		keyname := token.str
 
 		expr := extractExpression(exprTokens)
-		val := executor.evalNewExpression(expr)
+		val := executor.evalSubExpression(expr)
 		object.put(keyname, val)
 		i = nextCommaIndex
 	}
@@ -840,7 +841,7 @@ func (executor *ExpressionExecutor) parseJSONArray(array JSONArray) {
 		}
 
 		expr := extractExpression(exprTokens)
-		val := executor.evalNewExpression(expr)
+		val := executor.evalSubExpression(expr)
 		array.add(val)
 		i = nextCommaIndex
 	}
@@ -869,6 +870,61 @@ func (executor *ExpressionExecutor) addVar(name string, val Value)  {
 
 func (executor *ExpressionExecutor) addTmpVar(name string, val Value)  {
 	executor.tmpVars.add(name,  val)
+}
+
+func (executor *ExpressionExecutor) evalChainCall(priExpr *PrimaryExpr) Value {
+	caller := executeExpression(priExpr.head, executor.stack)
+	for _, pri := range priExpr.chain {
+		if caller.isJsonArray() {
+			if pri.isFunctionCall() {
+				argRawVals := executor.toGoTypeValues(pri.args)
+				caller = evalJSONArrayMethod(goArr(caller), pri.name, argRawVals)
+				continue
+			}
+		} else if caller.isJsonObject() {
+			if pri.isVar() {
+				caller = goObj(caller).get(pri.name)
+				continue
+			} else if pri.isFunctionCall() {
+				argRawVals := executor.toGoTypeValues(pri.args)
+				caller = evalJSONObjectMethod(goObj(caller), pri.name, argRawVals)
+				continue
+			} else if pri.isElement() {
+				val := goObj(caller).get(pri.name)
+				argRawVals := executor.toGoTypeValues(pri.args)
+				if val.isJsonArray() {
+					arr := goArr(val)
+					index := toIntValue(argRawVals[0])
+					caller = arr.get(index)
+					continue
+				} else if val.isJsonObject() {
+					obj := goObj(val)
+					key := toStringValue(obj)
+					caller = obj.get(key)
+					continue
+				} else {
+					runtimeExcption("invalid chain call expression")
+				}
+			}
+		} else if caller.isString() {
+			if pri.isFunctionCall() {
+				argRawVals := executor.toGoTypeValues(pri.args)
+				caller = evalStringMethod(goStr(caller), pri.name, argRawVals)
+				continue
+			}
+		} else if caller.isClass() {
+			if pri.isFunctionCall() {
+				argRawVals := executor.toGoTypeValues(pri.args)
+				caller = evalClassMethod(goAny(caller), pri.name, argRawVals)
+				continue
+			}
+			if pri.isVar() {
+				caller = evalClassField(goAny(caller), pri.name)
+				continue
+			}
+		}
+	}
+	return caller
 }
 
 

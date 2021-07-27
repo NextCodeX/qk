@@ -1,0 +1,21 @@
+/** */
+test() {
+    println("run test function!")
+    return {
+    name:"changlie",
+    addrs: ["beijing", "shanghai", "guangzhou", "shenzhen"]
+    }
+}
+
+println(test().name.size())
+
+println("v2", test().addrs)
+println("v333", test().addrs[1])
+println("v4444", test().addrs[0].upper())
+
+println("==============")
+println("".size())
+println("heel".size())
+println(["kitty", false, 999].size())
+println({name:"qk", sex:"unknown"}.sex.upper().size())
+

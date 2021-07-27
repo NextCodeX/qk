@@ -2,7 +2,6 @@ package core
 
 type ValueType int
 
-
 // 空值
 var NULL = newNULLValue()
 

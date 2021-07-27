@@ -353,7 +353,16 @@ func parseBinaryExpression(ts []Token) *Expression {
 func parsePrimaryExpression(t *Token) *PrimaryExpr {
 	v := tokenToValue(t)
 	var res *PrimaryExpr
-	if v != nil {
+	if t.isChainCall() {
+		var priExprs []*PrimaryExpr
+		for _, tk := range t.chainTokens {
+			priExpr := parsePrimaryExpression(&tk)
+			priExprs = append(priExprs, priExpr)
+		}
+		t.t = (^ChainCall) & t.t
+		expr := extractExpression(tokenArray(*t))
+		res = &PrimaryExpr{t: ChainCallPrimaryExpressionType, head: expr, chain: priExprs}
+	} else if v != nil {
 		primaryExprType := ConstPrimaryExpressionType
 		if t.isObjLiteral() {
 			primaryExprType = primaryExprType | ObjectPrimaryExpressionType
@@ -382,7 +391,9 @@ func parsePrimaryExpression(t *Token) *PrimaryExpr {
 		res = &PrimaryExpr{name: t.str, caller:t.caller, args: exprs, t: MethodCallPrimaryExpressionType}
 
 	} else if t.isExpr() {
-		res = &PrimaryExpr{t: ExprPrimaryExpressionType, ts: t.ts}
+		expr := extractExpression(t.ts)
+		res = &PrimaryExpr{t: ExprPrimaryExpressionType, head: expr}
+
 	} else if t.isIdentifier() {
 		res = &PrimaryExpr{name: t.str, t: VarPrimaryExpressionType}
 	} else {

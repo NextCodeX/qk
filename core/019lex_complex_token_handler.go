@@ -14,6 +14,7 @@ func initHover() *Hover {
 func parse4ComplexTokens(ts []Token) []Token {
 	var res []Token
 	size := len(ts)
+	dotHover := initHover()
 	notOperatorHover := initHover()
 	for i:=0; i<size; {
 		token := ts[i]
@@ -26,6 +27,7 @@ func parse4ComplexTokens(ts []Token) []Token {
 			goto endCurrentIterate
 		}
 
+		// 处理非逻辑运算符
 		if token.assertSymbol("!") {
 			notOperatorHover.ready = true
 			notOperatorHover.index ++
@@ -56,6 +58,29 @@ func parse4ComplexTokens(ts []Token) []Token {
 			}
 		}
 
+		// 处理 "." 运算符
+		if token.assertSymbol(".") && !dotHover.ready {
+			dotHover.ready = true
+			dotHover.lastLen = len(res)
+			goto endCurrentIterate
+		}
+		if dotHover.ready && dotHover.lastLen < len(res) {
+			last, _ := lastToken(res)
+			lastSecond, _ := lastSecondToken(res)
+			if !lastSecond.isChainCall() {
+				lastSecond.t = lastSecond.t | ChainCall
+			}
+			lastSecond.chainTokens = append(lastSecond.chainTokens, last)
+			resLen := len(res)
+			res[resLen-2] = lastSecond
+			res = res[:resLen-1]
+			if !token.assertSymbol(".") {
+				dotHover = initHover()
+			} else {
+				goto endCurrentIterate
+			}
+		}
+
 		// 捕获数组的字面值Token
 		if checkJSONArrayLiteral(i, ts) {
 			complexToken, nextIndex = extractArrayLiteral(i, ts)
@@ -80,23 +105,23 @@ func parse4ComplexTokens(ts []Token) []Token {
 		}
 
 		// 捕获Attribute类型token
-		complexToken, nextIndex = extractAttribute(i, ts)
-		if nextIndex > i {
-			// 捕获Mtcall类型token
-			if nextIndex < size && ts[nextIndex].assertSymbol("(") {
-				complexToken, nextIndex = extractMethodCall(i, ts)
-			}
-			res = append(res, complexToken)
-			i = nextIndex
-			goto nextLoop
-		}
+		//complexToken, nextIndex = extractAttribute(i, ts)
+		//if nextIndex > i {
+		//	// 捕获Mtcall类型token
+		//	if nextIndex < size && ts[nextIndex].assertSymbol("(") {
+		//		complexToken, nextIndex = extractMethodCall(i, ts)
+		//	}
+		//	res = append(res, complexToken)
+		//	i = nextIndex
+		//	goto nextLoop
+		//}
 
 		// 捕获Fcall类型token
 		complexToken, nextIndex = extractFunctionCall(i, ts)
 		if nextIndex > i {
 			// 标记Fdef类型token
 			if nextIndex < size && ts[nextIndex].assertSymbol("{") {
-				complexToken.t = Fdef | complexToken.t
+				complexToken.t = Fdef | Complex
 			}
 			res = append(res, complexToken)
 			i = nextIndex
@@ -119,13 +144,25 @@ func parse4ComplexTokens(ts []Token) []Token {
 		i++
 	nextLoop:
 	}
+
 	if notOperatorHover.ready && res != nil && len(res) > notOperatorHover.lastLen {
 		// 𥈱悬停监听有延迟， 需要在循环结束后进行数据进行收尾
 		lastIndex := len(res) - 1
 		res[lastIndex].not = notOperatorHover.index % 2 == 1
 		res[lastIndex].t = res[lastIndex].t | Not
 	}
-
+	if dotHover.ready && dotHover.lastLen < len(res) {
+		// 𥈱悬停监听有延迟， 需要在循环结束后进行数据进行收尾
+		last, _ := lastToken(res)
+		lastSecond, _ := lastSecondToken(res)
+		if !lastSecond.isChainCall() {
+			lastSecond.t = lastSecond.t | ChainCall
+		}
+		lastSecond.chainTokens = append(lastSecond.chainTokens, last)
+		resLen := len(res)
+		res[resLen-2] = lastSecond
+		res = res[:resLen-1]
+	}
 	return res
 }
 
@@ -342,7 +379,7 @@ func getCallArgsTokens(currentIndex int, ts []Token) (args []Token, nextIndex in
 				break
 			}
 		}
-		if token.assertSymbols("{", "}", ";", "=") {
+		if token.assertSymbols(";", "=") {
 			msg := printCurrentPositionTokens(ts, i)
 			runtimeExcption("extract call args Exception, illegal character:"+msg)
 		}

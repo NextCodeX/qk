@@ -10,6 +10,10 @@ import (
 
 func toIntValue(any interface{}) int {
 	switch v := any.(type) {
+	case int32:
+		return int(v)
+	case int64:
+		return int(v)
 	case int:
 		return v
 	case float32:
@@ -18,7 +22,7 @@ func toIntValue(any interface{}) int {
 		return int(v)
 	case string:
 		i, err := strconv.Atoi(v)
-		assert(err!=nil, err, "failed to int value:", any)
+		assert(err!=nil, err, "Value:", any)
 		return i
 	default:
 		runtimeExcption("failed to int value", any)

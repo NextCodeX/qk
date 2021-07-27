@@ -11,6 +11,13 @@ func match(src string, targets ...string) bool {
     return false
 }
 
+// 把一个Token转成Token数组
+func tokenArray(tk Token) []Token {
+	var res []Token
+	res = append(res, tk)
+	return res
+}
+
 // 在token列表头部插入一个新token
 func insert(h Token, ts []Token) []Token {
     res := make([]Token, 0, len(ts)+1)
@@ -55,6 +62,10 @@ func nextToken(currentIndex int, ts []Token) (t Token, ok bool) {
     return ts[currentIndex+1], true
 }
 
+// token列表的倒数第二个token
+func lastSecond(ts []Token) *Token {
+	return &ts[len(ts)-2]
+}
 // token列表的最后一个token
 func last(ts []Token) *Token {
     return &ts[len(ts)-1]
