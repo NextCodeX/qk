@@ -27,7 +27,7 @@ func main() {
 		}
 	}
 
-	qkfile := "examples/operate-not.qk"
+	qkfile := "examples/test-boolean-enhance.qk"
 	//qkfile := getScriptFile()
 	//changeWorkDirectory()
 

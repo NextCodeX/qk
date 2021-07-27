@@ -89,7 +89,7 @@ func executeExpression(expr *Expression, stack *VariableStack) (res Value) {
 func evalBoolExpression(expr *Expression, stack *VariableStack) bool {
 	val := executeExpression(expr, stack)
 	if !val.isBoolean() {
-		runtimeExcption(tokensString(expr.raw), " is not bool expression!")
+		return toBoolean(val)
 	}
 	return goBool(val)
 }

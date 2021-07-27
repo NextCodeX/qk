@@ -1,0 +1,30 @@
+if 9 {
+    println("enhance boolean successfully!")
+}
+
+if "ah" {
+    println("test string!")
+}
+
+obj = {
+name: "jfast!",
+age: 10
+}
+println(obj)
+obj.age += 8
+println(obj, "after update")
+
+test1(sign) {
+    println("It's test1 ->", sign)
+    return true
+}
+if true || test1(1) {
+    println("success 1")
+}
+
+if false && test1(2) {
+    println("fail")
+} else {
+    println("success 2")
+}
+test1("finally!!!")

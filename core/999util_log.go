@@ -13,6 +13,21 @@ func assert(flag bool, msg ...interface{})  {
 	}
 }
 
+// 报错并退出程序(带格式化)
+func errorf(format string, args ...interface{}) {
+	var msg []interface{}
+	for _, item := range args[1:] {
+		if err, ok := item.(error); ok && err != nil {
+			msg = append(msg, err.Error())
+			continue
+		}
+		msg = append(msg, item)
+	}
+	fmt.Printf(format, msg...)
+	os.Exit(2)
+}
+
+// 报错并退出程序(不带格式化)
 func runtimeExcption(raw ...interface{}){
 	var msg []interface{}
 	for _, item := range raw {

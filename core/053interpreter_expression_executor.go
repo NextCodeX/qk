@@ -210,13 +210,12 @@ func (executor *ExpressionExecutor) executeBinaryExpression() (res Value) {
 		res = executor.evalAndBinaryExpression()
 
 	}
+	if res == nil {
+		res = NULL
+	}
 	if expr.isAssignExpression() {
-		if res == nil {
-			res = NULL
-		}
 		varname := expr.receiver
 		executor.addVar(varname, res)
-
 	}
 	// 常量折叠
 	if expr.left.isConst() && expr.right.isConst() {
@@ -225,36 +224,52 @@ func (executor *ExpressionExecutor) executeBinaryExpression() (res Value) {
 	return res
 }
 
-func (executor *ExpressionExecutor) evalAndBinaryExpression() (res Value) {
-	expr := executor.expr
+func (executor *ExpressionExecutor) evalAndBinaryExpression() Value {
 	left := executor.leftVal()
+	if left.isBoolean() && !goBool(left) {
+		return newQKValue(false)
+	}
+	if !left.isBoolean() && !toBoolean(left) {
+		return newQKValue(false)
+	}
 	right := executor.rightVal()
-	var tmpVal interface{}
+	var res bool
 	switch {
 	case left.isBoolean() && right.isBoolean():
-		tmpVal = goBool(left) && goBool(right)
+		res = goBool(left) && goBool(right)
+	case !left.isBoolean() && right.isBoolean():
+		res = toBoolean(left) && goBool(right)
+	case left.isBoolean() && !right.isBoolean():
+		res = goBool(left) && toBoolean(right)
 
 	default:
-		runtimeExcption("evalAndBinaryExpression Exception:", tokensString(expr.raw))
+		errorf("invalid expression: %v && %v", left.val(), right.val())
 	}
-	res = newQKValue(tmpVal)
-	return res
+	return newQKValue(res)
 }
 
-func (executor *ExpressionExecutor) evalOrBinaryExpression() (res Value) {
-	expr := executor.expr
+func (executor *ExpressionExecutor) evalOrBinaryExpression() Value {
 	left := executor.leftVal()
+	if left.isBoolean() && goBool(left) {
+		return newQKValue(true)
+	}
+	if !left.isBoolean() && toBoolean(left) {
+		return newQKValue(true)
+	}
 	right := executor.rightVal()
-	var tmpVal interface{}
+	var res bool
 	switch {
 	case left.isBoolean() && right.isBoolean():
-		tmpVal = goBool(left) || goBool(right)
+		res = goBool(left) || goBool(right)
+	case !left.isBoolean() && right.isBoolean():
+		res = toBoolean(left) || goBool(right)
+	case left.isBoolean() && !right.isBoolean():
+		res = goBool(left) || toBoolean(right)
 
 	default:
-		runtimeExcption("evalOrBinaryExpression Exception:", tokensString(expr.raw))
+		errorf("invalid expression: %v || %v", left.val(), right.val())
 	}
-	res = newQKValue(tmpVal)
-	return res
+	return newQKValue(res)
 }
 
 func (executor *ExpressionExecutor) evalEqBinaryExpression() (res Value) {
@@ -277,7 +292,7 @@ func (executor *ExpressionExecutor) evalEqBinaryExpression() (res Value) {
 		tmpVal = float64(goInt(left)) == goFloat(right)
 
 	default:
-		tmpVal = false
+		errorf("invalid expression: %v == %v", left.val(), right.val())
 	}
 	res = newQKValue(tmpVal)
 	return res
@@ -303,7 +318,7 @@ func (executor *ExpressionExecutor) evalNeBinaryExpression() (res Value) {
 		tmpVal = float64(goInt(left)) != goFloat(right)
 
 	default:
-		tmpVal = false
+		errorf("invalid expression: %v != %v", left.val(), right.val())
 	}
 	res = newQKValue(tmpVal)
 	return res
@@ -327,7 +342,7 @@ func (executor *ExpressionExecutor) evalGtBinaryExpression() (res Value) {
 		tmpVal = float64(goInt(left)) > goFloat(right)
 
 	default:
-		tmpVal = false
+		errorf("invalid expression: %v > %v", left.val(), right.val())
 	}
 	res = newQKValue(tmpVal)
 	return res
@@ -351,79 +366,101 @@ func (executor *ExpressionExecutor) evalLtBinaryExpression() (res Value) {
 		tmpVal = float64(goInt(left)) < goFloat(right)
 
 	default:
-		tmpVal = false
+		errorf("invalid expression: %v < %v", left.val(), right.val())
 	}
 	res = newQKValue(tmpVal)
 	return res
 }
 
 func (executor *ExpressionExecutor) evalGeBinaryExpression() (res Value) {
-	tmpVal := goBool(executor.evalGtBinaryExpression()) || goBool(executor.evalEqBinaryExpression())
+	left := executor.leftVal()
+	right := executor.rightVal()
+	var tmpVal interface{}
+	switch {
+	case left.isInt() && right.isInt():
+		tmpVal = goInt(left) >= goInt(right)
+	case left.isFloat() && right.isFloat():
+		tmpVal = goFloat(left) >= goFloat(right)
+	case left.isString() && right.isString():
+		tmpVal = goStr(left) >= goStr(right)
+
+	case left.isFloat() && right.isInt():
+		tmpVal = goFloat(left) >= float64(goInt(right))
+	case left.isInt() && right.isFloat():
+		tmpVal = float64(goInt(left)) >= goFloat(right)
+
+	default:
+		errorf("invalid expression: %v >= %v", left.val(), right.val())
+	}
 	res = newQKValue(tmpVal)
 	return res
 }
 
 func (executor *ExpressionExecutor) evalLeBinaryExpression() (res Value) {
-	tmpVal := goBool(executor.evalLtBinaryExpression()) || goBool(executor.evalEqBinaryExpression())
+	left := executor.leftVal()
+	right := executor.rightVal()
+	var tmpVal interface{}
+	switch {
+	case left.isInt() && right.isInt():
+		tmpVal = goInt(left) <= goInt(right)
+	case left.isFloat() && right.isFloat():
+		tmpVal = goFloat(left) <= goFloat(right)
+	case left.isString() && right.isString():
+		tmpVal = goStr(left) <= goStr(right)
+
+	case left.isFloat() && right.isInt():
+		tmpVal = goFloat(left) <= float64(goInt(right))
+	case left.isInt() && right.isFloat():
+		tmpVal = float64(goInt(left)) <= goFloat(right)
+
+	default:
+		errorf("invalid expression: %v <= %v", left.val(), right.val())
+	}
 	res = newQKValue(tmpVal)
 	return res
 }
 
 func (executor *ExpressionExecutor) evalAssignAfterAddBinaryExpression() (res Value) {
-	expr := executor.expr
 	res = executor.evalAddBinaryExpression()
-
-	varname := expr.left.name
-	executor.addVar(varname, res)
+	executor.evalAssign(executor.expr.left, res)
 	return res
 }
 
 func (executor *ExpressionExecutor) evalAssignAfterSubBinaryExpression() (res Value) {
-	expr := executor.expr
 	res = executor.evalSubBinaryExpression()
-
-	varname := expr.left.name
-	executor.addVar(varname, res)
+	executor.evalAssign(executor.expr.left, res)
 	return res
 }
 
 func (executor *ExpressionExecutor) evalAssignAfterMulBinaryExpression() (res Value) {
-	expr := executor.expr
 	res = executor.evalMulBinaryExpression()
-
-	varname := expr.left.name
-	executor.addVar(varname, res)
+	executor.evalAssign(executor.expr.left, res)
 	return res
 }
 
 func (executor *ExpressionExecutor) evalAssignAfterDivBinaryExpression() (res Value) {
-	expr := executor.expr
 	res = executor.evalDivBinaryExpression()
-
-	varname := expr.left.name
-	executor.addVar(varname, res)
+	executor.evalAssign(executor.expr.left, res)
 	return res
 }
 
 func (executor *ExpressionExecutor) evalAssignAfterModBinaryExpression() (res Value) {
-	expr := executor.expr
 	res = executor.evalModBinaryExpression()
-
-	varname := expr.left.name
-	executor.addVar(varname, res)
+	executor.evalAssign(executor.expr.left, res)
 	return res
 }
 
-func (executor *ExpressionExecutor) evalAssignBinaryExpression() (res Value) {
-	expr := executor.expr
-	primaryExpr := expr.left
-	res = executor.rightVal()
+func (executor *ExpressionExecutor) evalAssignBinaryExpression() Value {
+	res := executor.rightVal()
+	executor.evalAssign(executor.expr.left, res)
+	return res
+}
 
-	varname := primaryExpr.name
-
-	if primaryExpr.isElement() {
+func (executor *ExpressionExecutor) evalAssign(priExpr *PrimaryExpr, res Value) {
+	varname := priExpr.name
+	if priExpr.isElement() {
 		varVal := executor.searchVariable(varname)
-		argRawVals := executor.toGoTypeValues(primaryExpr.args)
+		argRawVals := executor.toGoTypeValues(priExpr.args)
 		if varVal.isJsonArray() {
 			index := toIntValue(argRawVals[0])
 			arr := goArr(varVal)
@@ -437,9 +474,9 @@ func (executor *ExpressionExecutor) evalAssignBinaryExpression() (res Value) {
 			return
 		}
 
-	} else if primaryExpr.isAttibute() {
-		varname = primaryExpr.caller
-		attrname := primaryExpr.name
+	} else if priExpr.isAttibute() {
+		varname = priExpr.caller
+		attrname := priExpr.name
 		varVal := executor.searchVariable(varname)
 		if varVal.isJsonObject() {
 			obj := goObj(varVal)
@@ -455,11 +492,11 @@ func (executor *ExpressionExecutor) evalAssignBinaryExpression() (res Value) {
 		if varVal.isClass() {
 			return
 		}
+	} else if priExpr.isVar() {
+		executor.addVar(varname, res)
+	} else {
+		errorf("invalid assign expression")
 	}
-
-
-	executor.addVar(varname, res)
-	return res
 }
 
 func (executor *ExpressionExecutor) evalAddBinaryExpression() (res Value) {
@@ -542,7 +579,9 @@ func (executor *ExpressionExecutor) evalDivBinaryExpression() (res Value) {
 	left := executor.leftVal()
 	right := executor.rightVal()
 
-	executor.checkDivZeroOperation(right)
+	if (right.isInt() && goInt(right) == 0) || (right.isFloat() && goFloat(right) == 0) {
+		runtimeExcption("Invalid Operation: divide zero")
+	}
 
 	var tmpVal interface{}
 	switch {
@@ -569,7 +608,9 @@ func (executor *ExpressionExecutor) evalModBinaryExpression() (res Value) {
 	left := executor.leftVal()
 	right := executor.rightVal()
 
-	executor.checkDivZeroOperation(right)
+	if (right.isInt() && goInt(right) == 0) || (right.isFloat() && goFloat(right) == 0) {
+		runtimeExcption("Invalid Operation: divide zero")
+	}
 
 	var tmpVal interface{}
 	switch {
@@ -577,23 +618,10 @@ func (executor *ExpressionExecutor) evalModBinaryExpression() (res Value) {
 		tmpVal = goInt(left) % goInt(right)
 
 	default:
-		runtimeExcption("unknow operation:", left.val(), "%", right.val())
+		errorf("invalid expression: %v %v %v", left.val(), "%", right.val())
 	}
 	res = newQKValue(tmpVal)
 	return res
-}
-
-func (executor *ExpressionExecutor) checkDivZeroOperation(val Value) {
-	var flag bool
-	if val.isInt() {
-		flag = goInt(val) == 0
-	}
-	if val.isFloat() {
-		flag = goFloat(val) == 0
-	}
-	if flag {
-		runtimeExcption("Invalid Operation: divide zero")
-	}
 }
 
 func (executor *ExpressionExecutor) getArrayIndexs(arrSize int, objs []interface{}) []int {

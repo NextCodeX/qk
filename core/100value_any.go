@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"reflect"
 )
 
@@ -14,10 +13,10 @@ func newAnyValue(raw interface{}) *AnyValue {
 }
 
 func (any *AnyValue) val() interface{} {
-	si, ok := any.goValue.(fmt.Stringer)
-	if ok {
-		return si.String()
-	}
+	//si, ok := any.goValue.(fmt.Stringer)
+	//if ok {
+	//	return si.String()
+	//}
 	return any.goValue
 }
 func (any *AnyValue) isNULL() bool {
