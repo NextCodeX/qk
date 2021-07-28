@@ -211,7 +211,7 @@ func (executor *ExpressionExecutor) executeBinaryExpression() (res Value) {
 	if res == nil {
 		res = NULL
 	}
-	if expr.isAssignExpression() {
+	if expr.receiver != "" {
 		varname := expr.receiver
 		executor.addVar(varname, res)
 	}

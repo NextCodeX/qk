@@ -17,7 +17,7 @@ const (
     MultiStatement // 多重语句
     ContinueStatement // continue 语句
     BreakStatement // break 语句
-    ReturnStatement // 返回语句
+    ReturnStatement // return 语句
 )
 
 

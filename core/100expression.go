@@ -10,7 +10,6 @@ const (
     PrimaryExpression ExpressionType = 1 << iota  // 不可再分的原始表达式
     BinaryExpression // 二元表达式
     MultiExpression // 多元表达式
-    AssignExpression // 用于表示赋值的二元表达式
 )
 
 type OperationType int
@@ -134,12 +133,7 @@ func (expr *Expression) isMultiExpression() bool {
     return (expr.t & MultiExpression) == MultiExpression
 }
 
-func (expr *Expression) isAssignExpression() bool {
-    return (expr.t & AssignExpression) == AssignExpression
-}
-
 func (expr *Expression) setTmpname(name string) {
-    expr.t = expr.t | AssignExpression
     expr.receiver = name
 }
 

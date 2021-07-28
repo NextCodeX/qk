@@ -1,4 +1,4 @@
-/**
+/** */
 test() {
     println("run test function!")
     return {
@@ -41,15 +41,15 @@ println(genObj().zhangsan.score.chinese)
 println(genObj().zhangsan.career.upper())
 println(genObj().zhangsan.career.upper().sub(2))
 println(genObj().zhangsan.career.upper().sub(2).size())
-if genObj().zhangsan.career.upper().sub(2).size() {
+if !genObj().zhangsan.career.upper().sub(2).size() {
     println("+++++++++++++")
     println("it's over")
     println("+++++++++++++")
     return
 }
-println(!!genObj().zhangsan.career.upper().sub(2).size(), !genObj().zhangsan.career.upper().sub(2).size())*/
+println(!!genObj().zhangsan.career.upper().sub(2).size(), !genObj().zhangsan.career.upper().sub(2).size())
 
-if 666 {
+if !666 {
     println("+++++++++++++")
     println("it's fish")
     println("+++++++++++++")
