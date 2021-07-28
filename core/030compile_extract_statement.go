@@ -1,6 +1,5 @@
 package core
 
-
 func extractStatement(stmts StatementList) {
 	ts := stmts.getRaw()
 	for i := 0; i < len(ts); {
@@ -90,13 +89,15 @@ func extractBreakStatement(currentIndex int, ts []Token) (*Statement, int) {
 
 func extractReturnStatement(currentIndex int, ts []Token) (*Statement, int) {
 	stmt := &Statement{t:ReturnStatement}
-	size := len(ts)
-	if size < 2 {
+	size := len(ts[currentIndex:])
+	nextIndex := currentIndex + 1
+	if size < 2 || (size == 2 && ts[nextIndex].assertSymbol(";")) {
 		return stmt, currentIndex + 1
 	}
 
 	var endIndex int
-	for i:=currentIndex+1; i<size; i++ {
+	size = len(ts)
+	for i:=nextIndex; i<size; i++ {
 		t := ts[i]
 		if t.assertSymbols("}", ";") {
 			endIndex = i
@@ -109,6 +110,7 @@ func extractReturnStatement(currentIndex int, ts []Token) (*Statement, int) {
 			endIndex = i
 		}
 	}
+
 	return stmt, endIndex
 }
 

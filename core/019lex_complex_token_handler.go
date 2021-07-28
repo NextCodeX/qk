@@ -125,7 +125,7 @@ func parse4ComplexTokens(ts []Token) []Token {
 		complexToken, nextIndex = extractFunctionCall(i, ts)
 		if nextIndex > i {
 			// 标记Fdef类型token
-			if nextIndex < size && ts[nextIndex].assertSymbol("{") {
+			if nextIndex < size && ts[nextIndex].assertSymbol("{") && !dotHover.ready {
 				complexToken.setTyp(Fdef | Complex)
 			}
 			res = append(res, complexToken)

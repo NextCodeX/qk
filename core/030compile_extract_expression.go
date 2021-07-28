@@ -406,7 +406,7 @@ func parsePrimaryExpression(t Token) *PrimaryExpr {
 	} else if t.isIdentifier() {
 		res = &PrimaryExpr{name: t.raw(), t: VarPrimaryExpressionType}
 	} else {
-		runtimeExcption("parsePrimaryExpression: unknown token type!")
+		runtimeExcption("parsePrimaryExpression: unknown token type ->", t.String(), t.TokenTypeName())
 	}
 	if res != nil && t.isNot() {
 		res.t = res.t | NotPrimaryExpressionType
