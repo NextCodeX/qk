@@ -63,17 +63,17 @@ func nextToken(currentIndex int, ts []Token) (t Token, ok bool) {
 }
 
 // token列表的倒数第二个token
-func lastSecond(ts []Token) *Token {
-	return &ts[len(ts)-2]
+func lastSecond(ts []Token) Token {
+	return ts[len(ts)-2]
 }
 // token列表的最后一个token
-func last(ts []Token) *Token {
-    return &ts[len(ts)-1]
+func last(ts []Token) Token {
+    return ts[len(ts)-1]
 }
 
 // 获取当前索引于当前token列表的下一个token
-func next(ts []Token, i int) *Token {
-    return &ts[i+1]
+func next(ts []Token, i int) Token {
+    return ts[i+1]
 }
 
 // 判断token列表中是否存在指定符号token

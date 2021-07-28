@@ -16,7 +16,7 @@ func assert(flag bool, msg ...interface{})  {
 // 报错并退出程序(带格式化)
 func errorf(format string, args ...interface{}) {
 	var msg []interface{}
-	for _, item := range args[1:] {
+	for _, item := range args {
 		if err, ok := item.(error); ok && err != nil {
 			msg = append(msg, err.Error())
 			continue

@@ -23,19 +23,19 @@ const (
 
 type Statement struct {
     t StatementType
-    expr *Expression // 用于expressionStatement.
-    preExprTokens []Token // 用于普通for语句
+    expr *Expression           // 用于expressionStatement.
+    preExprTokens []Token  // 用于普通for语句
     condExprTokens []Token // 用于if,for语句
     postExprTokens []Token // 用于普通for语句
-    preExpr *Expression  // 用于for语句
-    condExpr *Expression // 用于if,for语句
-    postExpr *Expression // 用于for语句
-    condStmts []*Statement // 用于if, switch语句
-    defStmt *Statement // 用于if, switch语句
-    block []*Statement // stmt核心组成(编译后的信息)
-    raw []Token // stmt核心组成, token列表(编译前的信息)
-    compiled bool // 该语句是否已编译
-    fpi *ForPlusInfo // 增强for, 相关的信息
+    preExpr *Expression        // 用于for语句
+    condExpr *Expression       // 用于if,for语句
+    postExpr *Expression       // 用于for语句
+    condStmts []*Statement     // 用于if, switch语句
+    defStmt *Statement         // 用于if, switch语句
+    block []*Statement         // stmt核心组成(编译后的信息)
+    raw []Token            // stmt核心组成, token列表(编译前的信息)
+    compiled bool              // 该语句是否已编译
+    fpi *ForPlusInfo           // 增强for, 相关的信息
 }
 
 

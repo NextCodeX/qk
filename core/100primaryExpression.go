@@ -25,9 +25,9 @@ type PrimaryExpr struct {
 	name string  // 变量名或者函数名称
 	args []*Expression // 函数调用参数 / 数组索引
 	chain []*PrimaryExpr
-	res Value  // 常量值
-	not bool // 是否进行非处理
-	ts []Token // 储存Expression的Token列表, ChainCall 所需的Token
+	res Value        // 常量值
+	not bool         // 是否进行非处理
+	ts []TokenImpl   // 储存Expression的Token列表, ChainCall 所需的Token
 	head *Expression // ChainCall 的头表达式
 }
 

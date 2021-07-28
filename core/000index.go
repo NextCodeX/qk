@@ -8,7 +8,7 @@ var (
 func Run(bs []byte) {
 	// 词法分析
 	ts := ParseTokens(bs)
-	//printTokensByLine(ts)
+	printTokensByLine(ts)
 
 	// 语法分析
 	mainFunc.setRaw(ts)

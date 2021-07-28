@@ -27,14 +27,14 @@ func parse4PrimaryTokens(bs []byte) []Token {
 }
 
 type Lexer struct {
-	bs []byte // 入参,尚未处理的字节流
+	bs []byte             // 入参,尚未处理的字节流
 	preState MachineState // 状态机上一个状态
-	state MachineState // 状态机当前状态
-	currentByte byte // 遍历处理的当前字节
-	currentIndex int // 遍历处理的当前索引
-	tmpBytes []byte // 用于暂存长token字符的变量
-	ts []Token // 状态机处理后的token列表
-	lineIndex int //行索引，用于定位错误。（每个token都会记录自己的行索引）
+	state MachineState    // 状态机当前状态
+	currentByte byte      // 遍历处理的当前字节
+	currentIndex int      // 遍历处理的当前索引
+	tmpBytes []byte       // 用于暂存长token字符的变量
+	ts []Token        // 状态机处理后的token列表
+	lineIndex int         //行索引，用于定位错误。（每个token都会记录自己的行索引）
 }
 
 func newLexer(bs []byte) *Lexer {
@@ -134,7 +134,7 @@ func (lexer *Lexer) whenDynamicStringLiterial() {
 	if len(lexer.tmpBytes) < 1 {
 		if lexer.inStateDynamicStrLiteral() {
 			// 状态机当前状态是stateStrLiteral，且tmpBytes没有值，说遇到空字符串
-			lexer.ts = append(lexer.ts, Token{
+			lexer.ts = append(lexer.ts, &TokenImpl{
 				lineIndex: lexer.lineIndex,
 				str: "",
 				t:   DynamicStr | Str,
@@ -164,7 +164,7 @@ func (lexer *Lexer) whenStringLiterial() {
 	if len(lexer.tmpBytes) < 1 {
 		if lexer.inStateStrLiteral() {
 			// 状态机当前状态是stateStrLiteral，且tmpBytes没有值，说遇到空字符串
-			lexer.ts = append(lexer.ts, Token{
+			lexer.ts = append(lexer.ts, &TokenImpl{
 				lineIndex: lexer.lineIndex,
 				str: "",
 				t:   Str,
@@ -270,7 +270,7 @@ func (lexer *Lexer) tailTokenClear() {
 
 func (lexer *Lexer) pushSymbolToken() {
 	symbol := symbolToken(string(lexer.currentByte))
-	symbol.lineIndex = lexer.lineIndex
+	symbol.setLineIndex(lexer.lineIndex)
 
 	last, lastExist := lastToken(lexer.ts)
 	if symbol.assertSymbol("}") && lastExist && last.assertSymbol(";") {
@@ -290,7 +290,7 @@ func (lexer *Lexer) pushBoundryToken() {
 		return
 	}
 
-	lexer.ts = append(lexer.ts, Token{
+	lexer.ts = append(lexer.ts, &TokenImpl{
 		lineIndex: lexer.lineIndex,
 		str: ";",
 		t:   Symbol,
@@ -321,7 +321,7 @@ func (lexer *Lexer) pushLongToken() {
 		tokenType = Str | DynamicStr
 	} else {}
 
-	lexer.ts = append(lexer.ts, Token{
+	lexer.ts = append(lexer.ts, &TokenImpl{
 		lineIndex: lexer.lineIndex,
 		str: s,
 		t:   tokenType,

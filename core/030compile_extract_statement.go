@@ -11,7 +11,7 @@ func extractStatement(stmts StatementList) {
 		if !t.isIdentifier() && !t.isComplex() {
 			goto nextLoop
 		}
-		switch t.str {
+		switch t.raw() {
 		case "if":
 			stmt, endIndex = extractIfStatement(i, ts)
 		case "for":
@@ -116,8 +116,8 @@ func extractFunction(currentIndex int, ts []Token) (*Function, int) {
 	var nextIndex int
 	defToken := ts[currentIndex]
 
-	f := newFunc(defToken.str)
-	f.paramNames = extractFunctionParamNames(defToken.ts)
+	f := newFunc(defToken.raw())
+	f.paramNames = extractFunctionParamNames(defToken.tokens())
 	f.defToken = defToken
 	var blockTokens []Token
 	size := len(ts)
@@ -149,7 +149,7 @@ func extractFunctionParamNames(ts []Token) []string {
 		if token.assertSymbol(",") {
 			continue
 		}
-		paramNames = append(paramNames, token.str)
+		paramNames = append(paramNames, token.raw())
 	}
 	return paramNames
 }
@@ -268,7 +268,7 @@ func extractForeachStatement(currentIndex int, ts []Token) (*Statement, int) {
 
 	headerEndIndex := nextSymbolIndex(ts, currentIndex, "{")
 	headerInfo := ts[currentIndex+1: headerEndIndex]
-	stmt.fpi = newForPlusInfo(headerInfo[0].str, headerInfo[2].str, extractExpression(headerInfo[4:]))
+	stmt.fpi = newForPlusInfo(headerInfo[0].raw(), headerInfo[2].raw(), extractExpression(headerInfo[4:]))
 
 	stmtEndIndex := scopeEndIndex(ts, currentIndex, "{", "}")
 	stmt.raw = ts[headerEndIndex+1: stmtEndIndex]
@@ -280,7 +280,7 @@ func extractForindexStatement(currentIndex int, ts []Token) (*Statement, int) {
 
 	headerEndIndex := nextSymbolIndex(ts, currentIndex, "{")
 	headerInfo := ts[currentIndex+1: headerEndIndex]
-	stmt.fpi = newForPlusInfo(headerInfo[0].str, "", extractExpression(headerInfo[2:]))
+	stmt.fpi = newForPlusInfo(headerInfo[0].raw(), "", extractExpression(headerInfo[2:]))
 
 	stmtEndIndex := scopeEndIndex(ts, currentIndex, "{", "}")
 	stmt.raw = ts[headerEndIndex+1: stmtEndIndex]
@@ -292,7 +292,7 @@ func extractForitemStatement(currentIndex int, ts []Token) (*Statement, int) {
 
 	headerEndIndex := nextSymbolIndex(ts, currentIndex, "{")
 	headerInfo := ts[currentIndex+1: headerEndIndex]
-	stmt.fpi = newForPlusInfo("", headerInfo[0].str, extractExpression(headerInfo[2:]))
+	stmt.fpi = newForPlusInfo("", headerInfo[0].raw(), extractExpression(headerInfo[2:]))
 
 	stmtEndIndex := scopeEndIndex(ts, currentIndex, "{", "}")
 	stmt.raw = ts[headerEndIndex+1: stmtEndIndex]

@@ -14,6 +14,7 @@ func initHover() *Hover {
 func parse4ComplexTokens(ts []Token) []Token {
 	var res []Token
 	size := len(ts)
+	var chainToken Token
 	dotHover := initHover()
 	notOperatorHover := initHover()
 	for i:=0; i<size; {
@@ -36,13 +37,13 @@ func parse4ComplexTokens(ts []Token) []Token {
 			}
 			goto endCurrentIterate
 		} else {
-			if notOperatorHover.ready {
+			if notOperatorHover.ready && checkConflict(dotHover, i, ts) {
 				lastIndex := len(res) - 1
 				if len(res) == notOperatorHover.lastLen && token.assertSymbol("(")  {
 					endIndex := scopeEndIndex(ts, i, "(", ")")
 					exprTokens := ts[i+1:endIndex]
 					exprTokens = parse4ComplexTokens(exprTokens)
-					res = append(res, Token{
+					res = append(res, &TokenImpl{
 						t: Expr | Not,
 						ts: exprTokens,
 						not: notOperatorHover.index % 2 == 1,
@@ -51,8 +52,8 @@ func parse4ComplexTokens(ts []Token) []Token {
 					notOperatorHover = initHover()
 					goto nextLoop
 				} else if res != nil && len(res) > notOperatorHover.lastLen {
-					res[lastIndex].not = notOperatorHover.index % 2 == 1
-					res[lastIndex].t = res[lastIndex].t | Not
+					res[lastIndex].setNotFlag(notOperatorHover.index % 2 == 1)
+					res[lastIndex].addType(Not)
 					notOperatorHover = initHover()
 				} else {}
 			}
@@ -60,21 +61,25 @@ func parse4ComplexTokens(ts []Token) []Token {
 
 		// 处理 "." 运算符
 		if token.assertSymbol(".") && !dotHover.ready {
+			if chainToken == nil {
+				chainToken = last(res)
+				chainToken.addType(ChainCall)
+			}
+
 			dotHover.ready = true
 			dotHover.lastLen = len(res)
 			goto endCurrentIterate
 		}
 		if dotHover.ready && dotHover.lastLen < len(res) {
 			last, _ := lastToken(res)
-			lastSecond, _ := lastSecondToken(res)
-			if !lastSecond.isChainCall() {
-				lastSecond.t = lastSecond.t | ChainCall
+			if chainToken != nil {
+				chainToken.chainTokenListAppend(last)
+			} else {
+				runtimeExcption("parse4ComplexTokens: chainToken is not initialized")
 			}
-			lastSecond.chainTokens = append(lastSecond.chainTokens, last)
-			resLen := len(res)
-			res[resLen-2] = lastSecond
-			res = res[:resLen-1]
+			res = res[:len(res)-1]
 			if !token.assertSymbol(".") {
+				chainToken = nil
 				dotHover = initHover()
 			} else {
 				goto endCurrentIterate
@@ -121,7 +126,7 @@ func parse4ComplexTokens(ts []Token) []Token {
 		if nextIndex > i {
 			// 标记Fdef类型token
 			if nextIndex < size && ts[nextIndex].assertSymbol("{") {
-				complexToken.t = Fdef | Complex
+				complexToken.setTyp(Fdef | Complex)
 			}
 			res = append(res, complexToken)
 			i = nextIndex
@@ -145,25 +150,36 @@ func parse4ComplexTokens(ts []Token) []Token {
 	nextLoop:
 	}
 
-	if notOperatorHover.ready && res != nil && len(res) > notOperatorHover.lastLen {
-		// 𥈱悬停监听有延迟， 需要在循环结束后进行数据进行收尾
-		lastIndex := len(res) - 1
-		res[lastIndex].not = notOperatorHover.index % 2 == 1
-		res[lastIndex].t = res[lastIndex].t | Not
-	}
+
 	if dotHover.ready && dotHover.lastLen < len(res) {
 		// 𥈱悬停监听有延迟， 需要在循环结束后进行数据进行收尾
 		last, _ := lastToken(res)
-		lastSecond, _ := lastSecondToken(res)
-		if !lastSecond.isChainCall() {
-			lastSecond.t = lastSecond.t | ChainCall
+		if chainToken != nil {
+			chainToken.chainTokenListAppend(last)
+		} else {
+			runtimeExcption("parse4ComplexTokens: chainToken is not initialized")
 		}
-		lastSecond.chainTokens = append(lastSecond.chainTokens, last)
-		resLen := len(res)
-		res[resLen-2] = lastSecond
-		res = res[:resLen-1]
+		res = res[:len(res)-1]
 	}
+	if notOperatorHover.ready && !dotHover.ready && res != nil && len(res) > notOperatorHover.lastLen {
+		// 𥈱悬停监听有延迟， 需要在循环结束后进行数据进行收尾
+		lastIndex := len(res) - 1
+		res[lastIndex].setNotFlag(notOperatorHover.index % 2 == 1)
+		res[lastIndex].addType(Not)
+	}
+
 	return res
+}
+
+func checkConflict(dotHover *Hover, currentIndex int, ts []Token) bool {
+	if !dotHover.ready {
+		return true
+	}
+	if currentIndex + 1 < len(ts) && next(ts, currentIndex).assertSymbol(".") {
+		return false
+	} else {
+		return true
+	}
 }
 
 // 判断当前token是否为无用";"
@@ -201,7 +217,7 @@ func extractArrayLiteral(currentIndex int, ts []Token) (t Token, nextIndex int) 
 	size := len(ts)
 	scopeOpenCount := 1
 	var elems []Token
-	lineIndex := ts[currentIndex].lineIndex
+	lineIndex := ts[currentIndex].getLineIndex()
 	var endLineIndex int
 	for i := currentIndex+1; i < size; i++ {
 		token := ts[i]
@@ -213,7 +229,7 @@ func extractArrayLiteral(currentIndex int, ts []Token) (t Token, nextIndex int) 
 		}
 		if scopeOpenCount == 0 {
 			nextIndex = i + 1
-			endLineIndex = token.lineIndex
+			endLineIndex = token.getLineIndex()
 			break
 		}
 		if token.assertSymbol(";") {
@@ -232,7 +248,7 @@ func extractArrayLiteral(currentIndex int, ts []Token) (t Token, nextIndex int) 
 
 	// 合并数组字面值内的复合token
 	elems = parse4ComplexTokens(elems)
-	t = Token{
+	t = &TokenImpl{
 		str:    "[]",
 		t:      ArrLiteral | Complex,
 		ts:     elems,
@@ -246,7 +262,7 @@ func extractObjectLiteral(currentIndex int, ts []Token) (t Token, nextIndex int)
 	size := len(ts)
 	scopeOpenCount := 1
 	var elems []Token
-	lineIndex := ts[currentIndex].lineIndex
+	lineIndex := ts[currentIndex].getLineIndex()
 	var endLineIndex int
 	for i := currentIndex+1; i < size; i++ {
 		token := ts[i]
@@ -257,7 +273,7 @@ func extractObjectLiteral(currentIndex int, ts []Token) (t Token, nextIndex int)
 			scopeOpenCount --
 			if scopeOpenCount == 0 {
 				nextIndex = i + 1
-				endLineIndex = token.lineIndex
+				endLineIndex = token.getLineIndex()
 				break
 			}
 		}
@@ -277,7 +293,7 @@ func extractObjectLiteral(currentIndex int, ts []Token) (t Token, nextIndex int)
 
 	// 合并对象字面值内的复合token
 	elems = parse4ComplexTokens(elems)
-	t = Token{
+	t = &TokenImpl{
 		str:    "{}",
 		t:      ObjLiteral | Complex,
 		ts:     elems,
@@ -296,11 +312,11 @@ func extractElement(currentIndex int, ts []Token) (t Token, nextIndex int) {
 	var indexs []Token
 	extractElementIndexTokens(currentIndex+2, ts, &nextIndex, &indexs)
 
-	t = Token {
-		str:    ts[currentIndex].str,
+	t = &TokenImpl{
+		str:    ts[currentIndex].raw(),
 		t:      Element | Complex,
 		ts:     indexs,
-		lineIndex:ts[currentIndex].lineIndex,
+		lineIndex:ts[currentIndex].getLineIndex(),
 	}
 	return t, nextIndex
 }
@@ -315,8 +331,8 @@ func extractElementIndexTokens(currentIndex int, ts []Token, nextIndex *int, ind
 			*nextIndex = i + 1
 			break
 		}
-		if token.isSymbol() && !match(token.str, "{", "}", ",", ";", "[", "=") {
-			runtimeExcption("extract element index Exception, illegal character:"+token.str)
+		if token.isSymbol() && !match(token.raw(), "{", "}", ",", ";", "[", "=") {
+			runtimeExcption("extract element index Exception, illegal character:"+token.raw())
 		}
 		*indexs = append(*indexs, token)
 	}
@@ -342,11 +358,11 @@ func extractFunctionCall(currentIndex int, ts []Token) (t Token, nextIndex int) 
 
 	args, nextIndex := getCallArgsTokens(currentIndex + 2, ts)
 
-	t = Token{
-		str:    ts[currentIndex].str,
+	t = &TokenImpl{
+		str:    ts[currentIndex].raw(),
 		t:      Fcall | Complex,
 		ts:     args,
-		lineIndex:ts[currentIndex].lineIndex,
+		lineIndex:ts[currentIndex].getLineIndex(),
 	}
 	return t, nextIndex
 }
@@ -354,12 +370,12 @@ func extractFunctionCall(currentIndex int, ts []Token) (t Token, nextIndex int) 
 func extractMethodCall(currentIndex int, ts []Token) (t Token, nextIndex int) {
 	args, nextIndex := getCallArgsTokens(currentIndex + 4, ts)
 
-	t = Token{
-		str:    ts[currentIndex+2].str,
+	t = &TokenImpl{
+		str:    ts[currentIndex+2].raw(),
 		t:      Mtcall | Complex,
-		caller: ts[currentIndex].str,
+		//caller: ts[currentIndex].str,
 		ts:     args,
-		lineIndex:ts[currentIndex].lineIndex,
+		lineIndex:ts[currentIndex].getLineIndex(),
 	}
 	return t, nextIndex
 }
@@ -404,11 +420,11 @@ func extractAttribute(currentIndex int, ts []Token) (t Token, nextIndex int) {
 		return
 	}
 
-	token := Token{
-		str:    ts[currentIndex+2].str,
+	token := &TokenImpl{
+		str:    ts[currentIndex+2].raw(),
 		t:      Attribute | Complex,
-		caller: ts[currentIndex].str,
-		lineIndex:ts[currentIndex].lineIndex,
+		//caller: ts[currentIndex].raw(),
+		lineIndex:ts[currentIndex].getLineIndex(),
 	}
 	return token, currentIndex+3
 }

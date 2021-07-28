@@ -61,15 +61,15 @@ func evalStringMethod(str string, method string, args []interface{}) (res Value)
 
 	case "sub":
 		assert(argCount<1, "method string.sub must has one parameter.")
-		startIndex, ok1 := args[0].(int)
+		startIndex, ok1 := args[0].(int64)
 		if argCount == 1 {
 			assert(!ok1, "parameter type error, require sub(int)")
 			rawVal = str[startIndex:]
 			break
 		}
-		endIndex, ok2 := args[1].(int)
+		endIndex, ok2 := args[1].(int64)
 		assert(!ok1 || !ok2, "parameter type error, require sub(int, int)")
-		assert(startIndex<0 || startIndex>endIndex || endIndex>=len(str), fmt.Sprintf("string out of index, sub(%v, %v)", startIndex, endIndex))
+		assert(startIndex<0 || startIndex>endIndex || int(endIndex)>=len(str), fmt.Sprintf("string out of index, sub(%v, %v)", startIndex, endIndex))
 		rawVal = str[startIndex: endIndex]
 
 	case "split":

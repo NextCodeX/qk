@@ -1,4 +1,4 @@
-/** */
+/**
 test() {
     println("run test function!")
     return {
@@ -19,3 +19,26 @@ println("heel".size())
 println(["kitty", false, 999].size())
 println({name:"qk", sex:"unknown"}.sex.upper().size())
 
+println("final++++++++++++++++++++")
+println("heel".upper().size())
+println(!!"heel".upper(), "heel".upper())
+println(!"heel".upper().size())*/
+
+genObj() {
+    return {
+        zhangsan: {
+            career: "student",
+            score: {
+                english:35,
+                math: 99,
+                chinese: 67
+            }
+        }
+    }
+}
+
+println(genObj().zhangsan.score.chinese)
+println(genObj().zhangsan.career.upper())
+println(genObj().zhangsan.career.upper().sub(2))
+println(genObj().zhangsan.career.upper().sub(2).size())
+println(!!genObj().zhangsan.career.upper().sub(2).size(), !genObj().zhangsan.career.upper().sub(2).size())

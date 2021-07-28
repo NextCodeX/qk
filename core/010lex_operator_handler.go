@@ -60,7 +60,7 @@ func extractAddSubSelfToken(condAdd bool, condSub bool, ts []Token) (res []Token
 	}
 	tailIndex := size - 2
 	tail := ts[tailIndex]
-	tail.t = tail.t | newTokenType
+	tail.addType(newTokenType)
 
 	res = ts[:size-1]
 	res[tailIndex] = tail
@@ -75,8 +75,8 @@ func tailTokenMerge(ts []Token, t Token) []Token {
 	size := len(ts)
 	tail := ts[size-1]
 
-	tail.str = fmt.Sprintf("%v%v", tail.str, t.str)
-	tail.t = t.t
+	tail.setRaw(fmt.Sprintf("%v%v", tail.raw(), t.raw()))
+	tail.setTyp(t.typ())
 
 	ts[size - 1] = tail
 	return ts

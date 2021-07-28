@@ -135,16 +135,14 @@ func (executor *ExpressionExecutor) executeFunctionCallExpression(primaryExpr *P
 	if ok {
 		argVals := executor.evalValues(args)
 		return executor.executeCustomFunction(customFunc, argVals)
-	}
-
-	if isPrint(functionName) {
+	} else if isPrint(functionName) {
 		argRawVals := executor.toGoTypeValues(args)
 		executePrintFunc(functionName, argRawVals)
-	}
-
-	if isModuleFunc(functionName) {
+	} else if isModuleFunc(functionName) {
 		argRawVals := executor.toGoTypeValues(args)
 		return executeModuleFunc(functionName, argRawVals)
+	} else {
+		errorf("function %v() is not defined!", functionName)
 	}
 	return nil
 }
@@ -801,7 +799,7 @@ func (executor *ExpressionExecutor) parseJSONObject(object JSONObject) {
 		}
 
 		token := ts[i]
-		keyname := token.str
+		keyname := token.raw()
 
 		expr := extractExpression(exprTokens)
 		val := executor.evalSubExpression(expr)
@@ -871,57 +869,57 @@ func (executor *ExpressionExecutor) addVar(name string, val Value)  {
 func (executor *ExpressionExecutor) addTmpVar(name string, val Value)  {
 	executor.tmpVars.add(name,  val)
 }
-
 func (executor *ExpressionExecutor) evalChainCall(priExpr *PrimaryExpr) Value {
 	caller := executeExpression(priExpr.head, executor.stack)
+
+	//fmt.Println("eval chainCall#in: ", priExpr.head.left.isFunctionCall(), priExpr.isNot())
+	//fmt.Println("eval chainCall#start: ", caller.val())
+
 	for _, pri := range priExpr.chain {
+		var intermediateResult Value
 		if caller.isJsonArray() {
 			if pri.isFunctionCall() {
 				argRawVals := executor.toGoTypeValues(pri.args)
-				caller = evalJSONArrayMethod(goArr(caller), pri.name, argRawVals)
-				continue
-			}
+				intermediateResult = evalJSONArrayMethod(goArr(caller), pri.name, argRawVals)
+			} else {}
 		} else if caller.isJsonObject() {
 			if pri.isVar() {
-				caller = goObj(caller).get(pri.name)
-				continue
+				intermediateResult = goObj(caller).get(pri.name)
 			} else if pri.isFunctionCall() {
 				argRawVals := executor.toGoTypeValues(pri.args)
-				caller = evalJSONObjectMethod(goObj(caller), pri.name, argRawVals)
-				continue
+				intermediateResult = evalJSONObjectMethod(goObj(caller), pri.name, argRawVals)
 			} else if pri.isElement() {
 				val := goObj(caller).get(pri.name)
 				argRawVals := executor.toGoTypeValues(pri.args)
 				if val.isJsonArray() {
 					arr := goArr(val)
 					index := toIntValue(argRawVals[0])
-					caller = arr.get(index)
-					continue
+					intermediateResult = arr.get(index)
 				} else if val.isJsonObject() {
 					obj := goObj(val)
 					key := toStringValue(obj)
-					caller = obj.get(key)
-					continue
-				} else {
-					runtimeExcption("invalid chain call expression")
-				}
+					intermediateResult = obj.get(key)
+				} else { }
 			}
 		} else if caller.isString() {
 			if pri.isFunctionCall() {
 				argRawVals := executor.toGoTypeValues(pri.args)
-				caller = evalStringMethod(goStr(caller), pri.name, argRawVals)
-				continue
-			}
+				intermediateResult = evalStringMethod(goStr(caller), pri.name, argRawVals)
+			} else {}
 		} else if caller.isClass() {
 			if pri.isFunctionCall() {
 				argRawVals := executor.toGoTypeValues(pri.args)
-				caller = evalClassMethod(goAny(caller), pri.name, argRawVals)
-				continue
-			}
-			if pri.isVar() {
-				caller = evalClassField(goAny(caller), pri.name)
-				continue
-			}
+				intermediateResult = evalClassMethod(goAny(caller), pri.name, argRawVals)
+			} else if pri.isVar() {
+				intermediateResult = evalClassField(goAny(caller), pri.name)
+			} else {}
+		} else {}
+
+		if intermediateResult == nil {
+			runtimeExcption("invalid chain call expression")
+		} else {
+			caller = intermediateResult
+			//fmt.Println("eval chainCall#intermediate: ", intermediateResult.val())
 		}
 	}
 	return caller

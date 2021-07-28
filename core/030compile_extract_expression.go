@@ -53,17 +53,17 @@ func parseUnaryExpression(ts []Token) *Expression {
 	}
 
 	expr := &Expression{}
-	primaryExpr := parsePrimaryExpression(&token)
+	primaryExpr := parsePrimaryExpression(token)
 	expr.left = primaryExpr
 	expr.t = PrimaryExpression
 	return expr
 }
 
 func parseMultivariateExpression(ts []Token) (expr *Expression) {
-	var resVarToken *Token
+	var resVarToken Token
 	var multiExprTokens []Token
 	if ts[1].assertSymbol("=") {
-		resVarToken = &(ts[0])
+		resVarToken = ts[0]
 		multiExprTokens = ts[2:]
 	} else {
 		multiExprTokens = ts
@@ -88,11 +88,11 @@ func parseMultivariateExpression(ts []Token) (expr *Expression) {
 	return expr
 }
 
-func getFinalExpr(exprs []*Expression, resVarToken *Token) *Expression {
+func getFinalExpr(exprs []*Expression, resVarToken Token) *Expression {
 	var finalExprTokens *Expression
 	isAssignExpr := resVarToken != nil
 	for _, expr := range exprs {
-		if isAssignExpr && expr.receiver == resVarToken.str {
+		if isAssignExpr && expr.receiver == resVarToken.raw() {
 			finalExprTokens = expr
 			break
 		}
@@ -128,15 +128,15 @@ func generateBinaryExpr(ts []Token) *Expression {
 	var expr *Expression
 	if size == 4 {
 		expr = parseBinaryExpression(ts[:3])
-		expr.setTmpname(ts[3].str)
+		expr.setTmpname(ts[3].raw())
 	} else {
 		expr = parseBinaryExpression(ts)
 	}
 	return expr
 }
 
-// 分解多元表达式, 并把结果保存至exprTokensList *[][]Token
-func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token) {
+// 分解多元表达式, 并把结果保存至exprTokensList *[][]TokenImpl
+func reduceTokensForExpression(res Token, ts []Token, exprTokensList *[][]Token) {
 	var exprTokens []Token
 
 	ts = clearParentheses(ts)
@@ -163,7 +163,7 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 		} else {
 			// e.g. (d + (f - c)) * e
 			// 左处理
-			reduceTokensForExpression(&tmpvarToken, leftTokens, exprTokensList)
+			reduceTokensForExpression(tmpvarToken, leftTokens, exprTokensList)
 
 			// 右处理
 			nextTokens := insert(tmpvarToken, ts[nextIndex:])
@@ -205,13 +205,13 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 				// e.g. a + (9 * d) - 3; rightTokens -> 9 * d; 9 * d => tmpVarToken1
 				// 因为括号圈的不是右边整个表达式, 故先求括号值, 再通过运算符优先级求值
 				tmpVarToken1 := getTmpVarToken() // 括号内的中间临时值
-				reduceTokensForExpression(&tmpVarToken1, rightTokens, exprTokensList)
+				reduceTokensForExpression(tmpVarToken1, rightTokens, exprTokensList)
 
 				// 根据运算符优先级的不同, tmpVarToken2可能是左边表达式的或者右边表达式的中间临时值
 				tmpVarToken2 := getTmpVarToken()
 
 				nextToken := ts[nextIndex]
-				if last(exprTokens).equal(&nextToken) || last(exprTokens).lower(&nextToken) {
+				if last(exprTokens).equal(nextToken) || last(exprTokens).lower(nextToken) {
 					// e.g. d * tmp + c / 2
 					// 左优先
 					exprTokens = append(exprTokens, tmpVarToken1) // middle tmp result
@@ -225,7 +225,7 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 					exprTokens = append(exprTokens, tmpVarToken2) // rigtht expr result.
 
 					nextTokens3 := insert(tmpVarToken1, ts[nextIndex:])
-					reduceTokensForExpression(&tmpVarToken2, nextTokens3, exprTokensList)
+					reduceTokensForExpression(tmpVarToken2, nextTokens3, exprTokensList)
 				}
 				break
 			}
@@ -236,7 +236,7 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 			exprTokens = append(exprTokens, tmpVarToken3)
 
 			nextTokens := ts[i:]
-			reduceTokensForExpression(&tmpVarToken3, nextTokens, exprTokensList)
+			reduceTokensForExpression(tmpVarToken3, nextTokens, exprTokensList)
 			break
 		}
 
@@ -249,7 +249,7 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 			tmpVarToken := getTmpVarToken()
 			nextTokens := ts[i:]
 			exprTokens = append(exprTokens, tmpVarToken)
-			reduceTokensForExpression(&tmpVarToken, nextTokens, exprTokensList)
+			reduceTokensForExpression(tmpVarToken, nextTokens, exprTokensList)
 			break
 		}
 
@@ -257,7 +257,7 @@ func reduceTokensForExpression(res *Token, ts []Token, exprTokensList *[][]Token
 	}
 
 	if res != nil && len(exprTokens) == 3 {
-		exprTokens = append(exprTokens, *res)
+		exprTokens = append(exprTokens, res)
 	}
 
 	*exprTokensList = append(*exprTokensList, exprTokens)
@@ -290,8 +290,8 @@ func parseBinaryExpression(ts []Token) *Expression {
 	first := ts[0]
 	mid := ts[1]
 	third := ts[2]
-	left := parsePrimaryExpression(&first)
-	right := parsePrimaryExpression(&third)
+	left := parsePrimaryExpression(first)
+	right := parsePrimaryExpression(third)
 	var op OperationType
 	switch {
 
@@ -350,18 +350,27 @@ func parseBinaryExpression(ts []Token) *Expression {
 	return expr
 }
 
-func parsePrimaryExpression(t *Token) *PrimaryExpr {
+func parsePrimaryExpression(t Token) *PrimaryExpr {
 	v := tokenToValue(t)
 	var res *PrimaryExpr
 	if t.isChainCall() {
 		var priExprs []*PrimaryExpr
-		for _, tk := range t.chainTokens {
-			priExpr := parsePrimaryExpression(&tk)
+		for _, tk := range t.chainTokenList() {
+			priExpr := parsePrimaryExpression(tk)
 			priExprs = append(priExprs, priExpr)
 		}
-		t.t = (^ChainCall) & t.t
-		expr := extractExpression(tokenArray(*t))
-		res = &PrimaryExpr{t: ChainCallPrimaryExpressionType, head: expr, chain: priExprs}
+		var headExpr *Expression
+		if t.isNot() {
+			// 避免类型 Not, ChainCall在解析执行时发生冲突
+			t.setTyp(^Not & (^ChainCall) & t.typ())
+			headExpr = extractExpression(tokenArray(t))
+			t.addType(Not)
+		} else {
+			t.setTyp((^ChainCall) & t.typ())
+			headExpr = extractExpression(tokenArray(t))
+		}
+
+		res = &PrimaryExpr{t: ChainCallPrimaryExpressionType, head: headExpr, chain: priExprs}
 	} else if v != nil {
 		primaryExprType := ConstPrimaryExpressionType
 		if t.isObjLiteral() {
@@ -376,32 +385,32 @@ func parsePrimaryExpression(t *Token) *PrimaryExpr {
 		res = &PrimaryExpr{res: v, t: primaryExprType}
 
 	} else if t.isElement() {
-		exprs := getArgExprsFromToken(t.ts)
-		res = &PrimaryExpr{name: t.str, args: exprs, t: ElementPrimaryExpressionType}
+		exprs := getArgExprsFromToken(t.tokens())
+		res = &PrimaryExpr{name: t.raw(), args: exprs, t: ElementPrimaryExpressionType}
 
 	} else if t.isAttribute() {
-		res = &PrimaryExpr{name: t.str, caller: t.caller, t: AttibutePrimaryExpressionType}
+		//res = &PrimaryExpr{name: t.raw(), caller: t.caller, t: AttibutePrimaryExpressionType}
 
 	} else if t.isFcall() {
-		exprs := getArgExprsFromToken(t.ts)
-		res = &PrimaryExpr{name: t.str, args: exprs, t: FunctionCallPrimaryExpressionType}
+		exprs := getArgExprsFromToken(t.tokens())
+		res = &PrimaryExpr{name: t.raw(), args: exprs, t: FunctionCallPrimaryExpressionType}
 
 	} else if t.isMtcall() {
-		exprs := getArgExprsFromToken(t.ts)
-		res = &PrimaryExpr{name: t.str, caller:t.caller, args: exprs, t: MethodCallPrimaryExpressionType}
+		//exprs := getArgExprsFromToken(t.ts)
+		//res = &PrimaryExpr{name: t.str, caller:t.caller, args: exprs, t: MethodCallPrimaryExpressionType}
 
 	} else if t.isExpr() {
-		expr := extractExpression(t.ts)
+		expr := extractExpression(t.tokens())
 		res = &PrimaryExpr{t: ExprPrimaryExpressionType, head: expr}
 
 	} else if t.isIdentifier() {
-		res = &PrimaryExpr{name: t.str, t: VarPrimaryExpressionType}
+		res = &PrimaryExpr{name: t.raw(), t: VarPrimaryExpressionType}
 	} else {
 		runtimeExcption("parsePrimaryExpression: unknown token type!")
 	}
 	if res != nil && t.isNot() {
 		res.t = res.t | NotPrimaryExpressionType
-		res.not = t.not
+		res.not = t.notFlag()
 	}
 	return res
 }

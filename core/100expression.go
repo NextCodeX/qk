@@ -48,10 +48,10 @@ type Expression struct {
     left       *PrimaryExpr
     right      *PrimaryExpr
     list       []*Expression // 多元表达式拆分后的二元表达式列表
-    finalExpr  *Expression // 多元表达式中最后执行的表达式
-    raw        []Token // 原始Token列表
-    res        Value  // 常量折叠缓存值
-    receiver   string // 最终赋值变量名
+    finalExpr  *Expression   // 多元表达式中最后执行的表达式
+    raw        []Token   // 原始Token列表
+    res        Value         // 常量折叠缓存值
+    receiver   string        // 最终赋值变量名
 }
 
 func (expr *Expression) isAssign() bool {
