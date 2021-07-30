@@ -27,7 +27,7 @@ func main() {
 		}
 	}
 
-	qkfile := "examples/test-chain-call.qk"
+	qkfile := "examples/demo.qk"
 	//qkfile := getScriptFile()
 	//changeWorkDirectory()
 

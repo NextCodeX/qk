@@ -10,27 +10,45 @@ const (
 	StatementNormal
 )
 
-type StatementResult struct {
+type StatementResult interface {
+	isReturn() bool
+	isContinue() bool
+	isBreak() bool
+	isNormal() bool
+	setType(t StatementResultType)
+	value() Value
+}
+
+
+type StatementResultImpl struct {
 	t StatementResultType
 	val Value
 }
 
-func newStatementResult(t StatementResultType, val Value) *StatementResult {
-	return &StatementResult{t, val}
+func newStatementResult(t StatementResultType, val Value) StatementResult {
+	return &StatementResultImpl{t, val}
 }
 
-func (sr *StatementResult) isReturn() bool {
+func (sr *StatementResultImpl) setType(t StatementResultType) {
+	sr.t = t
+}
+
+func (sr *StatementResultImpl) value() Value {
+	return sr.val
+}
+
+func (sr *StatementResultImpl) isReturn() bool {
 	return (sr.t & StatementReturn) == StatementReturn
 }
 
-func (sr *StatementResult) isContinue() bool {
+func (sr *StatementResultImpl) isContinue() bool {
 	return (sr.t & StatementContinue) == StatementContinue
 }
 
-func (sr *StatementResult) isBreak() bool {
+func (sr *StatementResultImpl) isBreak() bool {
 	return (sr.t & StatementBreak) == StatementBreak
 }
 
-func (sr *StatementResult) isNormal() bool {
+func (sr *StatementResultImpl) isNormal() bool {
 	return (sr.t & StatementNormal) == StatementNormal
 }

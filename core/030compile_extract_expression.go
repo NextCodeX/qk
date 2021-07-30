@@ -1,7 +1,7 @@
 package core
 
-func extractExpression(ts []Token) *Expression {
-	var expr *Expression
+func extractExpression(ts []Token) Expression {
+	var expr Expression
 
 	// 去括号
 	ts = clearParentheses(ts)
@@ -27,17 +27,17 @@ func extractExpression(ts []Token) *Expression {
 	if expr == nil {
 		runtimeExcption("parseExpressionStatement Exception:", tokensString(ts))
 	} else {
-		expr.raw = ts
+		expr.setRaw(ts)
 	}
 	return expr
 }
 
 // 获取一元表达式
-func parseUnaryExpression(ts []Token) *Expression {
+func parseUnaryExpression(ts []Token) Expression {
 	token := ts[0]
-
-	// 处理自增, 自减
+	var expr Expression
 	if token.isAddSelf() || token.isSubSelf() {
+		// 处理自增, 自减
 		var op Token
 		if token.isSubSelf() {
 			op = symbolToken("-")
@@ -49,17 +49,16 @@ func parseUnaryExpression(ts []Token) *Expression {
 		tmpTokens = append(tmpTokens, op)
 		tmpTokens = append(tmpTokens, newToken("1", Int))
 		tmpTokens = append(tmpTokens, token)
-		return generateBinaryExpr(tmpTokens)
+		expr = generateBinaryExpr(tmpTokens)
+	} else {
+		expr = parsePrimaryExpression(token)
 	}
-
-	expr := &Expression{}
-	primaryExpr := parsePrimaryExpression(token)
-	expr.left = primaryExpr
-	expr.t = PrimaryExpression
+	expr.setRaw(ts)
 	return expr
 }
 
-func parseMultivariateExpression(ts []Token) (expr *Expression) {
+func parseMultivariateExpression(ts []Token) Expression {
+	var expr Expression
 	var resVarToken Token
 	var multiExprTokens []Token
 	if ts[1].assertSymbol("=") {
@@ -80,23 +79,22 @@ func parseMultivariateExpression(ts []Token) (expr *Expression) {
 
 	finalExpr := getFinalExpr(exprs, resVarToken)
 
-	expr = &Expression {
-		t:         MultiExpression,
+	expr = &MultiExpressionImpl{
 		list:      exprs,
 		finalExpr: finalExpr,
 	}
 	return expr
 }
 
-func getFinalExpr(exprs []*Expression, resVarToken Token) *Expression {
-	var finalExprTokens *Expression
+func getFinalExpr(exprs []BinaryExpression, resVarToken Token) BinaryExpression {
+	var finalExprTokens BinaryExpression
 	isAssignExpr := resVarToken != nil
 	for _, expr := range exprs {
-		if isAssignExpr && expr.receiver == resVarToken.raw() {
+		if isAssignExpr && expr.getReceiver() == resVarToken.raw() {
 			finalExprTokens = expr
 			break
 		}
-		if !isAssignExpr && expr.receiver == "" {
+		if !isAssignExpr && expr.getReceiver() == "" {
 			finalExprTokens = expr
 			break
 		}
@@ -107,11 +105,11 @@ func getFinalExpr(exprs []*Expression, resVarToken Token) *Expression {
 	return finalExprTokens
 }
 
-func generateBinaryExprs(exprTokensList [][]Token) []*Expression {
-	var res []*Expression
+func generateBinaryExprs(exprTokensList [][]Token) []BinaryExpression {
+	var res []BinaryExpression
 	for _, tokens := range exprTokensList {
 		expr := generateBinaryExpr(tokens)
-		expr.raw = tokens
+		expr.setRaw(tokens)
 		res = append(res, expr)
 	}
 	return res
@@ -119,16 +117,16 @@ func generateBinaryExprs(exprTokensList [][]Token) []*Expression {
 
 // 入参由三个或四个入参组成:
 // 因子, 操作符, 因子, 结果变量名(可选)
-func generateBinaryExpr(ts []Token) *Expression {
+func generateBinaryExpr(ts []Token) BinaryExpression {
 	size := len(ts)
 	if size < 3 || size > 4 {
 		runtimeExcption("generateBinaryExpr error args:", tokensString(ts))
 		return nil
 	}
-	var expr *Expression
+	var expr BinaryExpression
 	if size == 4 {
 		expr = parseBinaryExpression(ts[:3])
-		expr.setTmpname(ts[3].raw())
+		expr.setReceiver(ts[3].raw())
 	} else {
 		expr = parseBinaryExpression(ts)
 	}
@@ -286,7 +284,7 @@ func extractTokensByParentheses(ts []Token) (res []Token, nextIndex int) {
 }
 
 // 根据token列表获取二元表达式
-func parseBinaryExpression(ts []Token) *Expression {
+func parseBinaryExpression(ts []Token) BinaryExpression {
 	first := ts[0]
 	mid := ts[1]
 	third := ts[2]
@@ -294,7 +292,6 @@ func parseBinaryExpression(ts []Token) *Expression {
 	right := parsePrimaryExpression(third)
 	var op OperationType
 	switch {
-
 	case mid.assertSymbol("+"):
 		op = Opadd
 	case mid.assertSymbol("-"):
@@ -338,92 +335,80 @@ func parseBinaryExpression(ts []Token) *Expression {
 		op = Opand
 
 	default:
-		runtimeExcption("parseBinaryExpression Exception:", tokensString(ts))
+		runtimeExcption("parseBinaryExpression# invalid expression", tokensString(ts))
 	}
 
-	expr := &Expression{
-		t:     BinaryExpression,
-		op:    op,
+	return &BinaryExpressionImpl{
+		t:     op,
 		left:  left,
 		right: right,
 	}
-	return expr
 }
 
-func parsePrimaryExpression(t Token) *PrimaryExpr {
+func parsePrimaryExpression(t Token) PrimaryExpression {
 	v := tokenToValue(t)
-	var res *PrimaryExpr
+	var res PrimaryExpression
 	if t.isChainCall() {
-		var priExprs []*PrimaryExpr
+		var priExprs []PrimaryExpression
 		for _, tk := range t.chainTokenList() {
 			priExpr := parsePrimaryExpression(tk)
 			priExprs = append(priExprs, priExpr)
 		}
-		var headExpr *Expression
+		var headExpr PrimaryExpression
 		if t.isNot() {
 			// 避免类型 Not, ChainCall在解析执行时发生冲突
 			t.setTyp(^Not & (^ChainCall) & t.typ())
-			headExpr = extractExpression(tokenArray(t))
+			headExpr = parsePrimaryExpression(t)
 			t.addType(Not)
 		} else {
 			t.setTyp((^ChainCall) & t.typ())
-			headExpr = extractExpression(tokenArray(t))
+			headExpr = parsePrimaryExpression(t)
 		}
 
-		res = &PrimaryExpr{t: ChainCallPrimaryExpressionType, head: headExpr, chain: priExprs}
+		res = newChainCallPrimaryExpression(headExpr, priExprs)
 	} else if v != nil {
-		primaryExprType := ConstPrimaryExpressionType
 		if t.isObjLiteral() {
-			primaryExprType = primaryExprType | ObjectPrimaryExpressionType
+			res = newObjectPrimaryExpression(v)
+		} else  if t.isArrLiteral() {
+			res = newArrayPrimaryExpression(v)
+		} else if t.isDynamicStr() {
+			res = newDynamicStrPrimaryExpression(v)
+		} else {
+			res = newConstPrimaryExpression(v)
 		}
-		if t.isArrLiteral() {
-			primaryExprType = primaryExprType | ArrayPrimaryExpressionType
-		}
-		if t.isDynamicStr() {
-			primaryExprType = primaryExprType | DynamicStrPrimaryExpressionType
-		}
-		res = &PrimaryExpr{res: v, t: primaryExprType}
-
 	} else if t.isElement() {
 		exprs := getArgExprsFromToken(t.tokens())
-		res = &PrimaryExpr{name: t.raw(), args: exprs, t: ElementPrimaryExpressionType}
-
-	} else if t.isAttribute() {
-		//res = &PrimaryExpr{name: t.raw(), caller: t.caller, t: AttibutePrimaryExpressionType}
+		res = newElementPrimaryExpression(t.raw(), exprs)
 
 	} else if t.isFcall() {
 		exprs := getArgExprsFromToken(t.tokens())
-		res = &PrimaryExpr{name: t.raw(), args: exprs, t: FunctionCallPrimaryExpressionType}
-
-	} else if t.isMtcall() {
-		//exprs := getArgExprsFromToken(t.ts)
-		//res = &PrimaryExpr{name: t.str, caller:t.caller, args: exprs, t: MethodCallPrimaryExpressionType}
+		res = newFunctionCallPrimaryExpression(t.raw(), exprs)
 
 	} else if t.isExpr() {
 		expr := extractExpression(t.tokens())
-		res = &PrimaryExpr{t: ExprPrimaryExpressionType, head: expr}
+		res = newExprPrimaryExpression(expr)
 
 	} else if t.isIdentifier() {
-		res = &PrimaryExpr{name: t.raw(), t: VarPrimaryExpressionType}
+		res = newVarPrimaryExpression(t.raw())
 	} else {
 		runtimeExcption("parsePrimaryExpression: unknown token type ->", t.String(), t.TokenTypeName())
 	}
 	if res != nil && t.isNot() {
-		res.t = res.t | NotPrimaryExpressionType
-		res.not = t.notFlag()
+		res.addType(NotPrimaryExpressionType)
+		res.setNotFlag(t.notFlag())
 	}
 	return res
 }
 
-func getArgExprsFromToken(ts []Token) []*Expression {
-	var res []*Expression
+func getArgExprsFromToken(ts []Token) []Expression {
+	var res []Expression
 	size := len(ts)
 	if size < 1 {
 		return res
 	}
 	if size == 1 || !hasSymbol(ts, ",") {
 		expr := extractExpression(ts)
-		assert(expr == nil, "failed to parse Expression:", tokensString(ts))
+		assert(expr == nil, "failed to parse ExpressionImpl:", tokensString(ts))
 		res = append(res, expr)
 		return res
 	}
@@ -432,7 +417,7 @@ func getArgExprsFromToken(ts []Token) []*Expression {
 	for nextIndex >= 0 {
 		exprTokens, nextIndex = extractExpressionTokensByComma(nextIndex, ts)
 		expr := extractExpression(exprTokens)
-		assert(expr == nil, "failed to parse Expression:", tokensString(ts))
+		assert(expr == nil, "failed to parse ExpressionImpl:", tokensString(ts))
 		res = append(res, expr)
 	}
 	return res

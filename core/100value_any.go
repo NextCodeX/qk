@@ -1,15 +1,14 @@
 package core
 
-import (
-	"reflect"
-)
+import "reflect"
 
 type AnyValue struct {
 	goValue interface{}
+	ValueAdapter
 }
 
 func newAnyValue(raw interface{}) *AnyValue {
-	return &AnyValue{raw}
+	return &AnyValue{goValue: raw}
 }
 
 func (any *AnyValue) val() interface{} {
@@ -19,30 +18,10 @@ func (any *AnyValue) val() interface{} {
 	//}
 	return any.goValue
 }
-func (any *AnyValue) isNULL() bool {
-	return false
-}
-func (any *AnyValue) isInt() bool {
-	return false
-}
-func (any *AnyValue) isFloat() bool {
-	return false
-}
-func (any *AnyValue) isBoolean() bool {
-	return false
-}
-func (any *AnyValue) isString() bool {
-	return false
-}
 func (any *AnyValue) isAny() bool {
 	return true
 }
 func (any *AnyValue) isClass() bool {
 	return reflect.TypeOf(any.goValue).AssignableTo(ClassType)
 }
-func (any *AnyValue) isJsonArray() bool {
-	return false
-}
-func (any *AnyValue) isJsonObject() bool {
-	return false
-}
+

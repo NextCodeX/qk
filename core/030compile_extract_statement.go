@@ -1,47 +1,55 @@
 package core
 
-func extractStatement(stmts StatementList) {
-	ts := stmts.getRaw()
+func extractStatement(stmt Statement) {
+	ts := stmt.raw()
 	for i := 0; i < len(ts); {
 		t := ts[i]
 		var endIndex int
-		var stmt *Statement
+		var subStmt Statement
 
 		if !t.isIdentifier() && !t.isComplex() {
 			goto nextLoop
 		}
 		switch t.raw() {
 		case "if":
-			stmt, endIndex = extractIfStatement(i, ts)
+			subStmt, endIndex = extractIfStatement(i, ts)
 		case "for":
-			stmt, endIndex = extractForStatement(i, ts)
+			subStmt, endIndex = extractForStatement(i, ts)
 		case "foreach":
-			stmt, endIndex = extractForeachStatement(i, ts)
+			subStmt, endIndex = extractForeachStatement(i, ts)
 		case "fori":
-			stmt, endIndex = extractForindexStatement(i, ts)
+			subStmt, endIndex = extractForIndexStatement(i, ts)
 		case "forv":
-			stmt, endIndex = extractForitemStatement(i, ts)
+			subStmt, endIndex = extractForValueStatement(i, ts)
 		case "switch":
 		case "continue":
-			stmt, endIndex = extractContinueStatement(i, ts)
+			subStmt, endIndex = extractContinueStatement(i, ts)
 		case "break":
-			stmt, endIndex = extractBreakStatement(i, ts)
+			subStmt, endIndex = extractBreakStatement(i, ts)
 		case "return":
-			stmt, endIndex = extractReturnStatement(i, ts)
+			subStmt, endIndex = extractReturnStatement(i, ts)
 		default:
 			if t.isFdef() {
 				// 提取 函数定义
 				f, endIndex1 := extractFunction(i, ts)
-				funcList[f.name] = f
+				if stack, ok := stmt.(Function); ok {
+					f.setParent(stack)
+				} else {
+					f.setParent(stmt.getParent())
+				}
+				funcList[f.getName()] = f
 				i = endIndex1
 				goto nextLoop
 			}
 			// 提取 表达式语句
-			stmt, endIndex = extractExpressionStatement(i, ts)
+			subStmt, endIndex = extractExpressionStatement(i, ts)
 
 		}
 		if endIndex > 0 {
-			stmts.addStatement(stmt)
+			if subStmt != nil {
+				//subStmt.setStack(stmt)
+				stmt.addStmt(subStmt)
+			}
 			i = endIndex
 		}
 
@@ -50,22 +58,23 @@ func extractStatement(stmts StatementList) {
 	}
 }
 
-func extractExpressionStatement(currentIndex int, ts []Token) (*Statement, int) {
+func extractExpressionStatement(currentIndex int, ts []Token) (Statement, int) {
 	size := len(ts)
 	if !hasSymbol(ts[currentIndex:], ";") && currentIndex<size {
-		stmt := newStatement(ExpressionStatement, ts[currentIndex:])
+		stmt := newExpressionStatement(ts[currentIndex:])
 		return stmt, size
 	}
 	var nextBoundaryIndex = nextSymbolIndex(ts, currentIndex, ";")
 	if nextBoundaryIndex > currentIndex {
-		stmt := newStatement(ExpressionStatement, ts[currentIndex:nextBoundaryIndex])
+		stmt := newExpressionStatement(ts[currentIndex:nextBoundaryIndex])
 		return stmt, nextBoundaryIndex
 	}
+	runtimeExcption("unknown statement: ", tokensShow10(ts[currentIndex:]))
 	return nil, -1
 }
 
-func extractContinueStatement(currentIndex int, ts []Token) (*Statement, int) {
-	stmt := &Statement{t:ContinueStatement}
+func extractContinueStatement(currentIndex int, ts []Token) (Statement, int) {
+	stmt := newContinueStatement()
 	size := len(ts)
 	if currentIndex == size -1 {
 		return stmt, size
@@ -75,8 +84,8 @@ func extractContinueStatement(currentIndex int, ts []Token) (*Statement, int) {
 	return stmt, endIndex
 }
 
-func extractBreakStatement(currentIndex int, ts []Token) (*Statement, int) {
-	stmt := &Statement{t:BreakStatement}
+func extractBreakStatement(currentIndex int, ts []Token) (Statement, int) {
+	stmt := newBreakStatement()
 	size := len(ts)
 	if currentIndex == size -1 {
 		return stmt, size
@@ -87,8 +96,8 @@ func extractBreakStatement(currentIndex int, ts []Token) (*Statement, int) {
 	return stmt, endIndex
 }
 
-func extractReturnStatement(currentIndex int, ts []Token) (*Statement, int) {
-	stmt := &Statement{t:ReturnStatement}
+func extractReturnStatement(currentIndex int, ts []Token) (Statement, int) {
+	stmt := newReturnStatement()
 	size := len(ts[currentIndex:])
 	nextIndex := currentIndex + 1
 	if size < 2 || (size == 2 && ts[nextIndex].assertSymbol(";")) {
@@ -104,7 +113,7 @@ func extractReturnStatement(currentIndex int, ts []Token) (*Statement, int) {
 			break
 		}
 
-		stmt.raw = append(stmt.raw, t)
+		stmt.rawAppend(t)
 
 		if i==size-1 {
 			endIndex = i
@@ -114,13 +123,12 @@ func extractReturnStatement(currentIndex int, ts []Token) (*Statement, int) {
 	return stmt, endIndex
 }
 
-func extractFunction(currentIndex int, ts []Token) (*Function, int) {
+func extractFunction(currentIndex int, ts []Token) (Function, int) {
 	var nextIndex int
 	defToken := ts[currentIndex]
 
-	f := newFunc(defToken.raw())
-	f.paramNames = extractFunctionParamNames(defToken.tokens())
-	f.defToken = defToken
+	functionName := defToken.raw()
+	paramNames := extractFunctionParamNames(defToken.tokens())
 	var blockTokens []Token
 	size := len(ts)
 	scopeOpenCount := 1
@@ -141,8 +149,7 @@ func extractFunction(currentIndex int, ts []Token) (*Function, int) {
 	if scopeOpenCount > 0 {
 		runtimeExcption("parse function statement exception!")
 	}
-	f.setRaw(blockTokens)
-	return f, nextIndex
+	return newFunc(functionName, blockTokens, paramNames), nextIndex
 }
 
 func extractFunctionParamNames(ts []Token) []string {
@@ -156,32 +163,16 @@ func extractFunctionParamNames(ts []Token) []string {
 	return paramNames
 }
 
-func extractIfStatement(currentIndex int, ts []Token) (*Statement, int) {
-	var condStmts []*Statement
-	var defStmt *Statement
+func extractIfStatement(currentIndex int, ts []Token) (Statement, int) {
+	var condStmts []Statement
+	var defStmt Statement
+	size := len(ts)
 
 	nextLoop:
-	stmt := &Statement{t:IfStatement}
 	index := nextSymbolIndex(ts, currentIndex,"{")
-	stmt.condExprTokens = ts[currentIndex+1:index]
-
-	scopeOpenCount := 1
-	var endIndex int
-	size := len(ts)
-	for i:=index+1; i<size; i++ {
-		t := ts[i]
-		if t.assertSymbol("{") {
-			scopeOpenCount++
-		}
-		if t.assertSymbol("}") {
-			scopeOpenCount--
-			if scopeOpenCount == 0 {
-				endIndex = i
-				break
-			}
-		}
-		stmt.raw = append(stmt.raw, t)
-	}
+	condExprTokens := ts[currentIndex+1:index]
+	endIndex := scopeEndIndex(ts, index, "{", "}")
+	stmt := newSingleIfStatement(condExprTokens, ts[index+1:endIndex])
 
 	if endIndex+1<size && ts[endIndex+1].assertIdentifier("elif") {
 		currentIndex = endIndex+1
@@ -191,41 +182,25 @@ func extractIfStatement(currentIndex int, ts []Token) (*Statement, int) {
 	if endIndex+1<size && ts[endIndex+1].assertIdentifier("else") {
 		elseEndIndex := scopeEndIndex(ts, endIndex+1, "{", "}")
 		if elseEndIndex > 0 {
-			defStmt = newStatement(MultiStatement, ts[endIndex+3:elseEndIndex])
+			defStmt = newMultiStatement(ts[endIndex+3:elseEndIndex])
 			endIndex = elseEndIndex
 		}
 	}
 
 	condStmts = append(condStmts, stmt)
 
-	ifStmt := newStatement(IfStatement, ts[currentIndex:endIndex+1])
-	ifStmt.condStmts = condStmts
-	ifStmt.defStmt = defStmt
-	return ifStmt, endIndex
+	return newMultiIfStatement(condStmts, defStmt), endIndex
 }
 
-func extractForStatement(currentIndex int, ts []Token) (*Statement, int) {
-	stmt := &Statement{t:ForStatement}
+func extractForStatement(currentIndex int, ts []Token) (Statement, int) {
 	index := nextSymbolIndex(ts, currentIndex,  "{")
 	headerTokens := ts[currentIndex+1:index]
-	stmt.preExprTokens, stmt.condExprTokens, stmt.postExprTokens = extractForHeaderExpressions(headerTokens)
+	preExprTokens, condExprTokens, postExprTokens := extractForHeaderExpressions(headerTokens)
+	stmt := newForStatement(preExprTokens, condExprTokens, postExprTokens)
 
-	scopeOpenCount := 1
-	var endIndex int
-	for i:=index+1; i<len(ts); i++ {
-		t := ts[i]
-		if t.assertSymbol("{") {
-			scopeOpenCount++
-		}
-		if t.assertSymbol("}") {
-			scopeOpenCount--
-			if scopeOpenCount == 0 {
-				endIndex = i
-				break
-			}
-		}
-		stmt.raw = append(stmt.raw, t)
-	}
+	endIndex := scopeEndIndex(ts, index, "{", "}")
+	stmt.setRaw(ts[index+1:endIndex])
+
 	return stmt, endIndex
 }
 
@@ -265,38 +240,32 @@ func extractForHeaderExpressions(ts []Token) (preTokens, condTokens, postTokens 
 	return
 }
 
-func extractForeachStatement(currentIndex int, ts []Token) (*Statement, int) {
-	stmt := &Statement{t:ForeachStatement}
-
+func extractForeachStatement(currentIndex int, ts []Token) (Statement, int) {
 	headerEndIndex := nextSymbolIndex(ts, currentIndex, "{")
 	headerInfo := ts[currentIndex+1: headerEndIndex]
-	stmt.fpi = newForPlusInfo(headerInfo[0].raw(), headerInfo[2].raw(), extractExpression(headerInfo[4:]))
+	stmt := newForeachStatement(headerInfo[0].raw(), headerInfo[2].raw(), headerInfo[4:])
 
 	stmtEndIndex := scopeEndIndex(ts, currentIndex, "{", "}")
-	stmt.raw = ts[headerEndIndex+1: stmtEndIndex]
+	stmt.setRaw(ts[headerEndIndex+1: stmtEndIndex])
 	return stmt, stmtEndIndex
 }
 
-func extractForindexStatement(currentIndex int, ts []Token) (*Statement, int) {
-	stmt := &Statement{t:ForIndexStatement}
-
+func extractForIndexStatement(currentIndex int, ts []Token) (Statement, int) {
 	headerEndIndex := nextSymbolIndex(ts, currentIndex, "{")
 	headerInfo := ts[currentIndex+1: headerEndIndex]
-	stmt.fpi = newForPlusInfo(headerInfo[0].raw(), "", extractExpression(headerInfo[2:]))
+	stmt := newForIndexStatement(headerInfo[0].raw(), headerInfo[2:])
 
 	stmtEndIndex := scopeEndIndex(ts, currentIndex, "{", "}")
-	stmt.raw = ts[headerEndIndex+1: stmtEndIndex]
+	stmt.setRaw(ts[headerEndIndex+1: stmtEndIndex])
 	return stmt, stmtEndIndex
 }
 
-func extractForitemStatement(currentIndex int, ts []Token) (*Statement, int) {
-	stmt := &Statement{t:ForItemStatement}
-
+func extractForValueStatement(currentIndex int, ts []Token) (Statement, int) {
 	headerEndIndex := nextSymbolIndex(ts, currentIndex, "{")
 	headerInfo := ts[currentIndex+1: headerEndIndex]
-	stmt.fpi = newForPlusInfo("", headerInfo[0].raw(), extractExpression(headerInfo[2:]))
+	stmt := newForValueStatement(headerInfo[0].raw(), headerInfo[2:])
 
 	stmtEndIndex := scopeEndIndex(ts, currentIndex, "{", "}")
-	stmt.raw = ts[headerEndIndex+1: stmtEndIndex]
+	stmt.setRaw(ts[headerEndIndex+1: stmtEndIndex])
 	return stmt, stmtEndIndex
 }

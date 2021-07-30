@@ -24,6 +24,7 @@ type JSONArray interface {
 type JSONArrayImpl struct {
     valList []Value
     ts []Token
+    ValueAdapter
 }
 
 func newJSONArray(ts []Token) JSONArray {
@@ -120,30 +121,6 @@ func (arr *JSONArrayImpl) getItem(index interface{}) Value {
 func (arr *JSONArrayImpl) val() interface{} {
     return arr
 }
-func (arr *JSONArrayImpl) isNULL() bool {
-    return false
-}
-func (arr *JSONArrayImpl) isInt() bool {
-    return false
-}
-func (arr *JSONArrayImpl) isFloat() bool {
-    return false
-}
-func (arr *JSONArrayImpl) isBoolean() bool {
-    return false
-}
-func (arr *JSONArrayImpl) isString() bool {
-    return false
-}
-func (arr *JSONArrayImpl) isAny() bool {
-    return false
-}
-func (arr *JSONArrayImpl) isClass() bool {
-    return false
-}
 func (arr *JSONArrayImpl) isJsonArray() bool {
     return true
-}
-func (arr *JSONArrayImpl) isJsonObject() bool {
-    return false
 }

@@ -530,6 +530,17 @@ func toString4Tokens(ts []Token, start, end int) string {
 	return buf.String()
 }
 
+func tokensShow10(ts []Token) string {
+	var buf bytes.Buffer
+	for i, t := range ts {
+		buf.WriteString(t.String() + " ")
+		if i >= 10 {
+			break
+		}
+	}
+	return buf.String()
+}
+
 func tokensString(ts []Token) string {
 	var buf bytes.Buffer
 	for _, t := range ts {

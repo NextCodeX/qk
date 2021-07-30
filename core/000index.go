@@ -1,9 +1,6 @@
 package core
 
-var (
-	funcList = make(map[string]*Function)
-	mainFunc = newFunc("main")
-)
+var funcList = make(map[string]Function)
 
 func Run(bs []byte) {
 	// 词法分析
@@ -11,16 +8,18 @@ func Run(bs []byte) {
 	printTokensByLine(ts)
 
 	// 语法分析
-	mainFunc.setRaw(ts)
+	mainFunc := newFunc("main", ts, nil)
 	Compile(mainFunc)
-	//printFunc()
+	for _, customFunc := range funcList {
+		Compile(customFunc)
+	}
 
 	// 解析并执行
-	Interpret()
+	mainFunc.execute()
 }
 
 // 指定变量𣏾, 执行qk代码片段.
-func evalScript(src string, stack *VariableStack) Value {
+func evalScript(src string, stack Function) Value {
 	ts := ParseTokens([]byte(src))
 	tsLen := len(ts)
 	if tsLen < 1 {
@@ -33,7 +32,8 @@ func evalScript(src string, stack *VariableStack) Value {
 		return NULL
 	}
 	expr := extractExpression(ts)
-	qkValue := executeExpression(expr, stack)
+	expr.setStack(stack)
+	qkValue := expr.execute()
 	return qkValue
 }
 
@@ -49,27 +49,17 @@ func ParseTokens(bs []byte) []Token {
 	return ts
 }
 
-func Compile(stmts StatementList) {
-	if stmts == nil {
-		return
-	}
-	if stmts.isCompiled() {
-		return
-	} else {
-		stmts.setCompiled()
-	}
-	extractStatement(stmts)
-	parseStatementList(stmts.stmts())
-
-	for _, customFunc := range funcList {
-		Compile(customFunc)
+func Compile(stmt Statement) {
+	extractStatement(stmt)
+	for _, stmt := range stmt.stmts() {
+		stmt.parse()
 	}
 }
 
-func Interpret() {
-	stack := newVariableStack()
-	stack.push() // 执行方法前，向变量栈(list)添加的一个变量池(map)
-	executeFunctionStatementList(mainFunc.block, stack)
-}
+//func Interpret() {
+//	stack := newVariableStack()
+//	stack.push() // 执行方法前，向变量栈(list)添加的一个变量池(map)
+//	executeFunctionStatementList(mainFunc.block, stack)
+//}
 
 

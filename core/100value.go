@@ -16,6 +16,7 @@ type Value interface {
    isClass() bool
    isJsonArray() bool
    isJsonObject() bool
+   isFunction() bool
 }
 
 func newQKValue(rawVal interface{}) Value {

@@ -25,6 +25,7 @@ type JSONObject interface {
 type JSONObjectImpl struct {
     valMap map[string]Value
     ts []Token
+    ValueAdapter
 }
 
 func newJSONObject(ts []Token) JSONObject {
@@ -134,38 +135,9 @@ func (obj *JSONObjectImpl) getItem(index interface{}) Value {
     return obj.valMap[key]
 }
 
-
 func (obj *JSONObjectImpl) val() interface{} {
 	return obj
-}
-func (obj *JSONObjectImpl) isNULL() bool {
-	return false
-}
-func (obj *JSONObjectImpl) isInt() bool {
-	return false
-}
-func (obj *JSONObjectImpl) isFloat() bool {
-	return false
-}
-func (obj *JSONObjectImpl) isBoolean() bool {
-	return false
-}
-func (obj *JSONObjectImpl) isString() bool {
-	return false
-}
-func (obj *JSONObjectImpl) isAny() bool {
-	return false
-}
-func (obj *JSONObjectImpl) isClass() bool {
-	return false
-}
-func (obj *JSONObjectImpl) isJsonArray() bool {
-	return false
 }
 func (obj *JSONObjectImpl) isJsonObject() bool {
 	return true
 }
-
-
-
-
