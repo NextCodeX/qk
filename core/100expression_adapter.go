@@ -19,7 +19,7 @@ func (ea *ExpressionAdapter) getStack() Function {
     return ea.ValueStack.stack
 }
 
-func (ea *ExpressionAdapter) toGoTypeValues(exprs []Expression) []interface{} {
+func toGoTypeValues(exprs []Expression) []interface{} {
     var res []interface{}
     for _, expr := range exprs {
         if expr == nil {
@@ -32,7 +32,7 @@ func (ea *ExpressionAdapter) toGoTypeValues(exprs []Expression) []interface{} {
     return res
 }
 
-func (ea *ExpressionAdapter) evalValues(exprs []Expression) []Value {
+func evalValues(exprs []Expression) []Value {
     var res []Value
     for _, expr := range exprs {
         if expr == nil {

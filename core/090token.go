@@ -17,11 +17,11 @@ const (
 
 	Fcall  // function call 函数调用
 	Fdef  // function definition 函数 定义
-	Mtcall // method call 方法调用
-	Attribute // 对象属性
 	ArrLiteral // 数组字面值
 	ObjLiteral // 对象字面值
+	FuncLiteral // 函数字面值
 	Element // 元素, 用于指示对象或数组的元素
+	ElemFunctionCallMixture // 元素/function call 混合类型
 	Complex // 用于标记复合类型token
 	ChainCall // 链式调用
 	SubList // 列表截取
@@ -41,11 +41,11 @@ type Token interface {
 	isSymbol() bool
 	isFdef() bool
 	isFcall() bool
-	isAttribute() bool
-	isMtcall() bool
 	isArrLiteral() bool
 	isObjLiteral() bool
+	isFuncLiteral() bool
 	isElement() bool
+	isElemFunctionCallMixture() bool
 	isComplex() bool
 	isSubList() bool
 	isChainCall() bool
@@ -74,10 +74,7 @@ type Token interface {
 	equal(t Token) bool
 	lower(t Token) bool
 	upper(t Token) bool
-	String() string
-	toJSONString() string
-	TokenTypeName() string
-	lineIndexString() string
+
 
 	tokens() []Token
 	setTokens(ts []Token)
@@ -92,6 +89,19 @@ type Token interface {
 
 	setEndExprTokens(ts []Token)
 	endExprTokens() []Token
+
+	getScopeOperatorTokens() []Token
+	setScopeOperatorTokens(ts []Token)
+	scopeOperatorTokensAppend(t Token)
+
+	getBodyTokens() []Token
+	setBodyTokens(ts []Token)
+	bodyTokensAppend(t Token)
+
+	String() string
+	toJSONString() string
+	TokenTypeName() string
+	lineIndexString() string
 }
 
 
@@ -100,12 +110,12 @@ type TokenImpl struct {
 	endLineIndex int // 当token跨行时, 存的尾行索引
 	str string // 原始字符串
 	t TokenType // 类型
-	// token为元素, 函数调用, 函数定义类型时, 存的是参数   ;
-	// token为数组字面值, 对象字面值类型时, 存的是字面值内容
-	ts []Token
-	chainTokens []Token
-	startExpr []Token
-	endExpr []Token
+	ts []Token // token为 Element, Fcall, Expr 类型时, 存的是参数; 为 ArrLiteral, ObjLiteral 对象字面值类型时, 存的是字面值内容
+	chainTokens []Token // 存放 ChainCall 类型Token的子Token列表
+	scopeOperatorTokens []Token // 存放 ElemFunctionCallMixture 类型Token的子Token列表
+	bodyTokens []Token // 存放 FuncLiteral 类型Token的子Token列表
+	startExpr []Token // SubList 类型Token的startIndex表达式的Token列表
+	endExpr []Token // SubList 类型Token的endIndex表达式的Token列表
 	not bool // 是否进行非处理
 }
 
@@ -119,6 +129,26 @@ func symbolToken(s string) Token {
 
 func varToken(s string) Token {
 	return &TokenImpl{str: s, t:Identifier}
+}
+
+func (tk *TokenImpl) getBodyTokens() []Token {
+	return tk.bodyTokens
+}
+func (tk *TokenImpl) setBodyTokens(ts []Token) {
+	tk.bodyTokens = ts
+}
+func (tk *TokenImpl) bodyTokensAppend(t Token) {
+	tk.bodyTokens = append(tk.bodyTokens, t)
+}
+
+func (tk *TokenImpl) getScopeOperatorTokens() []Token {
+	return tk.scopeOperatorTokens
+}
+func (tk *TokenImpl) setScopeOperatorTokens(ts []Token) {
+	tk.scopeOperatorTokens = ts
+}
+func (tk *TokenImpl) scopeOperatorTokensAppend(t Token) {
+	tk.scopeOperatorTokens = append(tk.scopeOperatorTokens, t)
 }
 
 func (tk *TokenImpl) tokens() []Token {
@@ -222,20 +252,20 @@ func (tk *TokenImpl) isFcall() bool {
 	return (tk.t & Fcall) == Fcall
 }
 
-func (tk *TokenImpl) isAttribute() bool {
-	return (tk.t & Attribute) == Attribute
-}
-
-func (tk *TokenImpl) isMtcall() bool {
-	return (tk.t & Mtcall) == Mtcall
-}
-
 func (tk *TokenImpl) isArrLiteral() bool {
 	return (tk.t & ArrLiteral) == ArrLiteral
 }
 
+func (tk *TokenImpl) isFuncLiteral() bool {
+	return (tk.t & FuncLiteral) == FuncLiteral
+}
+
 func (tk *TokenImpl) isObjLiteral() bool {
 	return (tk.t & ObjLiteral) == ObjLiteral
+}
+
+func (tk *TokenImpl) isElemFunctionCallMixture() bool {
+	return (tk.t & ElemFunctionCallMixture) == ElemFunctionCallMixture
 }
 
 func (tk *TokenImpl) isElement() bool {
@@ -361,7 +391,7 @@ func (tk *TokenImpl) String() string {
 	if tk.isChainCall() {
 		var buf bytes.Buffer
 		tmp := tk.t
-		tk.t = ^Not & (^ChainCall) & tk.t
+		tk.t = ^Not & (^SubSelf) & (^AddSelf) & (^ChainCall) & tk.t
 		buf.WriteString(tk.String())
 		if tk.chainTokens != nil {
 			for _, token := range tk.chainTokens {
@@ -370,6 +400,37 @@ func (tk *TokenImpl) String() string {
 			}
 		}
 		tk.t = tmp
+		res = buf.String()
+	} else if tk.isElemFunctionCallMixture() {
+		var buf bytes.Buffer
+		tmp := tk.t
+		tk.t = ^Not & (^SubSelf) & (^AddSelf) & (^ElemFunctionCallMixture) & tk.t
+		buf.WriteString(tk.String())
+		for _, token := range tk.scopeOperatorTokens {
+			buf.WriteString(token.String())
+		}
+		tk.t = tmp
+		res = buf.String()
+	} else if tk.isSubList() {
+		var buf bytes.Buffer
+		buf.WriteString(tk.str)
+		buf.WriteString("[")
+		buf.WriteString(tokensString(tk.startExpr))
+		buf.WriteString(":")
+		buf.WriteString(tokensString(tk.endExpr))
+		buf.WriteString("]")
+		res = buf.String()
+	} else if tk.isFuncLiteral() {
+		var buf bytes.Buffer
+		buf.WriteString(tk.str)
+		buf.WriteString("(")
+		buf.WriteString(tokensString(tk.ts))
+		buf.WriteString(")")
+		buf.WriteString("{")
+		for _, token := range tk.bodyTokens {
+			buf.WriteString(token.String())
+		}
+		buf.WriteString("}")
 		res = buf.String()
 	} else if tk.isArrLiteral() || tk.isObjLiteral() {
 		res = tk.toJSONString()
@@ -383,21 +444,6 @@ func (tk *TokenImpl) String() string {
 			}
 		}
 		buf.WriteString(")")
-		res = buf.String()
-	} else if tk.isAttribute() || tk.isMtcall() {
-		var buf bytes.Buffer
-		//buf.WriteString(tk.caller)
-		buf.WriteString(".")
-		buf.WriteString(tk.str)
-		if tk.isMtcall() {
-			buf.WriteString("(")
-			if tk.ts != nil {
-				for _, token := range tk.ts {
-					buf.WriteString(token.String())
-				}
-			}
-			buf.WriteString(")")
-		}
 		res = buf.String()
 	} else if tk.isElement() {
 		var buf bytes.Buffer
@@ -414,10 +460,6 @@ func (tk *TokenImpl) String() string {
 		res = "("+tokensString(tk.ts)+")"
 	} else if tk.isStr() {
 		res = fmt.Sprintf(`"%v"`, tk.str)
-	} else if tk.isAddSelf() {
-		res = fmt.Sprintf(`%v ++`, tk.str)
-	} else if tk.isSubSelf() {
-		res = fmt.Sprintf(`%v --`, tk.str)
 	} else {
 		res = tk.str
 	}
@@ -426,6 +468,12 @@ func (tk *TokenImpl) String() string {
 		if !tk.not {
 			res = "!"+res
 		}
+	}
+	if tk.isAddSelf() {
+		res = res + " ++"
+	}
+	if tk.isSubSelf() {
+		res = res + " --"
 	}
 	return res
 }
@@ -454,6 +502,21 @@ func (tk *TokenImpl) TokenTypeName() string {
 	if tk.isStr() {
 		buf.WriteString( "string, ")
 	}
+	if tk.isFuncLiteral() {
+		buf.WriteString( "function literal, ")
+	}
+	if tk.isAddSelf() {
+		buf.WriteString( "addSelf, ")
+	}
+	if tk.isSubSelf() {
+		buf.WriteString( "subSelf, ")
+	}
+	if tk.isElemFunctionCallMixture() {
+		buf.WriteString( "element and function call mixture, ")
+	}
+	if tk.isSubList() {
+		buf.WriteString( "subList, ")
+	}
 	if tk.isIdentifier() {
 		buf.WriteString( "identifier, ")
 	}
@@ -474,12 +537,6 @@ func (tk *TokenImpl) TokenTypeName() string {
 	}
 	if tk.isFcall() {
 		buf.WriteString("function call, ")
-	}
-	if tk.isMtcall() {
-		buf.WriteString("method call, ")
-	}
-	if tk.isAttribute() {
-		buf.WriteString("attribute, ")
 	}
 	if tk.isArrLiteral() {
 		buf.WriteString("array literal, ")

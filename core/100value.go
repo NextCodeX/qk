@@ -17,6 +17,7 @@ type Value interface {
    isJsonArray() bool
    isJsonObject() bool
    isFunction() bool
+   isObject() bool
 }
 
 func newQKValue(rawVal interface{}) Value {
@@ -42,6 +43,10 @@ func newQKValue(rawVal interface{}) Value {
     case JSONArray:
         val = v
     case JSONObject:
+        val = v
+    case Function:
+        val = v
+    case Value:
         val = v
     default:
         val = newAnyValue(v)
@@ -108,6 +113,15 @@ func goObj(val Value) JSONObject {
         return v
     } else {
         runtimeExcption("value is not json object")
+        return nil
+    }
+}
+
+func goQKObj(val Value) Object {
+    if v, ok := val.(Object); ok {
+        return v
+    } else {
+        runtimeExcption("value is not object")
         return nil
     }
 }

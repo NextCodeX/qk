@@ -6,6 +6,7 @@ import (
 )
 
 type JSONObject interface {
+	getName() string
     parsed() bool
     init()
     size() int
@@ -23,17 +24,30 @@ type JSONObject interface {
 }
 
 type JSONObjectImpl struct {
+	name string
     valMap map[string]Value
     ts []Token
+    jsonObjectFlag bool
     ValueAdapter
 }
 
 func newJSONObject(ts []Token) JSONObject {
-    return &JSONObjectImpl{ts:ts}
+    return &JSONObjectImpl{ts:ts, jsonObjectFlag: true}
 }
 
 func toJSONObject(v map[string]Value) JSONObject {
-    return &JSONObjectImpl{valMap:v}
+    return &JSONObjectImpl{valMap:v, jsonObjectFlag: true}
+}
+
+func newClass(name string, v map[string]Value) JSONObject {
+	return &JSONObjectImpl{name:name, valMap:v, jsonObjectFlag: false}
+}
+
+func (obj *JSONObjectImpl) getName() string {
+	if obj.name == "" {
+		return "json object"
+	}
+    return obj.name
 }
 
 func (obj *JSONObjectImpl) init() {
@@ -67,6 +81,9 @@ func (obj *JSONObjectImpl) get(key string) Value {
     if ok {
         return v
     }
+    if obj.jsonObjectFlag {
+    	return obj.returnFakeMethod(key)
+	}
     return NULL
 }
 
@@ -139,5 +156,5 @@ func (obj *JSONObjectImpl) val() interface{} {
 	return obj
 }
 func (obj *JSONObjectImpl) isJsonObject() bool {
-	return true
+	return obj.jsonObjectFlag
 }

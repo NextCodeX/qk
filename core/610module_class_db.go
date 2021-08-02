@@ -12,7 +12,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func (mr *ModuleRegister) DBModuleInit() {
+func init() {
 	dsc := &DateSourceConstructor{}
 	fs := collectFunctionInfo(&dsc)
 	functionRegister("", fs)
@@ -26,7 +26,7 @@ type DataSource struct {
 
 type DateSourceConstructor struct{}
 
-func (dsc *DateSourceConstructor) Sqlserver(username, password, url string) *ClassExecutor {
+func (dsc *DateSourceConstructor) Sqlserver(username, password, url string) Value {
 	seperatorIndex := strings.Index(url, "/")
 	var host, port, dbName string
 	if seperatorIndex < 0 || seperatorIndex == len(url) - 1 {
@@ -47,7 +47,7 @@ func (dsc *DateSourceConstructor) Sqlserver(username, password, url string) *Cla
 	return dsc.ConnDB("mysql", sourceName)
 }
 
-func (dsc *DateSourceConstructor) Oracle(username, password, url string) *ClassExecutor {
+func (dsc *DateSourceConstructor) Oracle(username, password, url string) Value {
 	seperatorIndex := strings.Index(url, "/")
 	var netAddress, uri string
 	if seperatorIndex < 0 {
@@ -62,7 +62,7 @@ func (dsc *DateSourceConstructor) Oracle(username, password, url string) *ClassE
 	return dsc.ConnDB("oracle", sourceName)
 }
 
-func (dsc *DateSourceConstructor) Mysql(username, password, url string) *ClassExecutor {
+func (dsc *DateSourceConstructor) Mysql(username, password, url string) Value {
 	seperatorIndex := strings.Index(url, "/")
 	var netAddress, uri string
 	if seperatorIndex < 0 {
@@ -77,11 +77,11 @@ func (dsc *DateSourceConstructor) Mysql(username, password, url string) *ClassEx
 	return dsc.ConnDB("mysql", sourceName)
 }
 
-func (dsc *DateSourceConstructor) Sqlite(dbName string) *ClassExecutor {
+func (dsc *DateSourceConstructor) Sqlite(dbName string) Value {
 	return dsc.ConnDB("sqlite", dbName)
 }
 
-func (dsc *DateSourceConstructor) ConnDB(driverName, sourceName string) *ClassExecutor {
+func (dsc *DateSourceConstructor) ConnDB(driverName, sourceName string) Value {
 	ds := &DataSource{driverName, sourceName}
 	return newClassExecutor("db", ds, &ds)
 }

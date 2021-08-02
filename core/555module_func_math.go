@@ -9,17 +9,13 @@ import (
 	"time"
 )
 
-func (mr *ModuleRegister) MathModuleInit() {
+func init() {
 	mt := &QKMath{}
 	fmath := collectFunctionInfo(&mt)
 	functionRegister("", fmath)
 }
 
-
-type QKMath struct {
-
-}
-
+type QKMath struct {}
 
 // return absolute value of raw
 func (mt *QKMath) Abs(raw interface{}) (res interface{}) {

@@ -15,9 +15,11 @@ func extractExpression(ts []Token) Expression {
 
 	switch {
 	case tlen == 1:
+		// 处理一元表达式
 		return parseUnaryExpression(ts)
 
 	case tlen == 3:
+		// 处理二元表达式
 		expr = parseBinaryExpression(ts)
 
 	default:
@@ -37,23 +39,30 @@ func parseUnaryExpression(ts []Token) Expression {
 	token := ts[0]
 	var expr Expression
 	if token.isAddSelf() || token.isSubSelf() {
+
 		// 处理自增, 自减
 		var op Token
 		if token.isSubSelf() {
+			token.setTyp(^SubSelf & token.typ())
 			op = symbolToken("-")
 		} else {
+			token.setTyp(^AddSelf & token.typ())
 			op = symbolToken("+")
 		}
 		var tmpTokens []Token
+
 		tmpTokens = append(tmpTokens, token)
 		tmpTokens = append(tmpTokens, op)
 		tmpTokens = append(tmpTokens, newToken("1", Int))
 		tmpTokens = append(tmpTokens, token)
+		//fmt.Println("++++++++++++++++++++++")
+		//printTokensByLine(tmpTokens)
+		//fmt.Println("++++++++++++++++++++++")
+
 		expr = generateBinaryExpr(tmpTokens)
 	} else {
 		expr = parsePrimaryExpression(token)
 	}
-	expr.setRaw(ts)
 	return expr
 }
 
@@ -79,22 +88,20 @@ func parseMultivariateExpression(ts []Token) Expression {
 
 	finalExpr := getFinalExpr(exprs, resVarToken)
 
-	expr = &MultiExpressionImpl{
-		list:      exprs,
-		finalExpr: finalExpr,
-	}
+	expr = &MultiExpressionImpl{list:exprs, finalExpr: finalExpr}
+	expr.setRaw(ts)
 	return expr
 }
 
 func getFinalExpr(exprs []BinaryExpression, resVarToken Token) BinaryExpression {
 	var finalExprTokens BinaryExpression
-	isAssignExpr := resVarToken != nil
 	for _, expr := range exprs {
-		if isAssignExpr && expr.getReceiver() == resVarToken.raw() {
+		receiver := expr.getReceiver()
+		if resVarToken != nil && receiver != nil && receiver.raw()[0].String() == resVarToken.String() {
 			finalExprTokens = expr
 			break
 		}
-		if !isAssignExpr && expr.getReceiver() == "" {
+		if resVarToken == nil && receiver == nil {
 			finalExprTokens = expr
 			break
 		}
@@ -126,7 +133,7 @@ func generateBinaryExpr(ts []Token) BinaryExpression {
 	var expr BinaryExpression
 	if size == 4 {
 		expr = parseBinaryExpression(ts[:3])
-		expr.setReceiver(ts[3].raw())
+		expr.setReceiver(parsePrimaryExpression(ts[3]))
 	} else {
 		expr = parseBinaryExpression(ts)
 	}
@@ -338,11 +345,9 @@ func parseBinaryExpression(ts []Token) BinaryExpression {
 		runtimeExcption("parseBinaryExpression# invalid expression", tokensString(ts))
 	}
 
-	return &BinaryExpressionImpl{
-		t:     op,
-		left:  left,
-		right: right,
-	}
+	expr := &BinaryExpressionImpl{t:op, left:left, right:right}
+	expr.setRaw(ts)
+	return expr
 }
 
 func parsePrimaryExpression(t Token) PrimaryExpression {
@@ -354,18 +359,41 @@ func parsePrimaryExpression(t Token) PrimaryExpression {
 			priExpr := parsePrimaryExpression(tk)
 			priExprs = append(priExprs, priExpr)
 		}
+
 		var headExpr PrimaryExpression
-		if t.isNot() {
-			// 避免类型 Not, ChainCall在解析执行时发生冲突
-			t.setTyp(^Not & (^ChainCall) & t.typ())
-			headExpr = parsePrimaryExpression(t)
-			t.addType(Not)
-		} else {
-			t.setTyp((^ChainCall) & t.typ())
-			headExpr = parsePrimaryExpression(t)
-		}
+		tmp := t.typ()
+		// 排除类型 Not: 避免类型 Not, ChainCall在解析执行时发生冲突
+		// 排除类型 ChainCall: 避免无限递归
+		t.setTyp(^Not & (^ChainCall) & t.typ())
+		headExpr = parsePrimaryExpression(t)
+		t.setTyp(tmp)
 
 		res = newChainCallPrimaryExpression(headExpr, priExprs)
+
+	} else if t.isElemFunctionCallMixture() {
+		subTokens := t.getScopeOperatorTokens()
+		if t.isIdentifier() && len(subTokens) == 1 && subTokens[0].isFuncLiteral() {
+			funcToken := subTokens[0]
+			funcToken.setRaw(t.raw())
+			return parsePrimaryExpression(funcToken)
+		}
+
+		var priExprs []PrimaryExpression
+		for _, tk := range subTokens {
+			priExpr := parsePrimaryExpression(tk)
+			priExprs = append(priExprs, priExpr)
+		}
+
+		var headExpr PrimaryExpression
+		tmp := t.typ()
+		// 排除类型 Not: 避免类型 Not, ElemFunctionCallMixture在解析执行时发生冲突
+		// 排除类型 ElemFunctionCallMixture: 避免无限递归
+		t.setTyp(^Not & (^ElemFunctionCallMixture) & t.typ())
+		headExpr = parsePrimaryExpression(t)
+		t.setTyp(tmp)
+
+		res = newElemFunctionCallPrimaryExpression(headExpr, priExprs)
+
 	} else if v != nil {
 		if t.isObjLiteral() {
 			res = newObjectPrimaryExpression(v)
@@ -377,12 +405,23 @@ func parsePrimaryExpression(t Token) PrimaryExpression {
 			res = newConstPrimaryExpression(v)
 		}
 	} else if t.isElement() {
-		exprs := getArgExprsFromToken(t.tokens())
-		res = newElementPrimaryExpression(t.raw(), exprs)
+		expr := extractExpression(t.tokens())
+		res = newElementPrimaryExpression(t.raw(), expr)
 
 	} else if t.isFcall() {
 		exprs := getArgExprsFromToken(t.tokens())
 		res = newFunctionCallPrimaryExpression(t.raw(), exprs)
+
+	} else if t.isSubList() {
+		start := extractExpression(t.startExprTokens())
+		end := extractExpression(t.endExprTokens())
+		res = newSubListPrimaryExpression(start, end)
+
+	} else if t.isFuncLiteral() {
+		paramNames := getFuncParamNames(t.tokens())
+		f := newFunc(t.raw(), t.getBodyTokens(), paramNames)
+		Compile(f)
+		res = newFunctionPrimaryExpression(f)
 
 	} else if t.isExpr() {
 		expr := extractExpression(t.tokens())
@@ -396,6 +435,23 @@ func parsePrimaryExpression(t Token) PrimaryExpression {
 	if res != nil && t.isNot() {
 		res.addType(NotPrimaryExpressionType)
 		res.setNotFlag(t.notFlag())
+	}
+
+	res.setRaw(tokenArray(t))
+	return res
+}
+
+func getFuncParamNames(tokens []Token) []string {
+	var res []string
+	if len(tokens) < 1 {
+		return res
+	}
+	for _, tk := range tokens {
+		if tk.isIdentifier() {
+			res = append(res, tk.raw())
+		} else {
+			runtimeExcption("invalid function parameter name: ", tokensString(tokens))
+		}
 	}
 	return res
 }

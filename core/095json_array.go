@@ -11,7 +11,8 @@ type JSONArray interface {
     add(elem Value)
     remove(index int)
     set(index int, elem Value)
-    get(index int) Value
+    getElem(index int) Value
+    sub(start, end int) Value
     checkOutofIndex(index int) bool
     values() []Value
     tokens() []Token
@@ -61,8 +62,12 @@ func (arr *JSONArrayImpl) set(index int, elem Value) {
     arr.valList[index] = elem
 }
 
-func (arr *JSONArrayImpl) get(index int) Value {
+func (arr *JSONArrayImpl) getElem(index int) Value {
     return arr.valList[index]
+}
+
+func (arr *JSONArrayImpl) sub(start, end int) Value {
+    return toJSONArray(arr.valList[start:end])
 }
 
 func (arr *JSONArrayImpl) checkOutofIndex(index int) bool {

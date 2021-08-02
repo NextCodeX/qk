@@ -1,0 +1,99 @@
+/**
+
+test(){
+println("hello Quick")
+}()
+
+
+arr = [1, 3, 9, 10, false, "changlie", "true"]
+println(arr)
+println(arr[:4])
+
+getUser() {
+    a = 10
+    return {
+    age:a,
+    name:"tianyoushi"
+    }
+}
+
+println(getUser()["name"])
+println("中华人民共和国"[:5], "<>", "中华人民共和国"[5:], "中华人民共和国".size())
+
+println("hello Quick"[:5].upper(), "hello Quick"[:5].upper().size())
+
+println(showTime(){println("show time"); return {name:"tieZhen"}}()["name"])
+println(showTime(a){println("show time", a); return {name:"tieZhen v2"}}().name)
+
+showTime("let's go!")
+
+obj = {
+name:"DW",
+age:9
+}
+obj.age++
+println(obj)
+ts = $ a -> a + 1
+println(ts(1), ts(2))
+obj = {
+    name: "changlie",
+    age: 19,
+    action:$ var {
+        println("var is", var)
+        println(this)
+        println(`my name is ${this.name}, ${obj.age} year old`)
+    }
+}
+obj.action("make the world better!")
+
+xxx() {
+    println("wu di")
+}
+xxx()
+
+${
+println("anonymous function running!")
+}()
+
+demo(){
+println("func demo is running")
+}()
+
+i = 99
+i++;i++;i++
+println("i is ", i)
+
+arr = [66]
+println(arr[0])
+arr[0] ++
+println(arr)
+println(arr)
+arr = [[998],[1, [false, "fly!"]]]
+println(arr[1][1][0])
+println(arr[1][1][1])
+
+arr = [66]
+arr[0]++
+arr[0]++
+arr[0]--
+println(arr)
+
+obj = {age:17}
+obj.age --
+obj.age --
+obj.age --
+obj.age --
+println(obj)*/
+
+obj = {
+    score:[99, 58, 120],
+    info:{
+        name:"tom"
+    }
+}
+obj.score[1] --
+obj.score[1] --
+obj.score[1] --
+obj.info["name"] = "jerry"
+println(obj)
+println(obj.info["name"].upper().size(), obj.info["name"].upper(), obj.info["name"].upper()[:2], obj.info["name"].upper()[:2].lower(), obj.info["name"].upper()[:2].size())

@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func (mr *ModuleRegister) DateModuleInit() {
+func init() {
 	dtc := &DatetimeConstructor{}
 	fs := collectFunctionInfo(&dtc)
 	functionRegister("", fs)
@@ -38,7 +38,7 @@ func (dt *Datetime) String() string {
 type DatetimeConstructor struct{}
 
 // current datetime qk object
-func (dtc *DatetimeConstructor) Now() *ClassExecutor {
+func (dtc *DatetimeConstructor) Now() Value {
 	now := time.Now()
 	dt := &Datetime{now, now.Unix(), now.Format(CommonDatetimeFormat)}
 	return newClassExecutor("date", dt, &dt)

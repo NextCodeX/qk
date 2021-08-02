@@ -13,7 +13,7 @@ import (
 	"io"
 )
 
-func (mr *ModuleRegister) FileModuleInit() {
+func init() {
 	f := &File{}
 	fmap := collectFunctionInfo(&f)
 	functionRegister("file", fmap)
@@ -21,9 +21,7 @@ func (mr *ModuleRegister) FileModuleInit() {
 
 var regBlankChar = regexp.MustCompile(`\s+`)
 
-type File struct {
-
-}
+type File struct {}
 
 func (f *File) Bytes(filename string) []byte {
 	bs, err := ioutil.ReadFile(filename)

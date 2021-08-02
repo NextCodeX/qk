@@ -69,7 +69,7 @@ func (lexer *Lexer) run() []Token {
 			lexer.whenSpace()
 
 		case lexer.isSymbol():
-			lexer.whenSymBol()
+			lexer.whenSymbol()
 
 		case b == '"':
 			lexer.whenStringLiterial()
@@ -109,7 +109,7 @@ func (lexer *Lexer) whenNumber() {
 	}
 }
 
-func (lexer *Lexer) whenSymBol() {
+func (lexer *Lexer) whenSymbol() {
 	if lexer.currentByte == '.' && lexer.inStateInt() {
 		lexer.tmpBytesCollect()
 		lexer.setState(stateDot)
@@ -254,7 +254,7 @@ func (lexer *Lexer) tmpBytesCollect() {
 	lexer.tmpBytes = append(lexer.tmpBytes, lexer.currentByte)
 }
 
-func (lexer *Lexer) setState(state MachineState)  {
+func (lexer *Lexer) setState(state MachineState) {
 	lexer.preState = lexer.state
 	lexer.state = state
 }
@@ -266,7 +266,6 @@ func (lexer *Lexer) tailTokenClear() {
 	}
 	lexer.ts = (lexer.ts)[:size-1]
 }
-
 
 func (lexer *Lexer) pushSymbolToken() {
 	symbol := symbolToken(string(lexer.currentByte))
@@ -332,7 +331,7 @@ func (lexer *Lexer) pushLongToken() {
 
 func (lexer *Lexer) isSymbol() bool {
 	switch lexer.currentByte {
-	case '.', ':', '(', ')', '[', ']', '{', '}', ';', ',', '=', '!', '+', '-', '*', '/', '%', '>', '<', '|', '&':
+	case '.', ':', '(', ')', '[', ']', '{', '}', ';', ',', '=', '!', '+', '-', '*', '/', '%', '>', '<', '|', '&', '$':
 		return true
 	default:
 		return false

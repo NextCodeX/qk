@@ -1,20 +1,24 @@
 package core
 
-var funcList = make(map[string]Function)
+var mainFunc = newFuncWithoutTokens("main")
+// 添加 Quick 系统内部函数
+func addInternalFunc(name string, internalFunc func([]interface{})interface{}) {
+	mainFunc.addFunc(name, newInternalFunc(name, internalFunc))
+}
+func addModuleFunc(name string, moduleFunc *FunctionExecutor) {
+	mainFunc.addFunc(name, newModuleFunc(name, moduleFunc))
+}
 
 func Run(bs []byte) {
 	// 词法分析
 	ts := ParseTokens(bs)
 	printTokensByLine(ts)
 
-	// 语法分析
-	mainFunc := newFunc("main", ts, nil)
+	// 语法分析(解析)
+	mainFunc.setRaw(ts)
 	Compile(mainFunc)
-	for _, customFunc := range funcList {
-		Compile(customFunc)
-	}
 
-	// 解析并执行
+	// 程序执行
 	mainFunc.execute()
 }
 
@@ -55,11 +59,4 @@ func Compile(stmt Statement) {
 		stmt.parse()
 	}
 }
-
-//func Interpret() {
-//	stack := newVariableStack()
-//	stack.push() // 执行方法前，向变量栈(list)添加的一个变量池(map)
-//	executeFunctionStatementList(mainFunc.block, stack)
-//}
-
 

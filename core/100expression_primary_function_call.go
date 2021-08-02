@@ -29,26 +29,7 @@ func (priExpr *FunctionCallPrimaryExpression) setStack(stack Function) {
 }
 
 func (priExpr *FunctionCallPrimaryExpression) doExecute() Value {
-    functionName := priExpr.name
-    args := priExpr.args
-
-    customFunc, ok := funcList[functionName]
-    if ok {
-        argVals := priExpr.evalValues(args)
-        customFunc.setArgs(argVals)
-        res :=  customFunc.execute()
-        if res != nil {
-            return res.value()
-        }
-    } else if isPrint(functionName) {
-        argRawVals := priExpr.toGoTypeValues(args)
-        executePrintFunc(functionName, argRawVals)
-    } else if isModuleFunc(functionName) {
-        argRawVals := priExpr.toGoTypeValues(args)
-        return executeModuleFunc(functionName, argRawVals)
-    } else {
-        errorf("function %v() is not defined!", functionName)
-    }
+    runtimeExcption("running FunctionCallPrimaryExpression.doExecute is error")
     return nil
 }
 

@@ -8,6 +8,9 @@ const (
     ArrayPrimaryExpressionType
     ObjectPrimaryExpressionType
     ChainCallPrimaryExpressionType
+    ElemFunctionCallPrimaryExpressionType
+    FunctionPrimaryExpressionType
+    SubListPrimaryExpressionType
     ElementPrimaryExpressionType
     AttibutePrimaryExpressionType
     FunctionCallPrimaryExpressionType
@@ -31,6 +34,9 @@ type PrimaryExpression interface {
     isArray() bool
     isObject() bool
     isChainCall() bool
+    isElemFunctionCall() bool
+    isFunction() bool
+    isSubList() bool
     isElement() bool
     isAttibute() bool
     isFunctionCall() bool
@@ -116,6 +122,18 @@ func (priExpr *PrimaryExpressionImpl) isObject() bool {
 
 func (priExpr *PrimaryExpressionImpl) isChainCall() bool {
     return (priExpr.t & ChainCallPrimaryExpressionType) == ChainCallPrimaryExpressionType
+}
+
+func (priExpr *PrimaryExpressionImpl) isElemFunctionCall() bool {
+    return (priExpr.t & ElemFunctionCallPrimaryExpressionType) == ElemFunctionCallPrimaryExpressionType
+}
+
+func (priExpr *PrimaryExpressionImpl) isFunction() bool {
+    return (priExpr.t & FunctionPrimaryExpressionType) == FunctionPrimaryExpressionType
+}
+
+func (priExpr *PrimaryExpressionImpl) isSubList() bool {
+    return (priExpr.t & SubListPrimaryExpressionType) == SubListPrimaryExpressionType
 }
 
 func (priExpr *PrimaryExpressionImpl) isElement() bool {

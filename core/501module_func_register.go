@@ -6,35 +6,6 @@ import (
 	"strings"
 )
 
-var funcs =  make(map[string]*FunctionExecutor)
-
-type ModuleRegister struct{}
-
-// register all module...
-func Load() map[string]*FunctionExecutor {
-	mr := &ModuleRegister{}
-	v1 := reflect.ValueOf(&mr).Elem()
-	for i := 0; i < v1.NumMethod(); i++ {
-		v1.Method(i).Call(nil)
-	}
-	return funcs
-}
-
-func collectFieldInfo(objPtr interface{}) (res map[string]*FieldInfo) {
-	res = make(map[string]*FieldInfo)
-	v := reflect.ValueOf(objPtr).Elem()
-	k := v.Type()
-	for i := 0; i < v.NumField(); i++ {
-		key := k.Field(i)
-		val := v.Field(i)
-		if !val.CanInterface() { //CanInterface(): 判断该成员变量是否能被获取值
-			continue
-		}
-		fieldName := formatName(key.Name)
-		res[fieldName] = &FieldInfo{name: fieldName, t:val.Type(), v:val}
-	}
-	return res
-}
 
 func collectFunctionInfo(objDoublePtr interface{}) (res map[string]*FunctionExecutor) {
 	res = make(map[string]*FunctionExecutor)
@@ -71,11 +42,12 @@ func collectFunctionInfo(objDoublePtr interface{}) (res map[string]*FunctionExec
 func functionRegister(module string, fmap map[string]*FunctionExecutor) {
 	for name, f := range fmap {
 		if module == "" {
-			funcs[name] = f
+			addModuleFunc(name, f)
+			continue
 		}
 
 		funcKey := standardName(module, name)
-		funcs[funcKey] = f
+		addModuleFunc(funcKey, f)
 	}
 }
 

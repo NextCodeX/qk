@@ -28,6 +28,14 @@ func insert(h Token, ts []Token) []Token {
     return res
 }
 
+// 移除Token列表中, 最后一个Token
+func removeTailToken(ts []Token) {
+	if len(ts) < 1 {
+		return
+	}
+	ts = ts[:len(ts)-1]
+}
+
 // 获取当前索引于当前token列表的上一个token， 并返回上一个token是否存在的判断
 func preToken(currentIndex int, ts []Token) (t Token, ok bool) {
     if currentIndex-1 < 0 {
@@ -89,6 +97,17 @@ func hasSymbol(ts []Token, ss ...string) bool {
     return false
 }
 
+// 获取指定符号token列表任意Token的下一个索引
+func nextSymbolsIndex(ts []Token, currentIndex int, tokenStrs ...string) int {
+	for i:=currentIndex; i<len(ts); i++ {
+		t := ts[i]
+		if t.assertSymbols(tokenStrs...) {
+			return i
+		}
+	}
+	return -1
+}
+
 // 获取指定符号token的下一个索引
 func nextSymbolIndex(ts []Token, currentIndex int, s string) int {
     for i:=currentIndex; i<len(ts); i++ {
@@ -98,6 +117,20 @@ func nextSymbolIndex(ts []Token, currentIndex int, s string) int {
         }
     }
     return -1
+}
+
+// 获取指定符号token的下一个索引, 其间或错误符号直接退出
+func nextSymbolIndexNotError(ts []Token, currentIndex int, s string, errSymbols ...string) int {
+	for i:=currentIndex; i<len(ts); i++ {
+		t := ts[i]
+		if t.assertSymbols(errSymbols...) {
+			return -1
+		}
+		if t.assertSymbol(s) {
+			return i
+		}
+	}
+	return -1
 }
 
 // 根据指定分隔符获取程序块的尾索引

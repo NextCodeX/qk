@@ -50,6 +50,7 @@ func (priExpr *ArrayPrimaryExpression) doExecute() Value {
         }
 
         expr := extractExpression(exprTokens)
+        expr.setStack(priExpr.getStack())
         val := expr.execute()
         array.add(val)
         i = nextCommaIndex

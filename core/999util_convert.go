@@ -8,7 +8,7 @@ import (
 )
 
 
-func toIntValue(any interface{}) int {
+func toInt(any interface{}) int {
 	switch v := any.(type) {
 	case int32:
 		return int(v)

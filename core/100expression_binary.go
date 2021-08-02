@@ -83,8 +83,8 @@ type BinaryExpression interface {
     leftVal() Value
     rightExpr() PrimaryExpression
     leftExpr() PrimaryExpression
-    setReceiver(name string)
-    getReceiver() string
+    setReceiver(name PrimaryExpression)
+    getReceiver() PrimaryExpression
     Expression
 }
 
@@ -92,8 +92,8 @@ type BinaryExpressionImpl struct {
     t OperationType
     left PrimaryExpression
     right PrimaryExpression
-    receiver string // 结果接收变量名
-    res Value
+    receiver PrimaryExpression // 结果接收表达式
+    res Value // 用于常量折叠
     ExpressionAdapter
 }
 
@@ -106,6 +106,9 @@ func (binExpr *BinaryExpressionImpl) setStack(stack Function) {
 
     binExpr.left.setStack(stack)
     binExpr.right.setStack(stack)
+    if binExpr.receiver != nil {
+        binExpr.receiver.setStack(stack)
+    }
 }
 
 func (binExpr *BinaryExpressionImpl) execute() Value {
@@ -164,9 +167,8 @@ func (binExpr *BinaryExpressionImpl) execute() Value {
     if res == nil {
         res = NULL
     }
-    if binExpr.receiver != "" {
-        varname := binExpr.receiver
-        binExpr.setVar(varname, res)
+    if binExpr.receiver != nil {
+        binExpr.evalAssign(binExpr.receiver, res)
     }
     // 常量折叠
     if left.isConst() && right.isConst() {
@@ -422,35 +424,28 @@ func (binExpr *BinaryExpressionImpl) evalAssignBinaryExpression() Value {
 }
 
 func (binExpr *BinaryExpressionImpl) evalAssign(priExpr PrimaryExpression, res Value) {
-    if priExpr.isElement() {
-        info := priExpr.(*ElementPrimaryExpression)
-        varVal := binExpr.getVar(info.name)
-        argRawVals := binExpr.toGoTypeValues(info.args)
-        if varVal.isJsonArray() {
-            index := toIntValue(argRawVals[0])
-            arr := goArr(varVal)
-            arr.set(index, res)
-            return
-        }
-        if varVal.isJsonObject() {
-            key := toStringValue(argRawVals[0])
-            obj := goObj(varVal)
-            obj.put(key, res)
-            return
-        }
+    fmt.Printf("ElemFunctionCallPrimaryExpression assign### %v = %v; %v,%v \n", tokensString(priExpr.raw()), res.val(), priExpr.isElemFunctionCall(), priExpr.isVar())
+    if priExpr.isElemFunctionCall() {
+        subExpr := priExpr.(*ElemFunctionCallPrimaryExpression)
+        subExpr.beAssigned(res)
 
-    } else if priExpr.isAttibute() {
+    } else if priExpr.isChainCall() {
+        subExpr := priExpr.(*ChainCallPrimaryExpression)
+        subExpr.beAssigned(res)
+
     } else if priExpr.isVar() {
-        info := priExpr.(*VarPrimaryExpression)
-        binExpr.setVar(info.varname, res)
+        varExpr := priExpr.(*VarPrimaryExpression)
+        varExpr.beAssigned(res)
+
     } else {
-        errorf("invalid assign expression")
+        errorf("invalid assign expression: %v = %v", tokensString(priExpr.raw()), res.val())
     }
 }
 
 func (binExpr *BinaryExpressionImpl) evalAddBinaryExpression() (res Value) {
     left := binExpr.leftVal()
     right := binExpr.rightVal()
+    //fmt.Println("evalAddBinaryExpression: = ", left.val(), right.val())
     var tmpVal interface{}
     switch {
     case left.isInt() && right.isInt():
@@ -587,10 +582,10 @@ func (binExpr *BinaryExpressionImpl) evalModBinaryExpression() (res Value) {
 
 
 
-func (binExpr *BinaryExpressionImpl) setReceiver(name string) {
+func (binExpr *BinaryExpressionImpl) setReceiver(name PrimaryExpression) {
     binExpr.receiver = name
 }
-func (binExpr *BinaryExpressionImpl) getReceiver() string {
+func (binExpr *BinaryExpressionImpl) getReceiver() PrimaryExpression {
     return binExpr.receiver
 }
 

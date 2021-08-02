@@ -56,7 +56,11 @@ func (priExpr *ObjectPrimaryExpression) doExecute() Value {
         keyname := token.raw()
 
         expr := extractExpression(exprTokens)
+        expr.setStack(priExpr.getStack())
         val := expr.execute()
+        if fn, ok := val.(Function); ok {
+            fn.setThis(object)
+        }
         object.put(keyname, val)
         i = nextCommaIndex
     }

@@ -4,7 +4,7 @@ import (
 	"regexp"
 )
 
-func (mr *ModuleRegister) RegexpModuleInit() {
+func init() {
 	re := &QkRegexp{}
 	fre := collectFunctionInfo(&re)
 	functionRegister("reg", fre)

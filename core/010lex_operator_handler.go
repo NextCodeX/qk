@@ -8,64 +8,50 @@ func parse4OperatorTokens(ts []Token) []Token {
 	for _, token := range ts {
 		last, lastExist := lastToken(res)
 
-		currentIsEqual := token.assertSymbol("=")
-		condEqualMerge := lastExist && last.assertSymbols("=", ">", "<", "+", "-", "*", "/", "%", "!")
-		condEqual := currentIsEqual && condEqualMerge
+		condArrow := func() bool {
+			// ->
+			return token.assertSymbol(">") && lastExist && last.assertSymbol("-")
+		}
 
-		currentIsOr := token.assertSymbol("|")
-		condOrMerge := lastExist && last.assertSymbols("|")
-		condOr := currentIsOr && condOrMerge
+		condEqual := func() bool {
+			// ==, !=, >=, <=, -=, +=, *=, /=
+			return token.assertSymbol("=") && lastExist && last.assertSymbols("=", ">", "<", "+", "-", "*", "/", "%", "!")
+		}
 
-		currentIsAnd := token.assertSymbol("&")
-		condAndMerge := lastExist && last.assertSymbols("&")
-		condAnd := currentIsAnd && condAndMerge
+		condOr := func() bool {
+			// ||
+			return token.assertSymbol("|") && lastExist && last.assertSymbols("|")
+		}
 
-		currentIsAdd := token.assertSymbol("+")
-		condAddMerge := lastExist && last.assertSymbols("+")
-		condAdd := currentIsAdd && condAddMerge
+		condAnd := func() bool {
+			// &&
+			return token.assertSymbol("&") && lastExist && last.assertSymbols("&")
+		}
 
-		currentIsSub := token.assertSymbol("-")
-		condSubMerge := lastExist && last.assertSymbols("-")
-		condSub := currentIsSub && condSubMerge
+		condAdd := func() bool {
+			// ++
+			return token.assertSymbol("+") && lastExist && last.assertSymbol("+")
+		}
 
-		lastSecond, lastSecondExist := lastSecondToken(res)
-		condNegative := (token.isInt() || token.isFloat()) && (lastExist && last.assertSymbol("-")) && (lastSecondExist && !lastSecond.assertSymbol(")") && !(lastSecond.isInt() || lastSecond.isFloat()))
+		condSub := func() bool {
+			// --
+			return token.assertSymbol("-") && lastExist && last.assertSymbol("-")
+		}
 
-		if condEqual || condAnd || condOr || condAdd || condSub || condNegative {
+		condNegative := func() bool {
+			// -number(负数处理条件判断)
+			lastSecond, lastSecondExist := lastSecondToken(res)
+			return (token.isInt() || token.isFloat()) && (lastExist && last.assertSymbol("-")) && (lastSecondExist && !lastSecond.assertSymbol(")") && !(lastSecond.isInt() || lastSecond.isFloat()))
+		}
+
+		if condArrow() || condEqual() || condAnd() || condOr() || condAdd() || condSub() || condNegative() {
 			res = tailTokenMerge(res, token)
-			if newTokens, ok := extractAddSubSelfToken(condAdd, condSub, res); ok {
-				res = newTokens
-			}
 			continue
 		}
 
 		res = append(res, token)
 	}
 	return res
-}
-
-// 提取自增，自减token
-func extractAddSubSelfToken(condAdd bool, condSub bool, ts []Token) (res []Token, ok bool) {
-	size := len(ts)
-	if (!condAdd && !condSub) || size<2 || !ts[size-2].isIdentifier() {
-		// 判断自增，自减运算符是否能前一个token合并为自增，自减token
-		return
-	}
-
-	var newTokenType TokenType
-	if condAdd {
-		newTokenType = AddSelf
-	} else {
-		newTokenType = SubSelf
-	}
-	tailIndex := size - 2
-	tail := ts[tailIndex]
-	tail.addType(newTokenType)
-
-	res = ts[:size-1]
-	res[tailIndex] = tail
-
-	return res, true
 }
 
 // 当前token与前一个token合并。

@@ -7,60 +7,42 @@ func extractStatement(stmt Statement) {
 		var endIndex int
 		var subStmt Statement
 
-		if !t.isIdentifier() && !t.isComplex() {
-			goto nextLoop
-		}
-		switch t.raw() {
-		case "if":
+		switch {
+		case t.assertIdentifier("if"):
 			subStmt, endIndex = extractIfStatement(i, ts)
-		case "for":
+		case t.assertIdentifier("for"):
 			subStmt, endIndex = extractForStatement(i, ts)
-		case "foreach":
+		case t.assertIdentifier("foreach"):
 			subStmt, endIndex = extractForeachStatement(i, ts)
-		case "fori":
+		case t.assertIdentifier("fori"):
 			subStmt, endIndex = extractForIndexStatement(i, ts)
-		case "forv":
+		case t.assertIdentifier("forv"):
 			subStmt, endIndex = extractForValueStatement(i, ts)
-		case "switch":
-		case "continue":
+		case t.assertIdentifier("switch"):
+		case t.assertIdentifier("continue"):
 			subStmt, endIndex = extractContinueStatement(i, ts)
-		case "break":
+		case t.assertIdentifier("break"):
 			subStmt, endIndex = extractBreakStatement(i, ts)
-		case "return":
+		case t.assertIdentifier("return"):
 			subStmt, endIndex = extractReturnStatement(i, ts)
 		default:
-			if t.isFdef() {
-				// 提取 函数定义
-				f, endIndex1 := extractFunction(i, ts)
-				if stack, ok := stmt.(Function); ok {
-					f.setParent(stack)
-				} else {
-					f.setParent(stmt.getParent())
-				}
-				funcList[f.getName()] = f
-				i = endIndex1
-				goto nextLoop
-			}
 			// 提取 表达式语句
 			subStmt, endIndex = extractExpressionStatement(i, ts)
-
 		}
 		if endIndex > 0 {
 			if subStmt != nil {
-				//subStmt.setStack(stmt)
 				stmt.addStmt(subStmt)
 			}
 			i = endIndex
 		}
 
-	nextLoop:
 		i++
 	}
 }
 
 func extractExpressionStatement(currentIndex int, ts []Token) (Statement, int) {
 	size := len(ts)
-	if !hasSymbol(ts[currentIndex:], ";") && currentIndex<size {
+	if !hasSymbol(ts[currentIndex:], ";") {
 		stmt := newExpressionStatement(ts[currentIndex:])
 		return stmt, size
 	}
@@ -123,45 +105,6 @@ func extractReturnStatement(currentIndex int, ts []Token) (Statement, int) {
 	return stmt, endIndex
 }
 
-func extractFunction(currentIndex int, ts []Token) (Function, int) {
-	var nextIndex int
-	defToken := ts[currentIndex]
-
-	functionName := defToken.raw()
-	paramNames := extractFunctionParamNames(defToken.tokens())
-	var blockTokens []Token
-	size := len(ts)
-	scopeOpenCount := 1
-	for i:=currentIndex+2; i<size; i++ {
-		token := ts[i]
-		if token.assertSymbol("{") {
-			scopeOpenCount ++
-		}
-		if token.assertSymbol("}") {
-			scopeOpenCount --
-			if scopeOpenCount == 0 {
-				nextIndex = i
-				break
-			}
-		}
-		blockTokens = append(blockTokens, token)
-	}
-	if scopeOpenCount > 0 {
-		runtimeExcption("parse function statement exception!")
-	}
-	return newFunc(functionName, blockTokens, paramNames), nextIndex
-}
-
-func extractFunctionParamNames(ts []Token) []string {
-	var paramNames []string
-	for _, token := range ts {
-		if token.assertSymbol(",") {
-			continue
-		}
-		paramNames = append(paramNames, token.raw())
-	}
-	return paramNames
-}
 
 func extractIfStatement(currentIndex int, ts []Token) (Statement, int) {
 	var condStmts []Statement

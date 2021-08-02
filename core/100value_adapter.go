@@ -32,3 +32,6 @@ func (valAdapter *ValueAdapter) isJsonObject() bool {
 func (valAdapter *ValueAdapter) isFunction() bool {
     return false
 }
+func (valAdapter *ValueAdapter) isObject() bool {
+    return false
+}

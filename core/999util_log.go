@@ -50,21 +50,6 @@ func printExprTokens(exprTokensList [][]Token) {
 	fmt.Println(buf.String())
 }
 
-
-//func printFunc() {
-//	doPrintFunc(mainFunc)
-//	for _, fn := range funcList {
-//		doPrintFunc(fn)
-//	}
-//}
-
-//func doPrintFunc(fn *FunctionImpl) {
-//	fmt.Println("######################", fn.name, len(fn.block))
-//	for i, stmt := range fn.block {
-//		fmt.Printf("num: %v line %v: \n %v \n", len(stmt.raw), i, stmt)
-//	}
-//}
-
 func printTokensByLine(tokens []Token) {
 	for i, token := range tokens {
 		fmt.Printf("count %v-%v: [%v] -> %v \n", i, token.lineIndexString(), token.String(), token.TokenTypeName())

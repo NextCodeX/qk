@@ -1,6 +1,5 @@
 package core
 
-
 type ChainCallPrimaryExpression struct {
     chain []PrimaryExpression
     head  PrimaryExpression // ChainCall 的头表达式
@@ -30,66 +29,60 @@ func (priExpr *ChainCallPrimaryExpression) getName() string {
 }
 
 func (priExpr *ChainCallPrimaryExpression) doExecute() Value {
-    priExpr.head.setStack(priExpr.getStack())
+    return priExpr.exprExec(priExpr.chain)
+}
+
+func (priExpr *ChainCallPrimaryExpression) exprExec(chainExprs []PrimaryExpression) Value {
     caller := priExpr.head.execute()
 
-    //fmt.Println("eval chainCall#in: ", priExpr.head.left.isFunctionCall(), priExpr.isNot())
-    //fmt.Println("eval chainCall#start: ", caller.val())
-
-    for _, pri := range priExpr.chain {
+    for _, pri := range chainExprs {
         var intermediateResult Value
-        if caller.isJsonArray() {
-            if pri.isFunctionCall() {
-                info := pri.(*FunctionCallPrimaryExpression)
-                argRawVals := priExpr.toGoTypeValues(info.args)
-                intermediateResult = evalJSONArrayMethod(goArr(caller), info.name, argRawVals)
-            } else {}
-        } else if caller.isJsonObject() {
-            if pri.isVar() {
-                info := pri.(*VarPrimaryExpression)
-                intermediateResult = goObj(caller).get(info.varname)
-            } else if pri.isFunctionCall() {
-                info := pri.(*FunctionCallPrimaryExpression)
-                argRawVals := priExpr.toGoTypeValues(info.args)
-                intermediateResult = evalJSONObjectMethod(goObj(caller), info.name, argRawVals)
-            } else if pri.isElement() {
-                info := pri.(*ElementPrimaryExpression)
-                val := goObj(caller).get(info.name)
-                argRawVals := priExpr.toGoTypeValues(info.args)
-                if val.isJsonArray() {
-                    arr := goArr(val)
-                    index := toIntValue(argRawVals[0])
-                    intermediateResult = arr.get(index)
-                } else if val.isJsonObject() {
-                    obj := goObj(val)
-                    key := toStringValue(obj)
-                    intermediateResult = obj.get(key)
-                } else { }
-            }
-        } else if caller.isString() {
-            if pri.isFunctionCall() {
-                info := pri.(*FunctionCallPrimaryExpression)
-                argRawVals := priExpr.toGoTypeValues(info.args)
-                intermediateResult = evalStringMethod(goStr(caller), info.name, argRawVals)
-            } else {}
-        } else if caller.isClass() {
-            if pri.isFunctionCall() {
-                info := pri.(*FunctionCallPrimaryExpression)
-                argRawVals := priExpr.toGoTypeValues(info.args)
-                intermediateResult = evalClassMethod(goAny(caller), info.name, argRawVals)
+        if caller.isObject() {
+            obj := caller.(Object)
+            if pri.isElemFunctionCall() {
+                // object.method() / object.arr[]
+                nextExpr := pri.(*ElemFunctionCallPrimaryExpression)
+                intermediateResult = nextExpr.runWith(obj)
+
             } else if pri.isVar() {
-                info := pri.(*VarPrimaryExpression)
-                intermediateResult = evalClassField(goAny(caller), info.varname)
-            } else {}
-        } else {}
+                // object.attribute
+                nextExpr := pri.(*VarPrimaryExpression)
+                intermediateResult = nextExpr.getAttribute(obj)
+
+            } else {
+                errorf("%v.%v is error", caller.val(), tokensString(pri.raw()))
+            }
+        } else {
+            runtimeExcption("invalid chain call expression:", tokensString(priExpr.raw()))
+        }
 
         if intermediateResult == nil {
-            runtimeExcption("invalid chain call expression")
+            runtimeExcption("invalid chain call expression:", tokensString(priExpr.raw()))
         } else {
             caller = intermediateResult
-            //fmt.Println("eval chainCall#intermediate: ", intermediateResult.val())
         }
     }
     return caller
+}
+
+func (priExpr *ChainCallPrimaryExpression) beAssigned(res Value) {
+    chainExprs := priExpr.chain
+    chainLen := len(chainExprs)
+	obj := priExpr.exprExec(chainExprs[:chainLen-1])
+
+    tailExpr := chainExprs[chainLen-1]
+	if obj.isJsonObject() && tailExpr.isVar() {
+        jsonObject := obj.(JSONObject)
+        varExpr := tailExpr.(*VarPrimaryExpression)
+        varExpr.assign(jsonObject, res)
+
+    } else if obj.isJsonObject() && tailExpr.isElemFunctionCall() {
+        jsonObject := obj.(JSONObject)
+        subExpr := tailExpr.(*ElemFunctionCallPrimaryExpression)
+        subExpr.beAssignedAfterChainCall(jsonObject, res)
+
+    } else {
+        errorf("(in ChainCall)invalid assign expression: %v = %v", tokensString(priExpr.raw()), res.val())
+    }
 }
 

@@ -6,7 +6,7 @@ import (
 	"crypto/rand"
 )
 
-func (mr *ModuleRegister) StringModuleInit() {
+func init() {
 	s := &QkString{}
 	fmap := collectFunctionInfo(&s)
 	functionRegister("str", fmap)

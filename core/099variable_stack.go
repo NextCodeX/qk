@@ -13,14 +13,23 @@ func (vs *ValueStack) getVar(name string) Value {
     var level = vs.stack
     var res Value
     for level != nil {
+        fns := level.getLocalFunctions()
         varMap := level.getLocalVars()
         if varMap == nil {
             break
         }
-        res = varMap.get(name)
-        if res == nil {
+
+        val := varMap.get(name)
+        fn, ok := fns[name]
+
+        if  val == nil && !ok {
             level = level.getParent()
         } else {
+            if val != nil {
+                res = val
+            } else if ok {
+                res = fn
+            } else {}
             break
         }
     }
@@ -39,12 +48,20 @@ func (vs *ValueStack) setVar(name string, value Value) {
         if res == nil {
             level = level.getParent()
         } else {
-            varMap.add(name, value)
+            if value.isFunction() {
+                level.addFunc(name, value.(Function))
+            } else {
+                varMap.add(name, value)
+            }
             break
         }
     }
     if res == nil {
-        vs.stack.getLocalVars().add(name, value)
+        if value.isFunction() {
+            vs.stack.addFunc(name, value.(Function))
+        } else {
+            vs.stack.getLocalVars().add(name, value)
+        }
     }
 }
 

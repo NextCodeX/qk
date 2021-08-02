@@ -16,16 +16,17 @@ type ClassExecutor struct {
 
 var ClassType = reflect.TypeOf(&ClassExecutor{})
 
-func newClassExecutor(name string, objPtr interface{}, objDoublePtr interface{}) *ClassExecutor {
+func newClassExecutor(name string, objPtr interface{}, objDoublePtr interface{}) Value {
 	fs := collectFieldInfo(objPtr)
 	mts := collectFunctionInfo(objDoublePtr)
-	res := &ClassExecutor{
-		raw: objPtr,
-		name: name,
-		fields: fs,
-		methods: mts,
+	m := make(map[string]Value)
+	for name, f := range fs {
+		m[name] = toQKValue(f.get())
 	}
-	return res
+	for name, mt := range mts {
+		m[name] = newModuleFunc(name, mt)
+	}
+	return newClass(name, m)
 }
 
 func (clazz *ClassExecutor) fieldValue(name string) interface{} {
@@ -40,16 +41,16 @@ func (clazz *ClassExecutor) setField(name string, rawVal interface{}) {
 	field.set(rawVal)
 }
 
-func (clazz *ClassExecutor) callMethod(name string, vals []interface{}) Value {
-	mt, exist := clazz.methods[name]
-	assert(!exist, fmt.Sprintf("method %v.%v is undefined!", clazz.name, name))
-	return callFunctionExecutor(mt, vals)
-}
+//func (clazz *ClassExecutor) callMethod(name string, vals []interface{}) Value {
+//	mt, exist := clazz.methods[name]
+//	assert(!exist, fmt.Sprintf("method %v.%v is undefined!", clazz.name, name))
+//	return callFunctionExecutor(mt, vals)
+//}
 
-func evalClassMethod(any interface{}, name string, vals []interface{}) Value {
-	clazz := any.(*ClassExecutor)
-	return clazz.callMethod(name, vals)
-}
+//func evalClassMethod(any interface{}, name string, vals []interface{}) Value {
+//	clazz := any.(*ClassExecutor)
+//	return clazz.callMethod(name, vals)
+//}
 
 func evalClassField(any interface{}, attrname string) Value {
 	clazz := any.(*ClassExecutor)

@@ -2,38 +2,36 @@ package core
 
 import "fmt"
 
-func isPrint(funcName string) bool {
-	return match(funcName, "println", "printf", "print")
-}
+func init()  {
+	addInternalFunc("print", func(args []interface{}) interface{} {
+		fmt.Print(args...)
+		return nil
+	})
 
-func executePrintFunc(funcName string, args []interface{}) (res Value) {
-	argCount := len(args)
-	if funcName == "println" {
-		fmt.Println(args...)
-		return
-	}
-
-	if funcName == "printf" {
+	addInternalFunc("printf", func(args []interface{}) (res interface{}) {
+		argCount := len(args)
 		if argCount < 1 {
 			runtimeExcption("printf argument is too less")
-			return
+			return res
 		}
 		format, ok := args[0].(string)
 		if !ok {
 			runtimeExcption("printf argumant format must be string type.")
-			return
+			return res
 		}
 		if argCount == 1 {
 			fmt.Printf(format)
-			return
+			return res
 		}
 		fmt.Printf(format, args[1:]...)
-		return
-	}
+		return res
+	})
 
-	if funcName == "print" {
-		fmt.Print(args...)
-	}
-	return
+	addInternalFunc("println", func(args []interface{}) interface{} {
+		fmt.Println(args...)
+		return nil
+	})
 }
+
+
 

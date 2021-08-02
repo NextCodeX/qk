@@ -27,7 +27,7 @@ func main() {
 		}
 	}
 
-	qkfile := "examples/demo.qk"
+	qkfile := "examples/element-function-call-mixture.qk"
 	//qkfile := getScriptFile()
 	//changeWorkDirectory()
 

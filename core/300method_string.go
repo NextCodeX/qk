@@ -1,98 +1,108 @@
 package core
 
 import (
-	"unicode/utf8"
-	"strings"
 	"fmt"
+	"strings"
 )
 
-func evalStringMethod(str string, method string, args []interface{}) (res Value) {
-	var rawVal interface{}
-	argCount := len(args)
-	switch method {
+func (str *StringValue) isObject() bool {
+	return true
+}
+func (str *StringValue) get(key string) Value {
+	raw := str.goValue
+	switch key {
 	case "size":
-		rawVal = utf8.RuneCountInString(str)
+		return newInternalFunc(key, func(args []interface{})interface{}{
+			return str.size()
+		})
 
 	case "trim":
-		rawVal = strings.TrimSpace(str)
+		return newInternalFunc(key, func(args []interface{})interface{}{
+			return strings.TrimSpace(raw)
+		})
 
 	case "replace":
-		assert(len(args)<2, "method string.replace must has two parameter.")
-		oldVal, ok1 := args[0].(string)
-		newVal, ok2 := args[1].(string)
-		assert(!ok1 || !ok2, "parameter type error, require replace(string, string)")
-		rawVal = strings.ReplaceAll(str, oldVal, newVal)
+		return newInternalFunc(key, func(args []interface{})interface{}{
+			assert(len(args)<2, "method string.replace must has two parameter.")
+			oldVal, ok1 := args[0].(string)
+			newVal, ok2 := args[1].(string)
+			assert(!ok1 || !ok2, "parameter type error, require replace(string, string)")
+			return strings.ReplaceAll(raw, oldVal, newVal)
+		})
 
 	case "contain":
-		assert(len(args)<1, "method string.contain must has one parameter.")
-		subStr, ok := args[0].(string)
-		assert(!ok, "parameter type error, require contain(string)")
-		rawVal = strings.Contains(str, subStr)
+		return newInternalFunc(key, func(args []interface{})interface{}{
+			assert(len(args)<1, "method string.contain must has one parameter.")
+			subStr, ok := args[0].(string)
+			assert(!ok, "parameter type error, require contain(string)")
+			return strings.Contains(raw, subStr)
+		})
 
 	case "lower":
-		rawVal = strings.ToLower(str)
+		return newInternalFunc(key, func(args []interface{})interface{}{
+			return strings.ToLower(raw)
+		})
 
 	case "upper":
-		rawVal = strings.ToUpper(str)
+		return newInternalFunc(key, func(args []interface{})interface{}{
+			return strings.ToUpper(raw)
+		})
 
 	case "lowerFirst":
-		rawVal = strings.ToLower(str[:1]) + str[1:]
+		return newInternalFunc(key, func(args []interface{})interface{}{
+			return strings.ToLower(str.sub(0, 1)) + str.sub(1, str.size())
+		})
 
 	case "upperFirst":
-		rawVal = strings.ToUpper(str[:1]) + str[1:]
+		return newInternalFunc(key, func(args []interface{})interface{}{
+			return strings.ToUpper(str.sub(0, 1)) + str.sub(1, str.size())
+		})
 
 	case "toTitle":
-		rawVal = strings.ToTitle(str)
+		return newInternalFunc(key, func(args []interface{})interface{}{
+			return strings.ToTitle(raw)
+		})
 
 	case "title":
-		rawVal = strings.Title(str)
+		return newInternalFunc(key, func(args []interface{})interface{}{
+			return strings.Title(raw)
+		})
 
 	case "hasPrefix":
-		assert(len(args)<1, "method string.hasPrefix must has one parameter.")
-		prefix, ok := args[0].(string)
-		assert(!ok, "parameter type error, require hasPrefix(string)")
-		rawVal = strings.HasPrefix(str, prefix)
+		return newInternalFunc(key, func(args []interface{})interface{}{
+			assert(len(args)<1, "method string.hasPrefix must has one parameter.")
+			prefix, ok := args[0].(string)
+			assert(!ok, "parameter type error, require hasPrefix(string)")
+			return strings.HasPrefix(raw, prefix)
+		})
 
 	case "hasSuffix":
-		assert(len(args)<1, "method string.hasSuffix must has one parameter.")
-		suffix, ok := args[0].(string)
-		assert(!ok, "parameter type error, require hasSuffix(string)")
-		rawVal = strings.HasSuffix(str, suffix)
-
-	case "sub":
-		assert(argCount<1, "method string.sub must has one parameter.")
-		startIndex, ok1 := args[0].(int64)
-		if argCount == 1 {
-			assert(!ok1, "parameter type error, require sub(int)")
-			rawVal = str[startIndex:]
-			break
-		}
-		endIndex, ok2 := args[1].(int64)
-		assert(!ok1 || !ok2, "parameter type error, require sub(int, int)")
-		assert(startIndex<0 || startIndex>endIndex || int(endIndex)>=len(str), fmt.Sprintf("string out of index, sub(%v, %v)", startIndex, endIndex))
-		rawVal = str[startIndex: endIndex]
+		return newInternalFunc(key, func(args []interface{})interface{}{
+			assert(len(args)<1, "method string.hasSuffix must has one parameter.")
+			suffix, ok := args[0].(string)
+			assert(!ok, "parameter type error, require hasSuffix(string)")
+			return strings.HasSuffix(raw, suffix)
+		})
 
 	case "split":
-		assert(len(args)<1, "method string.split must has one parameter.")
-		reg, ok := args[0].(string)
-		assert(!ok, "parameter type error, require split(string)")
-		tmp := toCommonSlice(strings.Split(str, reg))
-		return toQKValue(tmp)
+		return newInternalFunc(key, func(args []interface{})interface{}{
+			assert(len(args)<1, "method string.split must has one parameter.")
+			reg, ok := args[0].(string)
+			assert(!ok, "parameter type error, require split(string)")
+			tmp := toCommonSlice(strings.Split(raw, reg))
+			return toQKValue(tmp)
+		})
 
 	case "eic":
-		assert(len(args)<1, "method string.eic must has one parameter.")
-		strB, ok := args[0].(string)
-		assert(!ok, "parameter type error, require eic(string)")
-		res := str == strB || strings.ToLower(str) == strings.ToLower(strB)
-		return toQKValue(res)
-
+		return newInternalFunc(key, func(args []interface{})interface{}{
+			assert(len(args)<1, "method string.eic must has one parameter.")
+			strB, ok := args[0].(string)
+			assert(!ok, "parameter type error, require eic(string)")
+			res := raw == strB || strings.ToLower(raw) == strings.ToLower(strB)
+			return toQKValue(res)
+		})
 	default:
-		runtimeExcption(fmt.Sprintf("string.%v is undefined.", method))
+		runtimeExcption(fmt.Sprintf("string.%v() is undefined.", key))
+		return NULL
 	}
-
-	if rawVal == nil {
-		return
-	}
-	return newQKValue(rawVal)
-
 }
