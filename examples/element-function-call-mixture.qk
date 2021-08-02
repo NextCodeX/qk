@@ -83,7 +83,7 @@ obj.age --
 obj.age --
 obj.age --
 obj.age --
-println(obj)*/
+println(obj)
 
 obj = {
     score:[99, 58, 120],
@@ -97,3 +97,7 @@ obj.score[1] --
 obj.info["name"] = "jerry"
 println(obj)
 println(obj.info["name"].upper().size(), obj.info["name"].upper(), obj.info["name"].upper()[:2], obj.info["name"].upper()[:2].lower(), obj.info["name"].upper()[:2].size())
+*/
+
+str = "中华人民共和国Fire"
+println(str[:3], str[2], str[7], str[0], str[str.size()-1])

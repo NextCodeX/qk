@@ -24,6 +24,10 @@ func (str *StringValue) size() int {
     return len(str.chars)
 }
 
+func (str *StringValue) getChar(index int) string {
+    return string(str.chars[index])
+}
+
 func (str *StringValue) sub(start, end int) string {
     var buf bytes.Buffer
     for _, ch := range str.chars[start:end] {

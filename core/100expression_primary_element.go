@@ -36,6 +36,11 @@ func (priExpr *ElementPrimaryExpression) getArrElem(arr JSONArray) Value {
     return arr.getElem(toInt(priExpr.arg.execute().val()))
 }
 
+func (priExpr *ElementPrimaryExpression) getChar(str *StringValue) Value {
+    index := priExpr.arg.execute()
+    return newQKValue(str.getChar(toInt(index.val())))
+}
+
 func (priExpr *ElementPrimaryExpression) assignToObj(object JSONObject, res Value) {
     index := priExpr.arg.execute()
     object.put(goStr(index), res)
@@ -43,7 +48,6 @@ func (priExpr *ElementPrimaryExpression) assignToObj(object JSONObject, res Valu
 
 func (priExpr *ElementPrimaryExpression) assignToArr(array JSONArray, res Value) {
     index := priExpr.arg.execute()
-    //fmt.Println("assignToArr -> arr is ", array.val(), index.val())
     array.set(toInt(index.val()), res)
 
 }

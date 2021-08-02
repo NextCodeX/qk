@@ -85,6 +85,12 @@ func (priExpr *ElemFunctionCallPrimaryExpression) runScopeChain(currentObj Value
             nextExpr := subExpr.(*SubListPrimaryExpression)
             intermediateVal = nextExpr.subStr(str)
 
+        } else if currentObj.isString() && subExpr.isElement() {
+            // str[]
+            str := currentObj.(*StringValue)
+            nextExpr := subExpr.(*ElementPrimaryExpression)
+            intermediateVal = nextExpr.getChar(str)
+
         } else if currentObj.isJsonArray() && subExpr.isElement() {
             // arr[]
             arr := goArr(currentObj)
