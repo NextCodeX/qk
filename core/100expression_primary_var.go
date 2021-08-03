@@ -34,3 +34,7 @@ func (priExpr *VarPrimaryExpression) assign(object JSONObject, res Value) {
     object.put(priExpr.varname, res)
 }
 
+func (priExpr *VarPrimaryExpression) nameIs(s string) bool {
+	return priExpr.varname == s
+}
+

@@ -1,0 +1,104 @@
+/**
+a = 2
+b = 3
+c = (a + 10) / b
+println("result:", c)
+
+arr = [9, 1, 25]
+println(c + arr[1])
+
+obj = {
+    name:"stu",
+    score:[50, 45, 59],
+    fake: {
+        math: 100,
+        chinese: 90,
+        english: 89
+    }
+}
+obj.fake["english"] = obj.score[2] + arr[1] + a
+obj.reason = "idiot"
+println(obj)
+
+println("=====================")
+db = sqlite("foo.db")
+rows = db.getRows("select * from userinfo")
+// println(rows.size(), rows)
+forv row : rows {
+    println(row)
+}
+println("=====================")
+println("uuid:", str_uuid())
+
+a = 2
+b = 3
+c = 1
+arr = [9, 1, 25]
+obj = {
+    name:"stu",
+    score:[50, 45, 59],
+    fake: {
+        math: 100,
+        chinese: 90,
+        english: 89
+    },
+    num: 1,
+}
+// obj.score[2] 59; arr{9, 1, 25}; a 2; b 3; c 1
+// obj.res = obj.score[2] + arr[1]
+obj.res = (obj.score[2] + arr[1]) + a / c + 1 * arr[0] - arr[2]
+// obj.res = (obj.score[2] + arr[1]) / a + b
+// obj.res = obj.score[2] + (arr[1] + a) / b
+// obj.res = obj.score[2] + (arr[1] + a + c) * 2 / b
+// obj.res = obj.score[2] + (arr[1] + (a + c) * 2 / b)
+println(obj.res)
+
+obj.fake["english"] = obj.score[2] + arr[1] + a
+obj.reason = "idiot"
+println(obj) */
+
+
+
+
+
+a = 2; b = 5; c = 10
+// res = a * b
+// res = a * b + 1 + c + 4
+// res = a - b * c
+// res = a - b * c + 100
+// res = a + b - 2 * c + 100
+// res = c * (a + b) - 30
+// res = c + (a + b) * 5
+// res = c + a * b * c / 2
+// res = c - (a + b) + 50
+// res = c - (b + a * 3)
+// res = 9 - a * c
+// res = a + b - 2 * c + (5 + c / 3) + 11
+
+println(res = a + b * c - 9)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

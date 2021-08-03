@@ -121,7 +121,7 @@ func (f *FunctionImpl) getLocalVars() Variables {
 }
 
 func (f *FunctionImpl) parse() {
-	fmt.Println("parse function!!!")
+	fmt.Println("parse function？？？")
 }
 
 func (f *FunctionImpl) setRawArgs(rawArgs []interface{}) {
@@ -162,17 +162,14 @@ func (f *FunctionImpl) execute() StatementResult {
 	return f.executeStatementList(f.block, StmtListTypeFunc)
 }
 
-func (f *FunctionImpl) setParent(p Function) {
-	f.parent = p
-}
 
 func (f *FunctionImpl) val() interface{} {
-	return f.name + "()"
+	return "func:" + f.name + "()"
 }
 func (f *FunctionImpl) isFunction() bool {
 	return true
 }
 
 func (f *FunctionImpl) String() string {
-	return f.name + "()"
+	return "func:" + f.name + "()"
 }

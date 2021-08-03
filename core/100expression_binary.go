@@ -424,7 +424,6 @@ func (binExpr *BinaryExpressionImpl) evalAssignBinaryExpression() Value {
 }
 
 func (binExpr *BinaryExpressionImpl) evalAssign(priExpr PrimaryExpression, res Value) {
-    fmt.Printf("ElemFunctionCallPrimaryExpression assign### %v = %v; %v,%v \n", tokensString(priExpr.raw()), res.val(), priExpr.isElemFunctionCall(), priExpr.isVar())
     if priExpr.isElemFunctionCall() {
         subExpr := priExpr.(*ElemFunctionCallPrimaryExpression)
         subExpr.beAssigned(res)
@@ -435,7 +434,11 @@ func (binExpr *BinaryExpressionImpl) evalAssign(priExpr PrimaryExpression, res V
 
     } else if priExpr.isVar() {
         varExpr := priExpr.(*VarPrimaryExpression)
-        varExpr.beAssigned(res)
+        if varExpr.nameIs("this") {
+            runtimeExcption("variable this is not assigned!")
+        } else {
+            varExpr.beAssigned(res)
+        }
 
     } else {
         errorf("invalid assign expression: %v = %v", tokensString(priExpr.raw()), res.val())
@@ -445,7 +448,6 @@ func (binExpr *BinaryExpressionImpl) evalAssign(priExpr PrimaryExpression, res V
 func (binExpr *BinaryExpressionImpl) evalAddBinaryExpression() (res Value) {
     left := binExpr.leftVal()
     right := binExpr.rightVal()
-    //fmt.Println("evalAddBinaryExpression: = ", left.val(), right.val())
     var tmpVal interface{}
     switch {
     case left.isInt() && right.isInt():

@@ -71,9 +71,9 @@ type Token interface {
 	setNotFlag(flag bool)
 
 	priority() int
-	equal(t Token) bool
-	lower(t Token) bool
-	upper(t Token) bool
+	equal(t Token) bool // 判断两个Token优先级是否相等 (两个Token必须为Symbol类型)
+	lower(t Token) bool // 判断Token优先级是否比指定Token优先级低 (两个Token必须为Symbol类型)
+	upper(t Token) bool // 判断Token优先级是否比指定Token优先级高 (两个Token必须为Symbol类型)
 
 
 	tokens() []Token

@@ -1,5 +1,6 @@
 package core
 
+
 // stack 在Quick中是存放变量的一个地方
 // 对于函数, 它自身就是stack, 它的stack与parent不一致, 它的parent是父函数(上一层stack)
 // 对于非函数的statement, 它们的parent就是stack, parent与stack是一致的, 皆是父函数

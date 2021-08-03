@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"strings"
 )
 
 // 用于统计临时变量名,或计算得到临时变量名
@@ -19,8 +18,4 @@ func getTmpname() string {
 	name := fmt.Sprintf("%v%v", tmpPrefix, tmpcount)
 	tmpcount++
 	return name
-}
-
-func isTmpVar(name string) bool {
-	return strings.HasPrefix(name, tmpPrefix)
 }

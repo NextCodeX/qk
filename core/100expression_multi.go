@@ -63,7 +63,8 @@ func (mulExpr *MultiExpressionImpl) calculateIfNotExist(primaryExpr PrimaryExpre
     if !primaryExpr.isVar() {
         return
     }
-    varname := primaryExpr.getName()
+    varExpr := primaryExpr.(*VarPrimaryExpression)
+    varname := varExpr.getName()
     variable := mulExpr.getVar(varname)
     if variable != nil {
         return
@@ -78,7 +79,7 @@ func (mulExpr *MultiExpressionImpl) calculateIfNotExist(primaryExpr PrimaryExpre
 func (mulExpr *MultiExpressionImpl) getNextExprForMultiExpression(varname string, exprList []BinaryExpression) BinaryExpression {
     for _, subExpr := range exprList {
         receiver := subExpr.getReceiver()
-        if receiver != nil && receiver.raw()[0].String() == varname {
+        if receiver != nil && receiver.raw()[0].raw() == varname {
             return subExpr
         }
     }

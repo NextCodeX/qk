@@ -12,8 +12,6 @@ type StatementAdapter struct {
 func (stmtAdapter *StatementAdapter) initStatement(stmt Statement) {
     // 为getStack()判断当前的statement 是否为stack引用
     stmtAdapter.owner = stmt
-    // 为当前statement设置stack, 启用ValueStack
-    stmtAdapter.ValueStack.stack = stmtAdapter.getStack()
 }
 
 func (stmtAdapter *StatementAdapter) getStack() Function {
@@ -58,6 +56,11 @@ func (stmtAdapter *StatementAdapter) getParent() Function {
 
 func (stmtAdapter *StatementAdapter) setParent(p Function) {
     stmtAdapter.parent = p
+
+    // initStatement()[stmt创建] -> addStmt()[父statement传入stack] -> setParent()
+    // 为当前statement设置stack, 启用ValueStack
+    // 使得foreach这样的statement 可以使用ValueStack
+    stmtAdapter.ValueStack.stack = stmtAdapter.getStack()
 }
 
 func (stmtAdapter *StatementAdapter) isExpressionStatement() bool {
