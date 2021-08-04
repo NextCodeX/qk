@@ -34,7 +34,8 @@ func (mulExpr *MultiExpressionImpl) setStack(stack Function) {
 }
 
 func (mulExpr *MultiExpressionImpl) execute() Value {
-    return mulExpr.recursiveEvalMultiExpression(mulExpr.finalExpr, mulExpr.list)
+    res := mulExpr.recursiveEvalMultiExpression(mulExpr.finalExpr, mulExpr.list)
+    return res
 }
 
 func (mulExpr *MultiExpressionImpl) getfinalExpr() BinaryExpression {
@@ -63,17 +64,15 @@ func (mulExpr *MultiExpressionImpl) calculateIfNotExist(primaryExpr PrimaryExpre
     if !primaryExpr.isVar() {
         return
     }
+
     varExpr := primaryExpr.(*VarPrimaryExpression)
-    varname := varExpr.getName()
-    variable := mulExpr.getVar(varname)
-    if variable != nil {
+    if toBoolean(varExpr.execute()) {
         return
     }
-    nextExpr := mulExpr.getNextExprForMultiExpression(varname, exprList)
-    if nextExpr == nil {
-        runtimeExcption("executeMultiExpression Exception")
+    nextExpr := mulExpr.getNextExprForMultiExpression(varExpr.getName(), exprList)
+    if nextExpr != nil {
+        mulExpr.recursiveEvalMultiExpression(nextExpr, exprList)
     }
-    mulExpr.recursiveEvalMultiExpression(nextExpr, exprList)
 }
 
 func (mulExpr *MultiExpressionImpl) getNextExprForMultiExpression(varname string, exprList []BinaryExpression) BinaryExpression {
@@ -82,6 +81,13 @@ func (mulExpr *MultiExpressionImpl) getNextExprForMultiExpression(varname string
         if receiver != nil && receiver.raw()[0].raw() == varname {
             return subExpr
         }
+
+        leftExpr := subExpr.leftExpr()
+        if subExpr.isAssign() && leftExpr.isVar() && leftExpr.(*VarPrimaryExpression).getName() == varname {
+            subExpr.execute()
+            return nil
+        }
     }
+    runtimeExcption("executeMultiExpression Exception: no expression for", varname)
     return nil
 }

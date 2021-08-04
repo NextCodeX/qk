@@ -69,12 +69,6 @@ func parseMultivariateExpression(ts []Token) Expression {
 	if ts[1].assertSymbol("=") {
 		resVarToken = ts[0]
 		multiExprTokens = clearParentheses(ts[2:])
-		if len(multiExprTokens) == 1 {
-			var binExprTokens []Token
-			binExprTokens = append(binExprTokens, ts[:2]...)
-			binExprTokens = append(binExprTokens, multiExprTokens[0])
-			return parseBinaryExpression(binExprTokens)
-		}
 	} else {
 		multiExprTokens = ts
 	}
@@ -84,12 +78,12 @@ func parseMultivariateExpression(ts []Token) Expression {
 	printExprTokens(exprTokensList)
 
 	exprs, finalExpr := generateMulExprFactor(exprTokensList, resVarToken)
-	if len(exprs) == 1 {
-		// 只有一个表达式时,直接返回一个二元表达式
-		return exprs[0]
-	}
 	if finalExpr == nil {
 		runtimeExcption("failed to get final expression for multiExpression: ", len(ts), tokensString(ts))
+	}
+	if len(exprs) == 0 {
+		// 只有一个表达式时,直接返回一个二元表达式
+		return finalExpr
 	}
 
 	expr = &MultiExpressionImpl{list:exprs, finalExpr: finalExpr}
@@ -100,25 +94,32 @@ func parseMultivariateExpression(ts []Token) Expression {
 func generateMulExprFactor(exprTokensList [][]Token, resToken Token) ([]BinaryExpression, BinaryExpression) {
 	var finalExpr BinaryExpression
 	var res []BinaryExpression
+	exprsLen := len(exprTokensList)
 	for _, tokens := range exprTokensList {
-		tokensLen := len(tokens)
 		expr := generateBinaryExpr(tokens)
-		expr.setRaw(tokens)
-		res = append(res, expr)
 
 		// 筛选出最后计算的二元表达式
 		// tokens的长度只会是3 或 4; 长度为4时, 表示最后一个为二元表达式的结果接收Token
 		if finalExpr == nil {
+			// finalExpr 不添加到exprList中
+			tokensLen := len(tokens)
 			if resToken != nil && tokensLen == 4 && tokens[3].raw() == resToken.raw() {
 				// 当表达式存在 赋值运算"="时, 存在resToken, 且分割出来的二元表达式的结果接收Token等于resToken
 				// 说明这个二元表达式是应该最后被执行的
 				finalExpr = expr
-			} else if resToken == nil && tokensLen == 3 {
+				continue
+			} else if resToken == nil && !expr.isAssign() && tokensLen == 3 {
 				// 当表达式不存在 赋值运算"="时, 不存在resToken, 所以分割出来的二元表达式没有结果接收Token时
 				// 说明这个二元表达式是应该最后被执行的
 				finalExpr = expr
+				continue
+			} else if exprsLen == 1 {
+				finalExpr = expr
+				continue
 			} else {}
 		}
+
+		res = append(res, expr)
 	}
 	return res, finalExpr
 }
@@ -138,6 +139,8 @@ func generateBinaryExpr(ts []Token) BinaryExpression {
 	} else {
 		expr = parseBinaryExpression(ts)
 	}
+
+	expr.setRaw(ts)
 	return expr
 }
 
@@ -159,6 +162,17 @@ func reduceTokensForExpression(res Token, ts []Token, exprTokensList *[][]Token)
 	}
 
 	size := len(ts)
+	if size == 1 {
+		if res == nil {
+			errorf("single expression(%v) is not result", tokensString(ts))
+		}
+
+		exprTokens = append(exprTokens, res)
+		exprTokens = append(exprTokens, symbolToken("="))
+		exprTokens = append(exprTokens, ts[0])
+		*exprTokensList = append(*exprTokensList, exprTokens)
+		return
+	}
 	for i := 0; i < size; i++ {
 		token := ts[i]
 		if len(exprTokens) < 2 {

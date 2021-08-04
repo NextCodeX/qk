@@ -177,11 +177,25 @@ func (binExpr *BinaryExpressionImpl) execute() Value {
     return res
 }
 
+func (binExpr *BinaryExpressionImpl) setReceiver(name PrimaryExpression) {
+    binExpr.receiver = name
+}
+func (binExpr *BinaryExpressionImpl) getReceiver() PrimaryExpression {
+    return binExpr.receiver
+}
+
+func (binExpr *BinaryExpressionImpl) rightVal() Value {
+    return binExpr.right.execute()
+}
+func (binExpr *BinaryExpressionImpl) leftVal() Value {
+    return binExpr.left.execute()
+}
+
 func (binExpr *BinaryExpressionImpl) rightExpr() PrimaryExpression {
-    return binExpr.left
+    return binExpr.right
 }
 func (binExpr *BinaryExpressionImpl) leftExpr() PrimaryExpression {
-    return binExpr.right
+    return binExpr.left
 }
 
 func (binExpr *BinaryExpressionImpl) evalAndBinaryExpression() Value {
@@ -410,12 +424,7 @@ func (binExpr *BinaryExpressionImpl) evalAssignAfterModBinaryExpression() (res V
     return res
 }
 
-func (binExpr *BinaryExpressionImpl) rightVal() Value {
-    return binExpr.right.execute()
-}
-func (binExpr *BinaryExpressionImpl) leftVal() Value {
-    return binExpr.left.execute()
-}
+
 
 func (binExpr *BinaryExpressionImpl) evalAssignBinaryExpression() Value {
     res := binExpr.rightVal()
@@ -568,27 +577,6 @@ func (binExpr *BinaryExpressionImpl) evalModBinaryExpression() (res Value) {
     }
     res = newQKValue(tmpVal)
     return res
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-func (binExpr *BinaryExpressionImpl) setReceiver(name PrimaryExpression) {
-    binExpr.receiver = name
-}
-func (binExpr *BinaryExpressionImpl) getReceiver() PrimaryExpression {
-    return binExpr.receiver
 }
 
 

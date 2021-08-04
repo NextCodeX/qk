@@ -18,7 +18,6 @@ func (priExpr *VarPrimaryExpression) getName() string {
 }
 
 func (priExpr *VarPrimaryExpression) doExecute() Value {
-    //fmt.Println("exec varExpr: ", priExpr.varname, priExpr.getVar(priExpr.varname), tokensString(priExpr.ts), priExpr.getStack())
     return priExpr.getVar(priExpr.varname)
 }
 

@@ -62,6 +62,7 @@ println(obj) */
 
 
 a = 2; b = 5; c = 10
+res = (-3.14)
 // res = a * b
 // res = a * b + 1 + c + 4
 // res = a - b * c
@@ -74,8 +75,14 @@ a = 2; b = 5; c = 10
 // res = c - (b + a * 3)
 // res = 9 - a * c
 // res = a + b - 2 * c + (5 + c / 3) + 11
+// res = a + b * c - 9
+// res = (-3.14)
+//res = a - (-3.14) + b
+// res = a * (-3.14)
+// res = (-3.14) * b + c
+// println((-3.14) * b + c)
 
-println(res = a + b * c - 9)
+println(res)
 
 
 
