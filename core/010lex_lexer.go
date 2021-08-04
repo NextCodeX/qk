@@ -331,7 +331,7 @@ func (lexer *Lexer) pushLongToken() {
 
 func (lexer *Lexer) isSymbol() bool {
 	switch lexer.currentByte {
-	case '.', ':', '(', ')', '[', ']', '{', '}', ';', ',', '=', '!', '+', '-', '*', '/', '%', '>', '<', '|', '&', '$':
+	case '.', '?', ':', '(', ')', '[', ']', '{', '}', ';', ',', '=', '!', '+', '-', '*', '/', '%', '>', '<', '|', '&', '$':
 		return true
 	default:
 		return false

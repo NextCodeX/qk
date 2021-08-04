@@ -97,6 +97,18 @@ func hasSymbol(ts []Token, ss ...string) bool {
     return false
 }
 
+// 返回 token列表中有多少个指定符号token
+func symbolCount(ts []Token, symbol string) int {
+	var count int
+    for i:=0; i<len(ts); i++ {
+        t := ts[i]
+		if t.assertSymbol(symbol) {
+			count ++
+		}
+    }
+    return count
+}
+
 // 获取指定符号token列表任意Token的下一个索引
 func nextSymbolsIndex(ts []Token, currentIndex int, tokenStrs ...string) int {
 	for i:=currentIndex; i<len(ts); i++ {
@@ -150,8 +162,7 @@ func scopeEndIndex(ts []Token, currentIndex int, open, close string) int {
 		}
 	}
 	if scopeOpenCount > 0 {
-		msg := printCurrentPositionTokens(ts, currentIndex)
-		runtimeExcption("scopeEndIndex: no match final character \""+close+"\"", msg)
+		errorf(`scopeEndIndex: no match final character "%v" for scope %v%v`, close, open, close)
 	}
 	return -1
 }

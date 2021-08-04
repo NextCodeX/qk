@@ -27,7 +27,7 @@ func main() {
 		}
 	}
 
-	qkfile := "examples/demo3.qk"
+	qkfile := "examples/multi-expression-test.qk"
 	//qkfile := getScriptFile()
 	//changeWorkDirectory()
 

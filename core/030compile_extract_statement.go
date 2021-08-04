@@ -51,6 +51,9 @@ func extractExpressionStatement(currentIndex int, ts []Token) (Statement, int) {
 		stmt := newExpressionStatement(ts[currentIndex:nextBoundaryIndex])
 		return stmt, nextBoundaryIndex
 	}
+	if nextBoundaryIndex > -1 {
+		return nil, nextBoundaryIndex
+	}
 	runtimeExcption("unknown statement: ", tokensShow10(ts[currentIndex:]))
 	return nil, -1
 }

@@ -299,8 +299,8 @@ func checkUselessBoundary(currentIndex int, ts []Token, resTs []Token) bool  {
 	if !ts[currentIndex].assertSymbol(";") {
 		return false
 	}
-	last, lastExist := lastToken(resTs)
-	if lastExist && last.assertSymbols("{", "}", ";", "=") {
+
+	if last, lastExist := lastToken(resTs); lastExist && last.assertSymbols("{", "}", ";", "=") {
 		// 为什么symbol ";" 前面不可以有symbol "}"呢？
 		// 因为如果symbol ";" 有symbol "}"的话，
 		// 这个symbol "}" 只会是各种语句或函数的结束符，
@@ -308,8 +308,8 @@ func checkUselessBoundary(currentIndex int, ts []Token, resTs []Token) bool  {
 		// 所以就应该消除
 		return true
 	}
-	next, nextExist := nextToken(currentIndex, ts)
-	if nextExist && next.assertSymbols("{") {
+
+	if next, nextExist := nextToken(currentIndex, ts); nextExist && next.assertSymbols("{") {
 		return true
 	}
 	return false

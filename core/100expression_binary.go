@@ -51,8 +51,6 @@ type BinaryExpression interface {
     evalAssignAfterModBinaryExpression() (res Value)
     evalAssignBinaryExpression() Value
 
-    evalAssign(priExprX PrimaryExpression, res Value)
-
     evalAddBinaryExpression() (res Value)
     evalSubBinaryExpression() (res Value)
     evalMulBinaryExpression() (res Value)
@@ -266,7 +264,8 @@ func (binExpr *BinaryExpressionImpl) evalEqBinaryExpression() (res Value) {
         tmpVal = float64(goInt(left)) == goFloat(right)
 
     default:
-        errorf("invalid expression: %v == %v", left.val(), right.val())
+        tmpVal = left.val() == right.val()
+        //errorf("invalid expression: %v == %v", left.val(), right.val())
     }
     res = newQKValue(tmpVal)
     return res
@@ -430,28 +429,6 @@ func (binExpr *BinaryExpressionImpl) evalAssignBinaryExpression() Value {
     res := binExpr.rightVal()
     binExpr.evalAssign(binExpr.left, res)
     return res
-}
-
-func (binExpr *BinaryExpressionImpl) evalAssign(priExpr PrimaryExpression, res Value) {
-    if priExpr.isElemFunctionCall() {
-        subExpr := priExpr.(*ElemFunctionCallPrimaryExpression)
-        subExpr.beAssigned(res)
-
-    } else if priExpr.isChainCall() {
-        subExpr := priExpr.(*ChainCallPrimaryExpression)
-        subExpr.beAssigned(res)
-
-    } else if priExpr.isVar() {
-        varExpr := priExpr.(*VarPrimaryExpression)
-        if varExpr.nameIs("this") {
-            runtimeExcption("variable this is not assigned!")
-        } else {
-            varExpr.beAssigned(res)
-        }
-
-    } else {
-        errorf("invalid assign expression: %v = %v", tokensString(priExpr.raw()), res.val())
-    }
 }
 
 func (binExpr *BinaryExpressionImpl) evalAddBinaryExpression() (res Value) {

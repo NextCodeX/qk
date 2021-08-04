@@ -1,0 +1,33 @@
+
+
+println(null == null, null)
+
+
+
+ternaryOperatorTest2(flag, angelPick, devilPick) {
+    res = flag ? angelPick ? "white angel" : "black angel" : devilPick ? "good devil" : "bad devil"
+    return res
+}
+
+println(ternaryOperatorTest2(true, true))
+println(ternaryOperatorTest2(true, false))
+println(ternaryOperatorTest2(false, "", true))
+println(ternaryOperatorTest2(false, "", false))
+println("=========================")
+
+ternaryOperatorTest1(flag) {
+    res = flag ? "angel" : "devil"
+    return res
+}
+
+println(ternaryOperatorTest1(true))
+println(ternaryOperatorTest1(false))
+
+ternaryOperatorTest(val) {
+    a = 10
+    b = 5
+    return val > 10 ? a * b - 23 : a / b * 7
+}
+
+println(ternaryOperatorTest(15))
+println(ternaryOperatorTest(3))

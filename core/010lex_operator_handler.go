@@ -41,7 +41,7 @@ func parse4OperatorTokens(ts []Token) []Token {
 		condNegative := func() bool {
 			// -number(负数处理条件判断)
 			lastSecond, lastSecondExist := lastSecondToken(res)
-			return (token.isInt() || token.isFloat()) && (lastExist && last.assertSymbol("-")) && (lastSecondExist && lastSecond.assertSymbols("+", "-", "*", "/", "=", ",", "(", ":", "["))
+			return (token.isInt() || token.isFloat()) && (lastExist && last.assertSymbol("-")) && (lastSecondExist && (lastSecond.assertIdentifier("return") || lastSecond.assertSymbols("+", "-", "*", "/", "=", ",", "(", ":", "[", "->")))
 		}
 
 		if condArrow() || condEqual() || condAnd() || condOr() || condAdd() || condSub() || condNegative() {

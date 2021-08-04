@@ -15,6 +15,7 @@ const (
     FunctionCallPrimaryExpressionType
     NotPrimaryExpressionType
     ExprPrimaryExpressionType
+    TernaryOperatorPrimaryExpressionType
 )
 
 type PrimaryExpression interface {
@@ -122,6 +123,9 @@ func (priExpr *PrimaryExpressionImpl) typeName() string {
     if priExpr.isExpr() {
         typeNames += "expression, "
     }
+    if priExpr.isTernaryOperator() {
+        typeNames += "ternary operator, "
+    }
 
     if typeNames == "" {
         return "unknown expression type"
@@ -194,4 +198,8 @@ func (priExpr *PrimaryExpressionImpl) isNot() bool {
 
 func (priExpr *PrimaryExpressionImpl) isExpr() bool {
     return (priExpr.t & ExprPrimaryExpressionType) == ExprPrimaryExpressionType
+}
+
+func (priExpr *PrimaryExpressionImpl) isTernaryOperator() bool {
+    return (priExpr.t & TernaryOperatorPrimaryExpressionType) == TernaryOperatorPrimaryExpressionType
 }

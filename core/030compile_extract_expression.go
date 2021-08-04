@@ -13,6 +13,11 @@ func extractExpression(ts []Token) Expression {
 		runtimeExcption("failed to extract expression from token list: ", len(ts), tokensString(ts))
 	}
 
+	if hasSymbol(ts, "?") {
+		// 解析三目运算符 ?:
+		return parseTernaryOperator(ts)
+	}
+
 	switch {
 	case tlen == 1:
 		// 处理一元表达式
@@ -32,6 +37,28 @@ func extractExpression(ts []Token) Expression {
 		expr.setRaw(ts)
 	}
 	return expr
+}
+
+// 解析三目运算符 ?:
+func parseTernaryOperator(ts []Token) Expression {
+	var receiver PrimaryExpression
+	if len(ts) > 2 && ts[1].assertSymbol("=") {
+		receiver = parsePrimaryExpression(ts[0])
+		ts = clearParentheses(ts[2:])
+	}
+	var condExpr, ifExpr, elseExpr Expression
+	condBoundryIndex := nextSymbolIndex(ts, 0, "?")
+	valueBoundryIndex := scopeEndIndex(ts, condBoundryIndex, "?", ":")
+
+	if condBoundryIndex < 1 || valueBoundryIndex <= condBoundryIndex + 1 || valueBoundryIndex >= len(ts) - 1 {
+		errorf("invalid ternary operator expression: %v, %v", len(ts), tokensString(ts))
+		return nil
+	}
+
+	condExpr = extractExpression(ts[:condBoundryIndex])
+	ifExpr = extractExpression(ts[condBoundryIndex+1:valueBoundryIndex])
+	elseExpr = extractExpression(ts[valueBoundryIndex+1:])
+	return newTernaryOperatorPrimaryExpression(condExpr, ifExpr, elseExpr, receiver)
 }
 
 // 获取一元表达式
@@ -75,7 +102,7 @@ func parseMultivariateExpression(ts []Token) Expression {
 
 	var exprTokensList [][]Token
 	reduceTokensForExpression(resVarToken, multiExprTokens, &exprTokensList)
-	printExprTokens(exprTokensList)
+	//printExprTokens(exprTokensList)
 
 	exprs, finalExpr := generateMulExprFactor(exprTokensList, resVarToken)
 	if finalExpr == nil {
@@ -173,95 +200,90 @@ func reduceTokensForExpression(res Token, ts []Token, exprTokensList *[][]Token)
 		*exprTokensList = append(*exprTokensList, exprTokens)
 		return
 	}
-	for i := 0; i < size; i++ {
-		token := ts[i]
-		if len(exprTokens) < 2 {
-			exprTokens = append(exprTokens, token)
-			continue
-		}
 
-		isSymbolParentheses := token.assertSymbol("(")
-		if i == size - 1 {
-			// e.g. c + 7
-			exprTokens = append(exprTokens, token)
+	i := 2
+	token := ts[2]
+	exprTokens = append(exprTokens, ts[:2]...)
+	isSymbolParentheses := token.assertSymbol("(")
+	if size == 3 {
+		// e.g. c + 7
+		exprTokens = append(exprTokens, token)
+		if res != nil {
+			exprTokens = append(exprTokens, res)
+		}
+		*exprTokensList = append(*exprTokensList, exprTokens)
+
+	} else if  !isSymbolParentheses && (last(exprTokens).equal(ts[i+1]) || last(exprTokens).lower(ts[i+1])) {
+		// 处理根据运算符优先级, 左向归约的情况
+		// e.g. a + 9 + c
+		// a + 9 => tmpVarToken
+		tmpVarToken := getTmpVarToken()
+		exprTokens = append(exprTokens, token)
+		exprTokens = append(exprTokens, tmpVarToken)
+		*exprTokensList = append(*exprTokensList, exprTokens)
+
+		// tmpVarToken + c => res
+		nextTokens := insert(tmpVarToken, ts[i+1:])
+		reduceTokensForExpression(res, nextTokens, exprTokensList)
+
+	} else if !isSymbolParentheses && last(exprTokens).upper(ts[i+1]) {
+		// 处理根据运算符优先级, 右向归约的情况
+		if i+3 == size {
+			// e.g. a + b * c
+			// a + tmpVarToken => res
+			tmpVarToken := getTmpVarToken()
+			exprTokens = append(exprTokens, tmpVarToken)
 			if res != nil {
 				exprTokens = append(exprTokens, res)
 			}
 			*exprTokensList = append(*exprTokensList, exprTokens)
 
-		} else if  !isSymbolParentheses && (last(exprTokens).equal(ts[i+1]) || last(exprTokens).lower(ts[i+1])) {
-			// 处理根据运算符优先级, 左向归约的情况
-			// e.g. a + 9 + c
-			// a + 9 => tmpVarToken
+			// b * c => tmpVarToken
+			reduceTokensForExpression(tmpVarToken, ts[i:], exprTokensList)
+		} else {
+			// e.g. a + b * c - 9
+			// b * c => middleResultToken
+			middleResultToken := getTmpVarToken()
+			middleExprTokens := make([]Token, 3)
+			copy(middleExprTokens, ts[i:i+3])
+			middleExprTokens = append(middleExprTokens, middleResultToken)
+			*exprTokensList = append(*exprTokensList, middleExprTokens)
+
+			// a + middleResultToken - 9 => res
+			exprTokens = append(exprTokens, middleResultToken)
+			exprTokens = append(exprTokens, ts[i+3:]...)
+			reduceTokensForExpression(res, exprTokens, exprTokensList)
+		}
+
+	} else if isSymbolParentheses {
+		endIndex := scopeEndIndex(ts, i, "(", ")")
+		if endIndex == size - 1 {
+			// e.g. a * (b + c)
+			// a * tmpVarToken => res
 			tmpVarToken := getTmpVarToken()
-			exprTokens = append(exprTokens, token)
 			exprTokens = append(exprTokens, tmpVarToken)
+			if res != nil {
+				exprTokens = append(exprTokens, res)
+			}
 			*exprTokensList = append(*exprTokensList, exprTokens)
 
-			// tmpVarToken + c => res
-			nextTokens := insert(tmpVarToken, ts[i+1:])
-			reduceTokensForExpression(res, nextTokens, exprTokensList)
-
-		} else if !isSymbolParentheses && last(exprTokens).upper(ts[i+1]) {
-			// 处理根据运算符优先级, 右向归约的情况
-			if i+3 == size {
-				// e.g. a + b * c
-				// a + tmpVarToken => res
-				tmpVarToken := getTmpVarToken()
-				exprTokens = append(exprTokens, tmpVarToken)
-				if res != nil {
-					exprTokens = append(exprTokens, res)
-				}
-				*exprTokensList = append(*exprTokensList, exprTokens)
-
-				// b * c => tmpVarToken
-				reduceTokensForExpression(tmpVarToken, ts[i:], exprTokensList)
-			} else {
-				// e.g. a + b * c - 9
-				// b * c => middleResultToken
-				middleResultToken := getTmpVarToken()
-				middleExprTokens := make([]Token, 3)
-				copy(middleExprTokens, ts[i:i+3])
-				middleExprTokens = append(middleExprTokens, middleResultToken)
-				*exprTokensList = append(*exprTokensList, middleExprTokens)
-
-				// a + middleResultToken - 9 => res
-				exprTokens = append(exprTokens, middleResultToken)
-				exprTokens = append(exprTokens, ts[i+3:]...)
-				reduceTokensForExpression(res, exprTokens, exprTokensList)
-			}
-
-		} else if isSymbolParentheses {
-			endIndex := scopeEndIndex(ts, i, "(", ")")
-			if endIndex == size - 1 {
-				// e.g. a * (b + c)
-				// a * tmpVarToken => res
-				tmpVarToken := getTmpVarToken()
-				exprTokens = append(exprTokens, tmpVarToken)
-				if res != nil {
-					exprTokens = append(exprTokens, res)
-				}
-				*exprTokensList = append(*exprTokensList, exprTokens)
-
-				// b + c => tmpVarToken
-				reduceTokensForExpression(tmpVarToken, ts[i+1:endIndex], exprTokensList)
-
-			} else {
-				// e.g. a * (b + c / a) - 9
-				// b + c / a => middleResultToken
-				middleResultToken := getTmpVarToken()
-				reduceTokensForExpression(middleResultToken, ts[i+1:endIndex], exprTokensList)
-
-				// a * middleResultToken - 9 => res
-				exprTokens = append(exprTokens, middleResultToken)
-				exprTokens = append(exprTokens, ts[endIndex+1:]...)
-				reduceTokensForExpression(res, exprTokens, exprTokensList)
-			}
+			// b + c => tmpVarToken
+			reduceTokensForExpression(tmpVarToken, ts[i+1:endIndex], exprTokensList)
 
 		} else {
-			runtimeExcption("failed to split multiExpression:", len(ts), tokensString(ts))
+			// e.g. a * (b + c / a) - 9
+			// b + c / a => middleResultToken
+			middleResultToken := getTmpVarToken()
+			reduceTokensForExpression(middleResultToken, ts[i+1:endIndex], exprTokensList)
+
+			// a * middleResultToken - 9 => res
+			exprTokens = append(exprTokens, middleResultToken)
+			exprTokens = append(exprTokens, ts[endIndex+1:]...)
+			reduceTokensForExpression(res, exprTokens, exprTokensList)
 		}
-		return
+
+	} else {
+		runtimeExcption("failed to split multiExpression:", len(ts), tokensString(ts))
 	}
 }
 
@@ -424,8 +446,6 @@ func getFuncParamNames(tokens []Token) []string {
 	for _, tk := range tokens {
 		if tk.isIdentifier() {
 			res = append(res, tk.raw())
-		} else {
-			runtimeExcption("invalid function parameter name: ", tokensString(tokens))
 		}
 	}
 	return res
