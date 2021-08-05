@@ -1,5 +1,7 @@
 package core
 
+import "fmt"
+
 type IntValue struct {
 	goValue int64
 	ValueAdapter
@@ -15,4 +17,8 @@ func (ival *IntValue) val() interface{} {
 
 func (ival *IntValue) isInt() bool {
 	return true
+}
+
+func (ival *IntValue) String() string {
+	return fmt.Sprint(ival.goValue)
 }

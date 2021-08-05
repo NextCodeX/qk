@@ -1,56 +1,9 @@
-a = 1
-b = 2
-c = a + b
-x = (c + 1) / 2 * 3 + a
-println("hello world", c, a, b, x)
-url = "http://chenlh.cn"
-test(a) {
-    println("open", url)
-    println("a is ", a)
-    a = 998
-    println("a(after update) is ", a)
-    return 9
-}
-println("func test", test(721))
-println("outer a =>", a)
-
-arr = [1, false, "changlie"]
-obj = {
-name:"tianyoushi",
-age:18
-}
-getObj() {
-    return {
-    name:"changlie",
-    addrs: ["beijing", "shanghai", "guangzhou", "shenzhen"]
-    }
+service(name, fn) {
+    println("fn is", fn)
+    printf("%v => %v", name, fn(name))
 }
 
-println(arr[2])
-println(obj.name, obj["age"])
-println(getObj().name.size(), !getObj().name.size(), getObj().addrs[1].upper(), getObj().addrs[1].upper().size())
-
-println("+++++++++++++++++++++++++++")
-doTestForIf() {
-    step = 0
-    for {
-        if step == 1 {
-            println("condition step = 1")
-        } elif step == 2 {
-            println("else if -> condition step is 2")
-        } else {
-            println("other condition: step is", step)
-        }
-
-        step ++
-        if step > 10 {
-            break
-        }
-    }
-}
-
-doTestForIf()
-println("_+_++_+_+_+_-=-=-=-=--===-")
-f = (1 + 2) * 3
-println(f)
-
+service("tom", $ name {
+    println("this is", this)
+    return name + " is a cat!"
+})

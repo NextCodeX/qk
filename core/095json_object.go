@@ -108,6 +108,9 @@ func (obj *JSONObjectImpl) tokens() []Token {
 }
 
 func (obj *JSONObjectImpl) String() string {
+	if !obj.isJsonObject() {
+		return "class " + obj.getName()
+	}
 	return obj.toJSONObjectString()
 }
 

@@ -1,5 +1,6 @@
 package core
 
+import "fmt"
 
 type FloatValue struct {
 	goValue float64
@@ -16,4 +17,8 @@ func (fval *FloatValue) val() interface{} {
 
 func (fval *FloatValue) isFloat() bool {
 	return true
+}
+
+func (fval *FloatValue) String() string {
+	return fmt.Sprint(fval.goValue)
 }

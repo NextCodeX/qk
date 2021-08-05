@@ -198,50 +198,20 @@ func (binExpr *BinaryExpressionImpl) leftExpr() PrimaryExpression {
 
 func (binExpr *BinaryExpressionImpl) evalAndBinaryExpression() Value {
     left := binExpr.leftVal()
-    if left.isBoolean() && !goBool(left) {
+    if !toBoolean(left) {
         return newQKValue(false)
+    } else {
+        return binExpr.rightVal()
     }
-    if !left.isBoolean() && !toBoolean(left) {
-        return newQKValue(false)
-    }
-    right := binExpr.rightVal()
-    var res bool
-    switch {
-    case left.isBoolean() && right.isBoolean():
-        res = goBool(left) && goBool(right)
-    case !left.isBoolean() && right.isBoolean():
-        res = toBoolean(left) && goBool(right)
-    case left.isBoolean() && !right.isBoolean():
-        res = goBool(left) && toBoolean(right)
-
-    default:
-        errorf("invalid expression: %v && %v", left.val(), right.val())
-    }
-    return newQKValue(res)
 }
 
 func (binExpr *BinaryExpressionImpl) evalOrBinaryExpression() Value {
     left := binExpr.leftVal()
-    if left.isBoolean() && goBool(left) {
-        return newQKValue(true)
+    if toBoolean(left) {
+        return left
+    } else {
+        return binExpr.rightVal()
     }
-    if !left.isBoolean() && toBoolean(left) {
-        return newQKValue(true)
-    }
-    right := binExpr.rightVal()
-    var res bool
-    switch {
-    case left.isBoolean() && right.isBoolean():
-        res = goBool(left) || goBool(right)
-    case !left.isBoolean() && right.isBoolean():
-        res = toBoolean(left) || goBool(right)
-    case left.isBoolean() && !right.isBoolean():
-        res = goBool(left) || toBoolean(right)
-
-    default:
-        errorf("invalid expression: %v || %v", left.val(), right.val())
-    }
-    return newQKValue(res)
 }
 
 func (binExpr *BinaryExpressionImpl) evalEqBinaryExpression() (res Value) {

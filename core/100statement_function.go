@@ -21,6 +21,7 @@ type Function interface {
 
 	getLocalFunctions() map[string]Function
 	addFunc(functionName string, internalFunc Function)
+	String() string
 	Statement
 	Value
 }
@@ -77,12 +78,17 @@ func extractModuleFuncArgs(f *FunctionExecutor, args []interface{}) []reflect.Va
 	}
 
 	if len(args) < len(f.ins) {
-		runtimeExcption("execute", f.name, ", arguments is too less")
+		errorf("execute %v(): arguments is too less, require %v have %v", f.name, len(f.ins), len(args))
 		return nil
 	}
 
 	for i, t := range f.ins {
 		arg := args[i]
+		if t.Kind() == reflect.Int && reflect.TypeOf(arg).Kind() == reflect.Int64 {
+			i := arg.(int64)
+			res = append(res, reflect.ValueOf(int(i)))
+			continue
+		}
 		if t.Kind() != reflect.Interface && t != reflect.TypeOf(arg) {
 			runtimeExcption("execute", f.name, "(), arguments type is not match!", t, reflect.TypeOf(arg))
 			return nil
@@ -141,7 +147,7 @@ func (f *FunctionImpl) execute() StatementResult {
 			params := extractModuleFuncArgs(f.moduleFunc, f.rawArgs)
 			res = f.moduleFunc.Run(params)
 		}
-		return newStatementResult(StatementNormal, toQKValue(res))
+		return newStatementResult(StatementNormal, newQKValue(res))
 	}
 
 	f.local = newVariables()
@@ -164,8 +170,9 @@ func (f *FunctionImpl) execute() StatementResult {
 
 
 func (f *FunctionImpl) val() interface{} {
-	return "func:" + f.name + "()"
+	return f
 }
+
 func (f *FunctionImpl) isFunction() bool {
 	return true
 }

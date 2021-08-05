@@ -6,6 +6,7 @@ type ValueType int
 var NULL = newNULLValue()
 
 type Value interface {
+   String() string
    val() interface{}
    isNULL() bool
    isInt() bool
@@ -48,6 +49,22 @@ func newQKValue(rawVal interface{}) Value {
         val = v
     case Value:
         val = v
+    case map[string]interface{}:
+        mapRes := make(map[string]Value)
+        for key, value := range v {
+            mapRes[key] = newQKValue(value)
+        }
+        tmp := toJSONObject(mapRes)
+        return tmp
+
+    case []interface{}:
+        var arrRes []Value
+        for _, item := range v {
+            arrRes = append(arrRes, newQKValue(item))
+        }
+        tmp := toJSONArray(arrRes)
+        return tmp
+
     default:
         val = newAnyValue(v)
     }

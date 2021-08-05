@@ -407,7 +407,7 @@ func parsePrimaryExpression(t Token) PrimaryExpression {
 
 	} else if t.isFcall() {
 		exprs := getArgExprsFromToken(t.tokens())
-		res = newFunctionCallPrimaryExpression(t.raw(), exprs)
+		res = newFunctionCallPrimaryExpression(exprs)
 
 	} else if t.isSubList() {
 		start := extractExpression(t.startExprTokens())

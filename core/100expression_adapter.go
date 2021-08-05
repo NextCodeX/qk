@@ -32,7 +32,7 @@ func (ea *ExpressionAdapter) evalAssign(priExpr PrimaryExpression, res Value) {
     } else if priExpr.isVar() {
         varExpr := priExpr.(*VarPrimaryExpression)
         if varExpr.nameIs("this") {
-            runtimeExcption("variable this is not assigned!")
+            runtimeExcption("variable this is not allowed to be assigned!")
         } else {
             varExpr.beAssigned(res)
         }
@@ -42,20 +42,19 @@ func (ea *ExpressionAdapter) evalAssign(priExpr PrimaryExpression, res Value) {
     }
 }
 
-func toGoTypeValues(exprs []Expression) []interface{} {
+func evalGoValues(exprs []Expression) []interface{} {
     var res []interface{}
     for _, expr := range exprs {
         if expr == nil {
             continue
         }
         val := expr.execute()
-        rawVal := val.val()
-        res = append(res, rawVal)
+        res = append(res, val.val())
     }
     return res
 }
 
-func evalValues(exprs []Expression) []Value {
+func evalQKValues(exprs []Expression) []Value {
     var res []Value
     for _, expr := range exprs {
         if expr == nil {

@@ -1,9 +1,9 @@
 package core
 
 import (
+	"fmt"
 	"reflect"
 	"strconv"
-	"fmt"
 	"strings"
 )
 
@@ -105,48 +105,6 @@ func tokenToValue(t Token)  Value {
 	}
 }
 
-func toQKValue(v interface{}) Value {
-	if v == nil {
-		return NULL
-	}
-	typ := reflect.TypeOf(v)
-	kind := typ.Kind()
-	switch kind {
-	case reflect.Map:
-		mapRes := make(map[string]Value)
-		m := v.(map[string]interface{})
-		for key, value := range m {
-			var qkVal Value
-			if isDecomposable(value) {
-				qkVal = toQKValue(value)
-			} else {
-				qkVal = newQKValue(value)
-			}
-			mapRes[key] = qkVal
-		}
-		tmp := toJSONObject(mapRes)
-		return newQKValue(tmp)
-
-	case reflect.Slice:
-		var arrRes []Value
-		list := v.([]interface{})
-		for _, item := range list {
-			var qkVal Value
-			if isDecomposable(item) {
-				qkVal = toQKValue(item)
-			} else {
-				qkVal = newQKValue(item)
-			}
-			arrRes = append(arrRes, qkVal)
-		}
-		tmp := toJSONArray(arrRes)
-		return newQKValue(tmp)
-
-	default:
-		return newQKValue(v)
-	}
-}
-
 // 是否为Map或Slice类型
 func isDecomposable(v interface{}) bool {
 	if v == nil {
@@ -156,6 +114,8 @@ func isDecomposable(v interface{}) bool {
 	return kind == reflect.Map || kind == reflect.Slice
 }
 
+
+// QK Value 转 go 类型bool
 func toBoolean(raw Value) bool {
 	if raw == nil || raw.isNULL() {
 		return false
@@ -170,12 +130,12 @@ func toBoolean(raw Value) bool {
 		return raw.val().(string) != ""
 	} else if raw.isJsonArray() {
 		return raw.val() != nil
-	} else if raw.isJsonObject() {
+	} else if raw.isJsonObject() || raw.isObject() {
 		return raw.val() != nil
 	} else if raw.isAny() {
 		return raw.val() != nil
 	} else {
-		runtimeExcption("toBoolean: unknown value type")
+		runtimeExcption("toBoolean: unknown value type: ", raw)
 		return false
 	}
 }

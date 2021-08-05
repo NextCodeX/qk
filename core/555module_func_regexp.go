@@ -4,15 +4,8 @@ import (
 	"regexp"
 )
 
-func init() {
-	re := &QkRegexp{}
-	fre := collectFunctionInfo(&re)
-	functionRegister("reg", fre)
-}
 
-type QkRegexp struct {}
-
-func (re *QkRegexp) Match(tmpl, source string) []interface{} {
+func (fns *InternalFunctionSet) Match(tmpl, source string) []interface{} {
 	matcher := regexp.MustCompile(tmpl)
 	list := matcher.FindAllStringSubmatch(source, -1)
 

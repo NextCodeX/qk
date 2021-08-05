@@ -1,20 +1,13 @@
 package core
 
 import (
-	"log"
-	"fmt"
 	"crypto/rand"
+	"fmt"
+	"log"
 )
 
-func init() {
-	s := &QkString{}
-	fmap := collectFunctionInfo(&s)
-	functionRegister("str", fmap)
-}
 
-type QkString struct {}
-
-func (s *QkString) RawUUID() string {
+func (fns *InternalFunctionSet) UuidRaw() string {
 	bs := make([]byte, 16)
 	_, err := rand.Read(bs)
 	if err != nil {
@@ -24,7 +17,7 @@ func (s *QkString) RawUUID() string {
 	return rawuuid
 }
 
-func (s *QkString) Uuid() string {
+func (fns *InternalFunctionSet) Uuid() string {
 	bs := make([]byte, 16)
 	_, err := rand.Read(bs)
 	if err != nil {
@@ -34,7 +27,7 @@ func (s *QkString) Uuid() string {
 	return uuid
 }
 
-func (s *QkString) Format(args []interface{}) string {
+func (fns *InternalFunctionSet) Fmt(args []interface{}) string {
 	assert(len(args) < 2,"function str_format(format, any...) must has two parameters.")
 	format, ok := args[0].(string)
 	assert(!ok, "function str_format(format, any...), parameter format must be string type.")

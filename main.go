@@ -27,7 +27,7 @@ func main() {
 		}
 	}
 
-	qkfile := "examples/multi-expression-test.qk"
+	qkfile := "examples/excel-xlsx.qk"
 	//qkfile := getScriptFile()
 	//changeWorkDirectory()
 

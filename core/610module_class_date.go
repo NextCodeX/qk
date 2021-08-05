@@ -5,18 +5,21 @@ import (
 	"time"
 )
 
-func init() {
-	dtc := &DatetimeConstructor{}
-	fs := collectFunctionInfo(&dtc)
-	functionRegister("", fs)
+// current datetime qk object
+func (fns *InternalFunctionSet) Now() Value {
+	dt := &Datetime{time.Now()}
+	return newClassExecutor("date", dt, &dt)
+}
+
+// current timestamp
+func (fns *InternalFunctionSet) Timestamp() interface{} {
+	return time.Now().Unix()
 }
 
 const CommonDatetimeFormat = "2006-01-02 15:04:05"
 
 type Datetime struct {
 	val       time.Time
-	Time int64
-	Stdfmt string
 }
 
 // date format: y-M-d H:m:s:S
@@ -33,19 +36,5 @@ func (dt *Datetime) Format(tmpl string) string {
 
 func (dt *Datetime) String() string {
 	return dt.val.Format(CommonDatetimeFormat)
-}
-
-type DatetimeConstructor struct{}
-
-// current datetime qk object
-func (dtc *DatetimeConstructor) Now() Value {
-	now := time.Now()
-	dt := &Datetime{now, now.Unix(), now.Format(CommonDatetimeFormat)}
-	return newClassExecutor("date", dt, &dt)
-}
-
-// current timestamp
-func (dtc *DatetimeConstructor) Timestamp() interface{} {
-	return time.Now().Unix()
 }
 

@@ -1,29 +1,23 @@
 package core
 
 import (
+	"bufio"
+	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
-	"bufio"
-	"encoding/json"
-	"strings"
-	"regexp"
 	"path/filepath"
-	"io"
+	"regexp"
+	"strings"
 )
 
-func init() {
-	f := &File{}
-	fmap := collectFunctionInfo(&f)
-	functionRegister("file", fmap)
-}
 
 var regBlankChar = regexp.MustCompile(`\s+`)
 
-type File struct {}
-
-func (f *File) Bytes(filename string) []byte {
+// 读取文件所有内容，返回字节数组
+func (fns *InternalFunctionSet) Fbytes(filename string) []byte {
 	bs, err := ioutil.ReadFile(filename)
 	if err == nil {
 		return bs
@@ -32,7 +26,8 @@ func (f *File) Bytes(filename string) []byte {
 	return nil
 }
 
-func (f *File) Content(filename string) string {
+// 读取文件所有内容，返回字符串
+func (fns *InternalFunctionSet) Fstr(filename string) string {
 	bs, err := ioutil.ReadFile(filename)
 	if err == nil {
 		return string(bs)
@@ -41,7 +36,8 @@ func (f *File) Content(filename string) string {
 	return ""
 }
 
-func (f *File) Lines(filename string) []interface{} {
+// 逐行读取文件，返回一个字符串数组
+func (fns *InternalFunctionSet) Flines(filename string) []interface{} {
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to read %v file: %v", filename, err.Error()))
@@ -55,7 +51,8 @@ func (f *File) Lines(filename string) []interface{} {
 	return res
 }
 
-func (f *File) Json(filename string) map[string]interface{} {
+// 读取文件内容，返回一个JSONObject
+func (fns *InternalFunctionSet) Fjson(filename string) map[string]interface{} {
 	bs, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to read %v file: %v", filename, err.Error()))
@@ -71,7 +68,8 @@ func (f *File) Json(filename string) map[string]interface{} {
 	return res
 }
 
-func (f *File) Props(filename string) map[string]interface{} {
+// 读取*.properties文件，返回一个JSONObject
+func (fns *InternalFunctionSet) Fprops(filename string) map[string]interface{} {
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to read %v file: %v", filename, err.Error()))
@@ -94,7 +92,8 @@ func (f *File) Props(filename string) map[string]interface{} {
 	return res
 }
 
-func (f *File) Args(filename string) []interface{} {
+// 读取一个参数文件，返回二维数组
+func (fns *InternalFunctionSet) Fargs(filename string) []interface{} {
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to read %v file: %v", filename, err.Error()))
@@ -124,17 +123,52 @@ func (f *File) Args(filename string) []interface{} {
 	return res
 }
 
-func (f *File) Scan(path string) []interface{} {
+func (fns *InternalFunctionSet) Fscan(path string) []interface{} {
 	var res []interface{}
 	doScan(path, false, &res)
 	return res
 }
 
-func (f *File) ScanAll(path string) []interface{} {
+func (fns *InternalFunctionSet) FscanAll(path string) []interface{} {
 	var res []interface{}
 	doScan(path, false, &res)
 	return res
 }
+
+func (fns *InternalFunctionSet) Fout(path, content string) {
+	err := ioutil.WriteFile(path, []byte(content), 0666)
+	if err != nil {
+		log.Fatal(fmt.Sprintf("failed to write content to file: %v, %v", path, err.Error()))
+	}
+}
+
+func (fns *InternalFunctionSet) Fappend(path, content string) {
+	data := []byte(content)
+	fobj, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatal(fmt.Sprintf("failed to open file: %v, %v", path, err.Error()))
+	}
+	n, err := fobj.Write(data)
+	if err == nil && n < len(data) {
+		log.Fatal(fmt.Sprintf("failed to write content to file: %v, %v", path, io.ErrShortWrite.Error()))
+	}
+	if err1 := fobj.Close(); err == nil && err1 != nil {
+		log.Fatal(fmt.Sprintf("failed to close file: %v, %v", path, err1.Error()))
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 func doScan(path string, scanAll bool, res *[]interface{})  {
 	if !isDir(path) {
@@ -166,26 +200,4 @@ func isDir(path string) bool {
 		return false
 	}
 	return fileInfo.IsDir()
-}
-
-func (f *File) Out(path, content string) {
-	err := ioutil.WriteFile(path, []byte(content), 0666)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("failed to write content to file: %v, %v", path, err.Error()))
-	}
-}
-
-func (f *File) Append(path, content string) {
-	data := []byte(content)
-	fobj, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("failed to open file: %v, %v", path, err.Error()))
-	}
-	n, err := fobj.Write(data)
-	if err == nil && n < len(data) {
-		log.Fatal(fmt.Sprintf("failed to write content to file: %v, %v", path, io.ErrShortWrite.Error()))
-	}
-	if err1 := fobj.Close(); err == nil && err1 != nil {
-		log.Fatal(fmt.Sprintf("failed to close file: %v, %v", path, err1.Error()))
-	}
 }

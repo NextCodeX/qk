@@ -84,6 +84,12 @@ println((-3.14) * b + c)
 
 println(res)
 
+s1 = ""
+s2 = ``
+s3 = "php"
+println(s1, s2, `]-${s1}-, -${s2}-[, it's ${s3}`)
+
+
 
 
 

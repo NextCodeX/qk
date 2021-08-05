@@ -14,3 +14,7 @@ func (null *NULLValue) val() interface{} {
 func (null *NULLValue) isNULL() bool {
 	return true
 }
+
+func (null *NULLValue) String() string {
+	return "null"
+}

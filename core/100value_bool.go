@@ -1,5 +1,7 @@
 package core
 
+import "fmt"
+
 type BooleanValue struct {
 	goValue bool
 	ValueAdapter
@@ -15,4 +17,8 @@ func (boolVal *BooleanValue) val() interface{} {
 
 func (boolVal *BooleanValue) isBoolean() bool {
 	return true
+}
+
+func (boolVal *BooleanValue) String() string {
+	return fmt.Sprint(boolVal.goValue)
 }

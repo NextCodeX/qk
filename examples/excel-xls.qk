@@ -1,0 +1,25 @@
+println("default value: ", "" || "changlie")
+println("test default value: ", "tom" || "jerry")
+
+f = xls("d:/tab1.xls")
+println("sheet number: ", f.sheetNumber(), f)
+
+
+sheet = f.sheet(0)
+println(sheet.name(), sheet.rowNumber())
+row = sheet.row(0)
+if row {
+    forv cell : row.cols() {
+        cell && print(cell.str()+", ")
+    }
+}
+println("\n+++++++++++++++++++++++++++++++")
+
+rows = sheet.rows()
+forv row : rows {
+    cells = row.cols()
+    forv cell : cells {
+        cell && print(cell.str()+", ")
+    }
+    println("\n=============================")
+}

@@ -21,7 +21,7 @@ func newClassExecutor(name string, objPtr interface{}, objDoublePtr interface{})
 	mts := collectFunctionInfo(objDoublePtr)
 	m := make(map[string]Value)
 	for name, f := range fs {
-		m[name] = toQKValue(f.get())
+		m[name] = newQKValue(f.get())
 	}
 	for name, mt := range mts {
 		m[name] = newModuleFunc(name, mt)
@@ -54,7 +54,7 @@ func (clazz *ClassExecutor) setField(name string, rawVal interface{}) {
 
 func evalClassField(any interface{}, attrname string) Value {
 	clazz := any.(*ClassExecutor)
-	return toQKValue(clazz.fieldValue(attrname))
+	return newQKValue(clazz.fieldValue(attrname))
 }
 
 func (clazz *ClassExecutor) String() string {

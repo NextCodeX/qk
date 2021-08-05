@@ -6,7 +6,17 @@ import (
 	"strings"
 )
 
+// internal function register
+func init() {
+	fns := &InternalFunctionSet{}
+	fmap := collectFunctionInfo(&fns)
+	functionRegister(fmap)
+}
 
+// 通过这个类型将所有内部函数串在一起
+type InternalFunctionSet struct{}
+
+// 通过反射收集函数信息
 func collectFunctionInfo(objDoublePtr interface{}) (res map[string]*FunctionExecutor) {
 	res = make(map[string]*FunctionExecutor)
 	v1 := reflect.ValueOf(objDoublePtr).Elem()
@@ -39,22 +49,14 @@ func collectFunctionInfo(objDoublePtr interface{}) (res map[string]*FunctionExec
 	return res
 }
 
-func functionRegister(module string, fmap map[string]*FunctionExecutor) {
-	for name, f := range fmap {
-		if module == "" {
-			addModuleFunc(name, f)
-			continue
-		}
-
-		funcKey := standardName(module, name)
-		addModuleFunc(funcKey, f)
+// 将内部函数注册到主函数(main)的内部栈中
+func functionRegister(fmap map[string]*FunctionExecutor) {
+	for fname, f := range fmap {
+		addModuleFunc(fname, f)
 	}
 }
 
-func standardName(moduleName, methodName string) string {
-	return fmt.Sprintf("%v_%v", moduleName, methodName)
-}
-
+// 将函数名第一个字母转小写
 func formatName(methodName string) string {
 	return fmt.Sprintf("%v%v", strings.ToLower(methodName[:1]), methodName[1:])
 }

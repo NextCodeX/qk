@@ -90,7 +90,7 @@ func (str *StringValue) get(key string) Value {
 			reg, ok := args[0].(string)
 			assert(!ok, "parameter type error, require split(string)")
 			tmp := toCommonSlice(strings.Split(raw, reg))
-			return toQKValue(tmp)
+			return newQKValue(tmp)
 		})
 
 	case "eic":
@@ -99,7 +99,7 @@ func (str *StringValue) get(key string) Value {
 			strB, ok := args[0].(string)
 			assert(!ok, "parameter type error, require eic(string)")
 			res := raw == strB || strings.ToLower(raw) == strings.ToLower(strB)
-			return toQKValue(res)
+			return newQKValue(res)
 		})
 	default:
 		runtimeExcption(fmt.Sprintf("string.%v() is undefined.", key))

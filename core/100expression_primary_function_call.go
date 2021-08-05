@@ -2,15 +2,13 @@ package core
 
 
 type FunctionCallPrimaryExpression struct {
-    name  string            // 变量名或者函数名称
-    args  []Expression // 函数调用参数 / 数组索引
+    args  []Expression // 函数调用参数
     PrimaryExpressionImpl
 }
 
-func newFunctionCallPrimaryExpression(name string, args []Expression) PrimaryExpression {
+func newFunctionCallPrimaryExpression(args []Expression) PrimaryExpression {
     expr := &FunctionCallPrimaryExpression{}
     expr.t = FunctionCallPrimaryExpressionType
-    expr.name = name
     expr.args = args
     expr.doExec = expr.doExecute
     return expr
@@ -31,5 +29,22 @@ func (priExpr *FunctionCallPrimaryExpression) setStack(stack Function) {
 func (priExpr *FunctionCallPrimaryExpression) doExecute() Value {
     runtimeExcption("running FunctionCallPrimaryExpression.doExecute is error")
     return nil
+}
+
+func (priExpr *FunctionCallPrimaryExpression) callFunc(fn Function) Value {
+    if fn.isInternalFunc() {
+        rawArgs := evalGoValues(priExpr.args)
+        fn.setRawArgs(rawArgs)
+    } else {
+        args := evalQKValues(priExpr.args)
+        fn.setArgs(args)
+    }
+
+    r := fn.execute()
+    if r != nil {
+       return r.value()
+    } else {
+        return NULL
+    }
 }
 

@@ -12,21 +12,7 @@ import (
 	_ "modernc.org/sqlite"
 )
 
-func init() {
-	dsc := &DateSourceConstructor{}
-	fs := collectFunctionInfo(&dsc)
-	functionRegister("", fs)
-}
-
-// 数据库连接对象
-type DataSource struct {
-	driver string
-	source string
-}
-
-type DateSourceConstructor struct{}
-
-func (dsc *DateSourceConstructor) Sqlserver(username, password, url string) Value {
+func (fns *InternalFunctionSet) Sqlserver(username, password, url string) Value {
 	seperatorIndex := strings.Index(url, "/")
 	var host, port, dbName string
 	if seperatorIndex < 0 || seperatorIndex == len(url) - 1 {
@@ -44,10 +30,10 @@ func (dsc *DateSourceConstructor) Sqlserver(username, password, url string) Valu
 	}
 	// e.g. "server=192.168.1.103;port=1433;database=STG;user id=SA;password=root@123"
 	sourceName := fmt.Sprintf("server=%v;port=%v;database=%v;user id=%v;password=%v", host, port, dbName, username, password)
-	return dsc.ConnDB("mysql", sourceName)
+	return connDB("mysql", sourceName)
 }
 
-func (dsc *DateSourceConstructor) Oracle(username, password, url string) Value {
+func (fns *InternalFunctionSet) Oracle(username, password, url string) Value {
 	seperatorIndex := strings.Index(url, "/")
 	var netAddress, uri string
 	if seperatorIndex < 0 {
@@ -59,10 +45,10 @@ func (dsc *DateSourceConstructor) Oracle(username, password, url string) Value {
 	}
 	// e.g. oracle://user:pass@server/service_name
 	sourceName := fmt.Sprintf("oracle://%v:%v@%v/%v", username, password, netAddress, uri)
-	return dsc.ConnDB("oracle", sourceName)
+	return connDB("oracle", sourceName)
 }
 
-func (dsc *DateSourceConstructor) Mysql(username, password, url string) Value {
+func (fns *InternalFunctionSet) Mysql(username, password, url string) Value {
 	seperatorIndex := strings.Index(url, "/")
 	var netAddress, uri string
 	if seperatorIndex < 0 {
@@ -74,16 +60,23 @@ func (dsc *DateSourceConstructor) Mysql(username, password, url string) Value {
 	}
 	// e.g. root:root@tcp(192.168.1.103:3306)/tx?charset=utf8
 	sourceName := fmt.Sprintf("%v:%v@tcp(%v)%v", username, password, netAddress, uri)
-	return dsc.ConnDB("mysql", sourceName)
+	return connDB("mysql", sourceName)
 }
 
-func (dsc *DateSourceConstructor) Sqlite(dbName string) Value {
-	return dsc.ConnDB("sqlite", dbName)
+func (fns *InternalFunctionSet) Sqlite(dbName string) Value {
+	return connDB("sqlite", dbName)
 }
 
-func (dsc *DateSourceConstructor) ConnDB(driverName, sourceName string) Value {
+func connDB(driverName, sourceName string) Value {
 	ds := &DataSource{driverName, sourceName}
 	return newClassExecutor("db", ds, &ds)
+}
+
+
+// 数据库连接对象
+type DataSource struct {
+	driver string
+	source string
 }
 
 func (ds *DataSource) Exec(args []interface{}) int64 {

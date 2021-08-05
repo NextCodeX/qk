@@ -37,7 +37,7 @@ func parse4ComplexTokens(ts []Token) []Token {
 		// 只要前一个表达式返回的是function, 运算符 "()"皆能处理
 		if res != nil && checkParenthesesOperator(res, token) {
 			tailToken := res[len(res)-1]
-			i = extractScopeOperator(tailToken, ts, i)
+			i = extractScopeOperator(tailToken, ts, i, dotHover)
 			goto nextLoop
 		}
 
@@ -52,7 +52,7 @@ func parse4ComplexTokens(ts []Token) []Token {
 		// 只要前一个表达式返回的是jsonObject或jsonArray, 运算符 "[]"皆能处理
 		if res != nil && checkBracketsOperator(res, token) {
 			tailToken := res[len(res)-1]
-			i = extractScopeOperator(tailToken, ts, i)
+			i = extractScopeOperator(tailToken, ts, i, dotHover)
 			goto nextLoop
 		}
 
@@ -208,7 +208,7 @@ func parse4ComplexTokens(ts []Token) []Token {
 	return res
 }
 
-func extractScopeOperator(tailToken Token, ts []Token, currentIndex int) int {
+func extractScopeOperator(tailToken Token, ts []Token, currentIndex int, dotHover *Hover) int {
 	tailToken.addType(ElemFunctionCallMixture)
 	for currentIndex < len(ts) {
 		var nextToken Token
@@ -239,7 +239,7 @@ func extractScopeOperator(tailToken Token, ts []Token, currentIndex int) int {
 
 			currentIndex = endIndex + 1
 
-			if currentIndex < len(ts) && ts[currentIndex].assertSymbol("{") {
+			if !dotHover.ready && currentIndex < len(ts) && ts[currentIndex].assertSymbol("{") {
 				// 捕获函数字面值
 				endIndex = scopeEndIndex(ts, currentIndex, "{", "}")
 				bodyTokens := parse4ComplexTokens(ts[currentIndex+1:endIndex])

@@ -20,6 +20,14 @@ func (str *StringValue) val() interface{} {
     return str.goValue
 }
 
+func (str *StringValue) isString() bool {
+    return true
+}
+
+func (str *StringValue) String() string {
+    return str.goValue
+}
+
 func (str *StringValue) size() int {
     return len(str.chars)
 }
@@ -34,8 +42,4 @@ func (str *StringValue) sub(start, end int) string {
         buf.WriteRune(ch)
     }
     return buf.String()
-}
-
-func (str *StringValue) isString() bool {
-    return true
 }

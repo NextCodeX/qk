@@ -34,9 +34,6 @@ func (priExpr *ElemFunctionCallPrimaryExpression) doExecute() Value {
 
 func (priExpr *ElemFunctionCallPrimaryExpression) exprExec(chainExprs []PrimaryExpression) Value {
     currentObj := priExpr.head.execute()
-    //tx := priExpr.head.raw()[0]
-    //tx.setTyp(^ElemFunctionCallMixture & tx.typ())
-    //fmt.Println("priExpr.head -=>", currentObj.val(),"|" , tx.String(),"|" , priExpr.getVar("arr"))
     chain := chainExprs
     if priExpr.head.isVar() {
         chainLen := len(chainExprs)
@@ -62,15 +59,12 @@ func (priExpr *ElemFunctionCallPrimaryExpression) exprExec(chainExprs []PrimaryE
 
 
 func (priExpr *ElemFunctionCallPrimaryExpression) runScopeChain(currentObj Value, chain []PrimaryExpression) Value {
-    //fmt.Println("mix#runScopeChain raw -> ", currentObj.val(), tokensString(priExpr.raw()))
     for _, subExpr := range chain {
 
         if currentObj == nil {
             errorf("invalid expression: null%v", tokensString(subExpr.raw()))
             break
         }
-        //fmt.Println("mix#runScopeChain currentObj -> ", currentObj.val())
-        //println("==============================")
 
         var intermediateVal Value
         if currentObj.isJsonArray() && subExpr.isSubList() {
@@ -107,17 +101,7 @@ func (priExpr *ElemFunctionCallPrimaryExpression) runScopeChain(currentObj Value
             // func()
             fn := currentObj.(Function)
             nextExpr := subExpr.(*FunctionCallPrimaryExpression)
-            if fn.isInternalFunc() {
-                rawArgs := toGoTypeValues(nextExpr.args)
-                fn.setRawArgs(rawArgs)
-            } else {
-                args := evalValues(nextExpr.args)
-                fn.setArgs(args)
-            }
-            r := fn.execute()
-            if r != nil {
-                intermediateVal = r.value()
-            }
+            intermediateVal = nextExpr.callFunc(fn)
 
         } else {
             errorf("invalid mixture expression: %v{%v} chainLen: %v", currentObj.val(), tokensString(subExpr.raw()), len(chain))
