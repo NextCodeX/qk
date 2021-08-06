@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	_ "github.com/lib/pq" // postgreSQL
-	//_ "github.com/sijms/go-ora/v2" // oracle
+	_ "github.com/sijms/go-ora/v2" // oracle
 	_ "modernc.org/sqlite"
 )
 
