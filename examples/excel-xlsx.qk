@@ -10,9 +10,10 @@ data = [
 f = newXlsx()
 sheet = f.sheet(0)
 sheet.setData(headers, data)
-f.saveAs("d:/test.xlsx")
+f.saveAs("/home/xp/ws/test.xlsx")
 println("write successfully")
 
+/*
 f = xlsx("d:/tab2.xlsx")
 sheet = f.sheet(0)
 forv row : sheet.cellVals() {
@@ -25,3 +26,4 @@ forv row : sheet.cellVals() {
 
 println("run successfully!")
 
+*/
