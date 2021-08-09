@@ -5,6 +5,9 @@ type ValueAdapter struct {}
 func (valAdapter *ValueAdapter) isNULL() bool {
     return false
 }
+func (valAdapter *ValueAdapter) isByteArray() bool {
+    return false
+}
 func (valAdapter *ValueAdapter) isInt() bool {
     return false
 }

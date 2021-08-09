@@ -1,6 +1,5 @@
 package core
 
-type ValueType int
 
 // 空值
 var NULL = newNULLValue()
@@ -9,6 +8,7 @@ type Value interface {
    String() string
    val() interface{}
    isNULL() bool
+   isByteArray() bool
    isInt() bool
    isFloat() bool
    isBoolean() bool
@@ -27,6 +27,8 @@ func newQKValue(rawVal interface{}) Value {
     }
     var val Value
     switch v := rawVal.(type) {
+    case []byte:
+        val = newByteArrayValue(v)
     case int:
         val = newIntValue(int64(v))
     case int64:
@@ -49,12 +51,32 @@ func newQKValue(rawVal interface{}) Value {
         val = v
     case Value:
         val = v
+    case []Value:
+        val = toJSONArray(v)
+    case map[string]Value:
+        val = toJSONObject(v)
+    case map[string]string:
+        mapRes := make(map[string]Value)
+        for key, value := range v {
+            mapRes[key] = newQKValue(value)
+        }
+        tmp := toJSONObject(mapRes)
+        return tmp
+
     case map[string]interface{}:
         mapRes := make(map[string]Value)
         for key, value := range v {
             mapRes[key] = newQKValue(value)
         }
         tmp := toJSONObject(mapRes)
+        return tmp
+
+    case []string:
+        var arrRes []Value
+        for _, item := range v {
+            arrRes = append(arrRes, newQKValue(item))
+        }
+        tmp := toJSONArray(arrRes)
         return tmp
 
     case []interface{}:
@@ -69,6 +91,15 @@ func newQKValue(rawVal interface{}) Value {
         val = newAnyValue(v)
     }
     return val
+}
+
+func goBytes(val Value) []byte {
+    if v, ok := val.(*ByteArrayValue); ok {
+        return v.goValue
+    } else {
+        runtimeExcption("value is not ByteArray")
+        return nil
+    }
 }
 
 func goInt(val Value) int64 {

@@ -27,7 +27,7 @@ func main() {
 		}
 	}
 
-	qkfile := "examples/excel-xlsx.qk"
+	qkfile := "examples/http-server.qk"
 	//qkfile := getScriptFile()
 	//changeWorkDirectory()
 

@@ -59,7 +59,7 @@ func (priExpr *ObjectPrimaryExpression) doExecute() Value {
         expr.setStack(priExpr.getStack())
         val := expr.execute()
         if fn, ok := val.(Function); ok {
-            fn.setThis(object)
+            fn.setPreVar("this", object)
         }
         object.put(keyname, val)
         i = nextCommaIndex

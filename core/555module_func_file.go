@@ -157,6 +157,27 @@ func (fns *InternalFunctionSet) Fappend(path, content string) {
 	}
 }
 
+func (fns *InternalFunctionSet) Fsave(path string, bytes []byte) {
+	err := ioutil.WriteFile(path, bytes, 0666)
+	if err != nil {
+		log.Fatal(fmt.Sprintf("failed to write content to file: %v, %v", path, err.Error()))
+	}
+}
+
+func (fns *InternalFunctionSet) FappendBytes(path string, bytes []byte) {
+	fobj, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatal(fmt.Sprintf("failed to open file: %v, %v", path, err.Error()))
+	}
+	n, err := fobj.Write(bytes)
+	if err == nil && n < len(bytes) {
+		log.Fatal(fmt.Sprintf("failed to write content to file: %v, %v", path, io.ErrShortWrite.Error()))
+	}
+	if err1 := fobj.Close(); err == nil && err1 != nil {
+		log.Fatal(fmt.Sprintf("failed to close file: %v, %v", path, err1.Error()))
+	}
+}
+
 
 
 

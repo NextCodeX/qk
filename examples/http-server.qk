@@ -1,0 +1,52 @@
+
+server = httpServer(8888)
+server.get("/", $ req, resp {
+    println(req, resp)
+    resp.txt("Hello Quick Http Server!")
+
+    resp.html(`<h2 style="color:red;">Hello Quick Http Server!</h2>`)
+})
+
+server.get("/user", $ req, resp {
+    println("args:", req.args())
+    println("========================")
+    foreach k, v : req.headers() {
+        printf("%v => %v\n", k, v)
+    }
+    println("========================")
+    resp.json({
+        id:req.param("id"),
+        name:"changlie",
+        age:19,
+        addr:"k中国"
+    })
+})
+
+server.get("/fake", $ req, resp {
+    resp.redirect("https://www.baidu.com")
+})
+
+server.post("/upload", $ req, resp {
+    println(req.args())
+    println(req.getFiles("testf"))
+    println(req.files())
+    forv f : req.getFiles("testf") {
+        println(f.name(), f.size())
+        f.save("bak_v2_"+f.name())
+    }
+    resp.txt("v6 successful!")
+})
+
+server.post("/form", $ req, resp {
+    println(req.args())
+    resp.txt("post success.")
+})
+
+server.post("/json", $ req, resp {
+    req.showhs()
+    println("args: ", req.args())
+    println("json: ", req.json(), req.json().career)
+    resp.txt("post json finish.")
+})
+
+server.startup()

@@ -1,9 +1,8 @@
 package core
 
 import (
-	"fmt"
-	"os"
 	"bytes"
+	"fmt"
 )
 
 
@@ -23,8 +22,7 @@ func errorf(format string, args ...interface{}) {
 		}
 		msg = append(msg, item)
 	}
-	fmt.Printf(format, msg...)
-	os.Exit(2)
+	panic(fmt.Sprintf(format, msg...))
 }
 
 // 报错并退出程序(不带格式化)
@@ -37,8 +35,7 @@ func runtimeExcption(raw ...interface{}){
 		}
 		msg = append(msg, item)
 	}
-	fmt.Println(msg...)
-	os.Exit(2)
+	panic(fmt.Sprint(msg...))
 }
 
 func printExprTokens(exprTokensList [][]Token) {

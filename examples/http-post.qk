@@ -1,0 +1,22 @@
+descBytes = fbytes("README.md")
+versionBytes = fbytes("version.go")
+
+url = "http://localhost:12345/hello?from=qk"
+resp = httpPost(url, {type:mime.data,
+    headers:{trace:"witch"},
+    body:{
+        name:"changlie",
+        age:18,
+        addr:"中国",
+        files: [
+            {field: "uploadFile", name: "demo.txt", path:"test.txt"},
+            {name: "qk.txt", path:"main.go"},
+            {name: "desc.txt", data:descBytes},
+            {field: "uploadFile", name: "version.txt", data:versionBytes},
+        ]
+    }
+})
+printf("status: %v|%v \n", resp.status(), resp.statusCode())
+println(resp.string())
+// obj = resp.json()
+// println("ret is", obj.ret, obj.msg)

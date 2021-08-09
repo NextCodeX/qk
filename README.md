@@ -1,5 +1,5 @@
 # Quick
-It's golang util wrapper,  a script language like JavaScript.
+It's a script language, like JavaScript, but more interesting.
 
 ### The reference documentation
 [https://www.chenlh.cn/qk-doc/](https://www.chenlh.cn/qk-doc/)

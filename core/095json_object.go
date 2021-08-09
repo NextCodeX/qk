@@ -16,6 +16,7 @@ type JSONObject interface {
     get(key string) Value
     keys() []string
     values() []Value
+	mapVal() map[string]Value
     tokens() []Token
     String() string
 	toJSONObjectString() string
@@ -101,6 +102,10 @@ func (obj *JSONObjectImpl) values() []Value {
         vals = append(vals, v)
     }
     return vals
+}
+
+func (obj *JSONObjectImpl) mapVal() map[string]Value {
+    return obj.valMap
 }
 
 func (obj *JSONObjectImpl) tokens() []Token {

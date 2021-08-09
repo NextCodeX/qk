@@ -9,7 +9,7 @@ type Function interface {
 	setRaw(ts []Token)
 	setParamNames(paramNames []string)
 
-	setThis(value JSONObject)
+	setPreVar(key string, value Value)
 	getName() string
 	getParent() Function
 	getLocalVars() Variables
@@ -36,7 +36,7 @@ type FunctionImpl struct {
 	moduleFunc *FunctionExecutor
 	internalFunc func([]interface{})interface{}
 	internalFuncFlag bool
-	this JSONObject
+	preVars JSONObject // 预设变量列表
 	StatementAdapter
 	ValueAdapter
 }
@@ -99,8 +99,12 @@ func extractModuleFuncArgs(f *FunctionExecutor, args []interface{}) []reflect.Va
 }
 
 // 预设变量
-func (f *FunctionImpl) setThis(value JSONObject) {
-	f.this = value
+func (f *FunctionImpl) setPreVar(key string, value Value) {
+	if f.preVars == nil {
+		m := make(map[string]Value)
+		f.preVars = toJSONObject(m)
+	}
+	f.preVars.put(key, value)
 }
 
 func (f *FunctionImpl) isInternalFunc() bool {
@@ -152,8 +156,11 @@ func (f *FunctionImpl) execute() StatementResult {
 
 	f.local = newVariables()
 
-	if f.this != nil {
-		f.local.add("this", f.this)
+	if f.preVars != nil {
+		obj := f.preVars
+		for _, key := range obj.keys() {
+			f.local.add(key, obj.get(key))
+		}
 	}
 
 	for i, paramName := range f.paramNames {
