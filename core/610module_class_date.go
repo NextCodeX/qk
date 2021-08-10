@@ -11,9 +11,14 @@ func (fns *InternalFunctionSet) Now() Value {
 	return newClassExecutor("date", dt, &dt)
 }
 
-// current timestamp
+// current timestamp (Microsecond)
 func (fns *InternalFunctionSet) Timestamp() interface{} {
-	return time.Now().Unix()
+	return time.Now().UnixNano() / 1e6
+}
+
+// current timestamp （Nanosecond）
+func (fns *InternalFunctionSet) Nanosecond() interface{} {
+	return time.Now().UnixNano()
 }
 
 const CommonDatetimeFormat = "2006-01-02 15:04:05"

@@ -87,18 +87,37 @@ func parse4ComplexTokens(ts []Token) []Token {
 				i = endIndex+1
 				goto nextLoop
 
-			} else if endIndex := nextSymbolIndexNotError(ts, i, "->", ";", ",", ")", "]", "}"); endIndex > 0 {
+			} else if endIndex := nextSymbolIndexNotError(ts, i, "->", ";", ")", "]", "}"); endIndex > 0 {
 				argsTokens := ts[i+1:endIndex]
 				currentIndex := endIndex
-				endIndex = nextSymbolsIndex(ts, currentIndex, ";", ",", ")", "]", "}")
+				endIndex = minFuncEndIndex(ts, currentIndex)
+				// 这时的endIndex已不是条件判断时的endIndex
+				if endIndex < 0 {
+					endIndex = len(ts)
+				}
+
 				bodyTokens := ts[currentIndex+1:endIndex]
-				bodyTokens = insert(newToken("return", Identifier), bodyTokens)
 				bodyTokens = parse4ComplexTokens(bodyTokens)
+				bodyTokens = insert(newToken("return", Identifier), bodyTokens)
+
 				funcToken := &TokenImpl{t:FuncLiteral, ts:argsTokens, bodyTokens: bodyTokens}
 				res = append(res, funcToken)
+
+				// 不能使endIndex+1, 避免";", ",", ")", "]", "}"这些分隔符被删除
 				i = endIndex
 				goto nextLoop
 
+			} else if endIndex := minFuncEndIndex(ts, i); endIndex > 0 {
+				var argsTokens []Token
+				bodyTokens := ts[i+1:endIndex]
+				bodyTokens = parse4ComplexTokens(bodyTokens)
+
+				funcToken := &TokenImpl{t:FuncLiteral, ts:argsTokens, bodyTokens: bodyTokens}
+				res = append(res, funcToken)
+
+				// 不能使endIndex+1, 避免";", ",", ")", "]", "}"这些分隔符被删除
+				i = endIndex
+				goto nextLoop
 			} else {
 				runtimeExcption("error function literal:", tokensShow10(ts[i:]))
 			}
@@ -322,7 +341,11 @@ func checkJSONArrayLiteral(currentIndex int, ts []Token) bool {
 
 // 判断是否遇到了json对象字面值
 func checkJSONObjectLiteral(currentIndex int, ts []Token) bool {
-	return ts[currentIndex].assertSymbol("{") && (currentIndex == 0 || (currentIndex > 0 && ((ts[currentIndex-1].isSymbol() && !ts[currentIndex-1].assertSymbol(")")) || ts[currentIndex-1].assertIdentifier("return"))))
+	return ts[currentIndex].assertSymbol("{") &&
+		(currentIndex == 0 ||
+			(currentIndex > 0 &&
+				((ts[currentIndex-1].isSymbol() && !ts[currentIndex-1].assertSymbols(")", "++")) ||
+					ts[currentIndex-1].assertIdentifier("return"))))
 }
 
 func extractArrayLiteral(currentIndex int, ts []Token) (t Token, nextIndex int) {

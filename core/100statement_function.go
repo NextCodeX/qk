@@ -34,6 +34,7 @@ type FunctionImpl struct {
 	args []Value
 	rawArgs []interface{}
 	moduleFunc *FunctionExecutor
+	anonymousFunc func()Value
 	internalFunc func([]interface{})interface{}
 	internalFuncFlag bool
 	preVars JSONObject // 预设变量列表
@@ -50,6 +51,14 @@ func newFunc(name string, ts []Token, paramNames []string) Function {
 	f.StatementAdapter.ts = ts
 	f.paramNames = paramNames
 	f.fns = make(map[string]Function)
+	f.initStatement(f)
+	return f
+}
+
+func newAnonymousFunc(anonymousFunc func()Value) Function {
+	f := &FunctionImpl{}
+	f.anonymousFunc = anonymousFunc
+	f.internalFuncFlag = true
 	f.initStatement(f)
 	return f
 }
@@ -147,10 +156,12 @@ func (f *FunctionImpl) execute() StatementResult {
 		var res interface{}
 		if f.internalFunc != nil {
 			res = f.internalFunc(f.rawArgs)
-		} else {
+		} else if f.moduleFunc != nil {
 			params := extractModuleFuncArgs(f.moduleFunc, f.rawArgs)
 			res = f.moduleFunc.Run(params)
-		}
+		} else if f.anonymousFunc != nil {
+			res = f.anonymousFunc()
+		} else {}
 		return newStatementResult(StatementNormal, newQKValue(res))
 	}
 

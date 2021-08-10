@@ -1,0 +1,11 @@
+start = timestamp()
+
+res = async(${
+    println("it's in async")
+    sleep(1500)
+    return 998
+})
+
+println("async result:", res())
+
+println("cost: ", timestamp() - start, "ms")

@@ -12,7 +12,7 @@ func addModuleFunc(name string, moduleFunc *FunctionExecutor) {
 func Run(bs []byte) {
 	// 词法分析
 	ts := ParseTokens(bs)
-	//printTokensByLine(ts)
+	printTokensByLine(ts)
 
 	// 语法分析(解析)
 	mainFunc.setRaw(ts)
@@ -20,6 +20,9 @@ func Run(bs []byte) {
 
 	// 程序执行
 	mainFunc.execute()
+
+	// 等待所有协程执行完，再结束程序
+	goroutineWaiter.Wait()
 }
 
 // 指定变量𣏾, 执行qk代码片段.

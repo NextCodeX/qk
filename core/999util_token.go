@@ -120,6 +120,23 @@ func nextSymbolsIndex(ts []Token, currentIndex int, tokenStrs ...string) int {
 	return -1
 }
 
+func minFuncEndIndex(ts []Token, currentIndex int) int {
+	scopeCount := 0
+	for i:=currentIndex; i<len(ts); i++ {
+		t := ts[i]
+		if t.assertSymbol("(") {
+			scopeCount ++
+		}
+		if scopeCount == 0 && t.assertSymbols(";", ",", ")", "]", "}") {
+			return i
+		}
+		if t.assertSymbol(")") {
+			scopeCount --
+		}
+	}
+	return -1
+}
+
 // 获取指定符号token的下一个索引
 func nextSymbolIndex(ts []Token, currentIndex int, s string) int {
     for i:=currentIndex; i<len(ts); i++ {
@@ -162,7 +179,7 @@ func scopeEndIndex(ts []Token, currentIndex int, open, close string) int {
 		}
 	}
 	if scopeOpenCount > 0 {
-		errorf(`scopeEndIndex: no match final character "%v" for scope %v%v`, close, open, close)
+		errorf(`scopeEndIndex: no match final character "%v" for scope %v%v: %v`, close, open, close, tokensString(ts))
 	}
 	return -1
 }

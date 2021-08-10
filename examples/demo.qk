@@ -1,9 +1,164 @@
+/*
+upper = $ str -> str.upper()
+println(upper("helloxa"))
+
 service(name, fn) {
-    println("fn is", fn)
-    printf("%v => %v", name, fn(name))
+    println("fn is", fn) // fn is func:()
+    printf("%v => %v\n", name, fn(name)) // tom => tom is a cat!
 }
 
 service("tom", $ name {
-    println("this is", this)
     return name + " is a cat!"
 })
+
+test(a, b, add) {
+    printf("%v + %v = %v\n", a, b, add(a, b)) // 5 + 7 = 12
+}
+
+test(5, 7, $ num1, num2 -> num1 + num2)
+
+student = {
+    name:"changlie",
+    age:18,
+    show:${
+        println(`my name is ${this.name}, ${this.age} years old.`) // my name is changlie, 18 years old.
+    }
+}
+student.show()
+
+
+add(num1, num2) {
+    res = num1 + num2
+    return res
+}
+c = add(3*3, 4*4)
+println("result:", add(5, 9), c)
+
+test(a, b, c) {
+    printf("a=%v, b=%v, c=%v\n", a, b, c) // a=fast, b=null, c=null
+}
+test("fast")
+
+${
+    println("It's in anonymous function")
+}() // It's in anonymous function
+
+testx(name){
+    printf("It's in %v function\n", name)
+}("normal") // It's in normal function
+
+
+rows = [
+{name:"changlie", age:18},
+{name:"philip", age:30},
+{name:"baby", age:1}
+]
+
+forv row : rows {
+    line = `this age of student ${row.name} is ${row.age}`
+    println(line)
+}
+
+s = ``
+s1 = ""
+
+animal = "dog"
+number = 23
+s2 = `the number of ${animal} is ${number}`
+s4 = "China."
+println(s2)
+println(s4)
+
+s5 = `++++++++++
+line 1
+line 2
+++++++++++`
+s6 = "##############
+number one
+number two
+number three
+##############"
+println(s5)
+println(s6)
+
+
+str = "中华人民共和国Great"
+println(str[3]) // 民
+println(str[8]) // r
+
+println("China".size()) // 5
+println("疑是银河落九天".size()) // 7
+
+
+str = "中华人民共和国Great"
+println(str[:3]) // 中华人
+println(str[4:7]) //共和国
+println(str[7:]) //Great
+
+str = "中华人民共和国Great"
+foreach i, char : str {
+    println(i, char)
+}
+
+println("HELL".lower())
+
+pt = $println("It's simple function!!!")
+pt() // It's simple function!!!
+
+arr1 = []
+
+arr2 = [1, false, "NT"]
+
+str = "thor"
+arr3 = [str, true]
+
+arr = [1, false, "NT"]
+println(arr.size())
+
+arr = [1, 2, 3, "a", "b", "c"]
+println(arr[1]) // 1
+println(arr[3]) // "a"
+
+
+println(arr[4:]) // ["b", "c"]
+println(arr[:2]) // [1, 2]
+println(arr[3:5]) // ["a", "b"]
+
+arr = [1, false, "NT"]
+arr[1] = "change"
+println(arr) // [1, "change", "NT"]
+
+arr = [1, false, "NT"]
+arr.add(998)
+arr.add(3.14, "jerry")
+println(arr) // [1, false, "NT", 998, 3.14, "jerry"]
+
+
+arr = [1, false, "NT"]
+arr.remove(1)
+println(arr) // [1, "NT"]
+
+arr = [1, false, "D"]
+println( arr.join(",")) // 1,false,D
+println( arr.join(", ")) // 1, false, D
+println( arr.join("#")) // 1#false#D
+*/
+
+arr = [1, false, "NT"]
+for i=0; i<arr.size(); i++ {
+    println(i, arr[i])
+}
+
+arr = [998, true, "DONE"]
+foreach i, item : arr {
+    println(i, item)
+}
+
+
+println(true ? "blue" : "red")  // blue
+println(false ? "kind" : "dom") // dom
+
+println(10 + -5.5) // 4.5
+println(-3.14 + 2) // -1.1400000000000001
+
+println(-6.234+"")

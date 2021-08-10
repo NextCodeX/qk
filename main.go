@@ -27,7 +27,7 @@ func main() {
 		}
 	}
 
-	qkfile := "examples/http-server.qk"
+	qkfile := "examples/demo.qk"
 	//qkfile := getScriptFile()
 	//changeWorkDirectory()
 
@@ -36,7 +36,6 @@ func main() {
 		log.Fatalf("failed to read %v; error info: %v", qkfile, err)
 	}
 	core.Run(bs)
-	//time.Sleep(time.Duration(50) * time.Millisecond)
 
 	duration := time.Now().UnixNano() - startupTime
 	fmt.Printf("\n\nspend: %vns, %.3fms, %.3fs  \n", duration, float64(duration) / 1e6, float64(duration) / 1e9)

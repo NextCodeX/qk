@@ -27,8 +27,8 @@ func (arr *JSONArrayImpl) get(key string) Value {
 	case "remove":
 		return newInternalFunc(key, func(args []interface{})interface{}{
 			assert(len(args)<1, "method array.remove must has one parameter.")
-			index, ok := args[0].(int)
-			assert(!ok, "method array.remove, parameter must be int type")
+			index := toInt(args[0])
+			//assert(!ok, "method array.remove, parameter must be int type")
 			arr.remove(index)
 			return NULL
 		})
