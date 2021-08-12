@@ -6,12 +6,16 @@ import (
 
 type AnyValue struct {
 	goValue interface{}
-	ValueAdapter
+	ClassObject
 }
 
 func newAnyValue(raw interface{}) Value {
-	return &AnyValue{goValue: raw}
+	any := &AnyValue{goValue: raw}
+	any.ClassObject.raw = &any
+	any.ClassObject.name = "Anything"
+	return any
 }
+
 
 func (any *AnyValue) val() interface{} {
 	return any.goValue

@@ -31,11 +31,6 @@ func (priExpr *TernaryOperatorPrimaryExpression) setStack(stack Function) {
     }
 }
 
-
-func (priExpr *TernaryOperatorPrimaryExpression) getName() string {
-    return "#ternary operator"
-}
-
 func (priExpr *TernaryOperatorPrimaryExpression) doExecute() Value {
     var res Value
 

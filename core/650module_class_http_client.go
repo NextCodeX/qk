@@ -37,7 +37,7 @@ func init() {
 	mimes["json"] = newQKValue("application/json")
 	mimes["form"] = newQKValue("application/x-www-form-urlencoded")
 	mimes["data"] = newQKValue("multipart/form-data")
-	mainFunc.setPreVar("mime", toJSONObject(mimes))
+	mainFunc.setPreVar("mime", jsonObject(mimes))
 }
 
 
@@ -68,8 +68,7 @@ func (fns *InternalFunctionSet) HttpGet(args []interface{}) Value {
 		runtimeExcption(err)
 	}
 
-	obj := newHttpResponse(resp)
-	return newClassExecutor("HttpResponse", obj, &obj)
+	return newHttpResponse(resp)
 }
 
 func (fns *InternalFunctionSet) HttpPost(args []interface{}) Value {
@@ -108,8 +107,7 @@ func (fns *InternalFunctionSet) HttpPost(args []interface{}) Value {
 		runtimeExcption(err)
 	}
 
-	obj := newHttpResponse(resp)
-	return newClassExecutor("HttpResponse", obj, &obj)
+	return newHttpResponse(resp)
 }
 
 func parseBody(contentType string, val Value) (io.Reader, string) {

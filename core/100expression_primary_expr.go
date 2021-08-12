@@ -14,10 +14,6 @@ func newExprPrimaryExpression(subExpr Expression) PrimaryExpression {
     return expr
 }
 
-func (priExpr *ExprPrimaryExpression) getName() string {
-    return "#expr"
-}
-
 func (priExpr *ExprPrimaryExpression) setStack(stack Function) {
     priExpr.stack = stack
 

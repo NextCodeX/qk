@@ -31,7 +31,7 @@ func (fns *InternalFunctionSet) HttpServer(port int) Value {
 	obj := &HttpServer{port: port}
 	obj.services = make(map[string]Function)
 	obj.serviceMethods = make(map[string]string)
-	return newClassExecutor("HttpServer", obj, &obj)
+	return newClass("HttpServer", &obj)
 }
 
 type HttpServer struct {
@@ -112,7 +112,7 @@ func (srv *HttpServer) Startup() {
 
 		resp := &ServerResponse{}
 		request := newHttpRequest(req, mt)
-		response := newClassExecutor("ServerResponse", resp, &resp)
+		response := newClass("ServerResponse", &resp)
 
 		// run service
 		service := srv.services[pt]

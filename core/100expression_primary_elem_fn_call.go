@@ -24,10 +24,6 @@ func (priExpr *ElemFunctionCallPrimaryExpression) setStack(stack Function) {
     }
 }
 
-func (priExpr *ElemFunctionCallPrimaryExpression) getName() string {
-    return "#elementFunctionCallMixture"
-}
-
 func (priExpr *ElemFunctionCallPrimaryExpression) doExecute() Value {
     return priExpr.exprExec(priExpr.chain)
 }
@@ -124,7 +120,7 @@ func (priExpr *ElemFunctionCallPrimaryExpression) runWith(obj Object) Value {
 	if !ok {
 	    errorf("object.%v is error", tokensString(priExpr.raw()))
     }
-	currentObj := varExpr.getAttribute(obj)
+	currentObj := varExpr.getField(obj)
 	return priExpr.runScopeChain(currentObj, priExpr.chain)
 }
 // 与Chain Call表达式结合, 被赋值
@@ -133,7 +129,7 @@ func (priExpr *ElemFunctionCallPrimaryExpression) beAssignedAfterChainCall(obj O
 	if !ok {
 	    errorf("object.%v is error", tokensString(priExpr.raw()))
     }
-	currentObj := varExpr.getAttribute(obj)
+	currentObj := varExpr.getField(obj)
     chainExprs := priExpr.chain
     chainLen := len(chainExprs)
     finalVal := priExpr.runScopeChain(currentObj, chainExprs[:chainLen-1])

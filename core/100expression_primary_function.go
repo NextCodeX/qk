@@ -19,10 +19,6 @@ func (priExpr *FunctionPrimaryExpression) setStack(stack Function) {
     priExpr.val.setParent(stack)
 }
 
-func (priExpr *FunctionPrimaryExpression) getName() string {
-    return "#function"
-}
-
 func (priExpr *FunctionPrimaryExpression) doExecute() Value {
     fn := priExpr.val
     funcName := fn.getName()

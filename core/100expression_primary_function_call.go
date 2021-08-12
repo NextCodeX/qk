@@ -14,10 +14,6 @@ func newFunctionCallPrimaryExpression(args []Expression) PrimaryExpression {
     return expr
 }
 
-func (priExpr *FunctionCallPrimaryExpression) getName() string {
-    return "#functionCall"
-}
-
 func (priExpr *FunctionCallPrimaryExpression) setStack(stack Function) {
     priExpr.stack = stack
 

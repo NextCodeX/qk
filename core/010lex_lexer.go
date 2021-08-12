@@ -294,7 +294,7 @@ func (lexer *Lexer) pushBoundryToken() {
 		str: ";",
 		t:   Symbol,
 	})
-	//fmt.Println("before append pushBoundryToken:", tokensString(lexer.ts), lexer.CurrentByteString(), lexer.CurrentStateName(), size>0 && lexer.ts[size-1].assertSymbols("{", ",", "}"))
+	//fmt.Println("before append pushBoundryToken:", tokensString(lexer.ts), lexer.CurrentByteString(), lexer.CurrentStateName(), Size>0 && lexer.ts[Size-1].assertSymbols("{", ",", "}"))
 }
 
 func (lexer *Lexer) pushLongToken() {

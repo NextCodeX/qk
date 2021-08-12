@@ -27,10 +27,6 @@ func (priExpr *SubListPrimaryExpression) setStack(stack Function) {
     }
 }
 
-func (priExpr *SubListPrimaryExpression) getName() string {
-    return "#subList"
-}
-
 func (priExpr *SubListPrimaryExpression) doExecute() Value {
     return nil
 }
@@ -51,12 +47,12 @@ func (priExpr *SubListPrimaryExpression) startEndIndex(defaultEndIndex int) (int
 }
 
 func (priExpr *SubListPrimaryExpression) subArr(arr JSONArray) Value {
-    startIndex, endIndex := priExpr.startEndIndex(arr.size())
+    startIndex, endIndex := priExpr.startEndIndex(arr.Size())
     return arr.sub(startIndex, endIndex)
 }
 
 func (priExpr *SubListPrimaryExpression) subStr(str *StringValue) Value {
-    startIndex, endIndex := priExpr.startEndIndex(str.size())
+    startIndex, endIndex := priExpr.startEndIndex(str.Size())
     return newQKValue(str.sub(startIndex, endIndex))
 }
 

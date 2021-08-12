@@ -22,10 +22,9 @@ type HttpRequest struct {
 func newHttpRequest(req *http.Request, method string) Value {
 	obj := &HttpRequest{}
 	parseArgs(obj, req, method)
-
 	obj.headers = req.Header
 
-	return newClassExecutor("HttpRequest", obj, &obj)
+	return newClass("HttpRequest", &obj)
 }
 
 func parseArgs(obj *HttpRequest, req *http.Request, method string) {
@@ -165,9 +164,9 @@ func (req *HttpRequest) Files() Value {
 		for _, multiFile := range multiFiles {
 			fs = append(fs, multiFile)
 		}
-		res[k] = toJSONArray(fs)
+		res[k] = array(fs)
 	}
-	return toJSONObject(res)
+	return jsonObject(res)
 }
 
 func (req *HttpRequest) GetFiles(formName string) JSONArray {
@@ -179,7 +178,7 @@ func (req *HttpRequest) GetFiles(formName string) JSONArray {
 		for _, multiFile := range multiFiles {
 			fs = append(fs, multiFile)
 		}
-		return toJSONArray(fs)
+		return array(fs)
 	}
 	return nil
 }
@@ -204,7 +203,7 @@ type MultipartFile struct {
 
 func newMultipartFile(name string, data []byte) Value {
 	obj := &MultipartFile{name: name, data: data}
-	return newClassExecutor("MultipartFile", obj, &obj)
+	return newClass("MultipartFile", &obj)
 }
 
 func (f *MultipartFile) Name() string {
@@ -257,7 +256,7 @@ func httpValsToJSONObject(vals map[string][]string) JSONObject {
 		for _, val := range vals {
 			arr = append(arr, newQKValue(val))
 		}
-		obj[k] = toJSONArray(arr)
+		obj[k] = array(arr)
 	}
-	return toJSONObject(obj)
+	return jsonObject(obj)
 }

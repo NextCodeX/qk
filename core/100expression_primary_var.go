@@ -21,7 +21,7 @@ func (priExpr *VarPrimaryExpression) doExecute() Value {
     return priExpr.getVar(priExpr.varname)
 }
 
-func (priExpr *VarPrimaryExpression) getAttribute(obj Object) Value {
+func (priExpr *VarPrimaryExpression) getField(obj Object) Value {
 	return obj.get(priExpr.varname)
 }
 

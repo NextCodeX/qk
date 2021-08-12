@@ -4,11 +4,14 @@ import "fmt"
 
 type IntValue struct {
 	goValue int64
-	ValueAdapter
+	ClassObject
 }
 
 func newIntValue(raw int64) Value {
-	return &IntValue{goValue: raw}
+	i := &IntValue{goValue: raw}
+	i.ClassObject.raw = &i
+	i.ClassObject.name = "Int"
+	return i
 }
 
 func (ival *IntValue) val() interface{} {
@@ -18,6 +21,7 @@ func (ival *IntValue) val() interface{} {
 func (ival *IntValue) isInt() bool {
 	return true
 }
+
 
 func (ival *IntValue) String() string {
 	return fmt.Sprint(ival.goValue)

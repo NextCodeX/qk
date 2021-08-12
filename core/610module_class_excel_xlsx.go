@@ -11,13 +11,13 @@ func (fns *InternalFunctionSet) Xlsx(fileName string) Value {
 		runtimeExcption(f)
 	}
 	obj := &XlsxClass{f}
-	return newClassExecutor("Xlsx", obj, &obj)
+	return newClass("Xlsx", &obj)
 }
 
 func (fns *InternalFunctionSet) NewXlsx() Value {
 	f := excelize.NewFile()
 	obj := &XlsxClass{f}
-	return newClassExecutor("Xlsx", obj, &obj)
+	return newClass("Xlsx", &obj)
 }
 
 type XlsxClass struct {
@@ -50,7 +50,7 @@ func (clazz *XlsxClass) Save() {
 func (clazz *XlsxClass) Sheet(index int) Value {
 	sheetName := clazz.obj.GetSheetName(index)
 	obj := &XlsxSheetClass{clazz.obj, index, sheetName}
-	return newClassExecutor("XlsxSheet", obj, &obj)
+	return newClass("XlsxSheet", &obj)
 }
 
 
@@ -91,7 +91,7 @@ func (clazz *XlsxSheetClass) Rows() Value {
 		runtimeExcption(err)
 	}
 	obj := &XlsxRowsClass{rows}
-	return newClassExecutor("XlsxRows", obj, &obj)
+	return newClass("XlsxRows", &obj)
 }
 
 func (clazz *XlsxSheetClass) CellVals() Value {
@@ -105,9 +105,9 @@ func (clazz *XlsxSheetClass) CellVals() Value {
 		for _, cell := range row {
 			subArr = append(subArr, newQKValue(cell))
 		}
-		arr = append(arr, toJSONArray(subArr))
+		arr = append(arr, array(subArr))
 	}
-	return toJSONArray(arr)
+	return array(arr)
 }
 
 func (clazz *XlsxSheetClass) CellVal(axis string) string {
@@ -135,5 +135,5 @@ func (clazz *XlsxRowsClass) Columns() Value {
 	for _, val := range cols {
 		arr = append(arr, newQKValue(val))
 	}
-	return toJSONArray(arr)
+	return array(arr)
 }

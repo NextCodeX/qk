@@ -1,8 +1,6 @@
 package core
 
 import (
-	"fmt"
-	"reflect"
 	"strconv"
 	"strings"
 )
@@ -32,44 +30,13 @@ func toInt(any interface{}) int {
 	return -1
 }
 
-func toStringValue(any interface{}) string {
-	return fmt.Sprintf("%v", any)
-}
-
-func toCommonMap(any interface{}) map[string]interface{} {
-	res := make(map[string]interface{})
-	switch v := any.(type) {
-	case map[string]string:
-		for key, val := range v {
-			res[key] = val
-		}
-	default:
-		runtimeExcption("toCommonMap# unknown type:", reflect.TypeOf(any))
-	}
-	return res
-}
-
-func toCommonSlice(any interface{}) []interface{} {
-	var res []interface{}
-	switch v := any.(type) {
-	case []string:
-		for _, item := range v {
-			res = append(res, item)
-		}
-	default:
-		runtimeExcption("toCommonSlice# unknown type:", reflect.TypeOf(any))
-	}
-	return res
-}
-
-
 func tokenToValue(t Token)  Value {
 	if t.isArrLiteral() {
-		v := newJSONArray(t.tokens())
+		v := rawJSONArray(t.tokens())
 		return newQKValue(v)
 
 	} else if t.isObjLiteral() {
-		v := newJSONObject(t.tokens())
+		v := rawJSONObject(t.tokens())
 		return newQKValue(v)
 
 	} else if t.isFloat() {
@@ -105,15 +72,6 @@ func tokenToValue(t Token)  Value {
 	}
 }
 
-// 是否为Map或Slice类型
-func isDecomposable(v interface{}) bool {
-	if v == nil {
-		return false
-	}
-	kind := reflect.TypeOf(v).Kind()
-	return kind == reflect.Map || kind == reflect.Slice
-}
-
 
 // QK Value 转 go 类型bool
 func toBoolean(raw Value) bool {
@@ -130,9 +88,9 @@ func toBoolean(raw Value) bool {
 		return raw.val().(string) != ""
 	} else if raw.isJsonArray() {
 		return raw.val() != nil
-	} else if raw.isJsonObject() || raw.isObject() {
+	} else if raw.isJsonObject() {
 		return raw.val() != nil
-	} else if raw.isAny() {
+	} else if raw.isAny() || raw.isObject() {
 		return raw.val() != nil
 	} else {
 		runtimeExcption("toBoolean: unknown value type: ", raw)

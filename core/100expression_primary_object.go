@@ -14,10 +14,6 @@ func newObjectPrimaryExpression(val Value) PrimaryExpression {
     return expr
 }
 
-func (priExpr *ObjectPrimaryExpression) getName() string {
-    return "#jsonObject"
-}
-
 func (priExpr *ObjectPrimaryExpression) doExecute() Value {
     object := priExpr.obj
     if object.parsed() {

@@ -19,7 +19,6 @@ const (
 )
 
 type PrimaryExpression interface {
-    getName() string
     notFlag() bool
     setNotFlag(flag bool)
     addType(t PrimaryExpressionType)
@@ -134,9 +133,6 @@ func (priExpr *PrimaryExpressionImpl) typeName() string {
     }
 }
 
-func (priExpr *PrimaryExpressionImpl) getName() string {
-    return ""
-}
 func (priExpr *PrimaryExpressionImpl) notFlag() bool {
     return priExpr.not
 }

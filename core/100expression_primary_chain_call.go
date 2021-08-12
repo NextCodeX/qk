@@ -24,10 +24,6 @@ func (priExpr *ChainCallPrimaryExpression) setStack(stack Function) {
     }
 }
 
-func (priExpr *ChainCallPrimaryExpression) getName() string {
-    return "#chaincall"
-}
-
 func (priExpr *ChainCallPrimaryExpression) doExecute() Value {
     return priExpr.exprExec(priExpr.chain)
 }
@@ -47,7 +43,7 @@ func (priExpr *ChainCallPrimaryExpression) exprExec(chainExprs []PrimaryExpressi
             } else if pri.isVar() {
                 // object.attribute
                 nextExpr := pri.(*VarPrimaryExpression)
-                intermediateResult = nextExpr.getAttribute(obj)
+                intermediateResult = nextExpr.getField(obj)
 
             } else {
                 errorf("%v.%v is error", caller.val(), tokensString(pri.raw()))
@@ -77,9 +73,9 @@ func (priExpr *ChainCallPrimaryExpression) beAssigned(res Value) {
         varExpr.assign(jsonObject, res)
 
     } else if obj.isJsonObject() && tailExpr.isElemFunctionCall() {
-        jsonObject := obj.(JSONObject)
+        clazz := obj.(Object)
         subExpr := tailExpr.(*ElemFunctionCallPrimaryExpression)
-        subExpr.beAssignedAfterChainCall(jsonObject, res)
+        subExpr.beAssignedAfterChainCall(clazz, res)
 
     } else {
         errorf("(in ChainCall)invalid assign expression: %v = %v", tokensString(priExpr.raw()), res.val())

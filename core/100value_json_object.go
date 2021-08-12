@@ -6,12 +6,11 @@ import (
 )
 
 type JSONObject interface {
-	getName() string
     parsed() bool
     init()
-    size() int
-    exist(key string) bool
-    remove(key string)
+    Size() int
+	Contain(key string) bool
+    Remove(key string)
     put(key string, value Value)
     get(key string) Value
     keys() []string
@@ -25,30 +24,24 @@ type JSONObject interface {
 }
 
 type JSONObjectImpl struct {
-	name string
     valMap map[string]Value
     ts []Token
-    jsonObjectFlag bool
-    ValueAdapter
+	ClassObject
 }
 
-func newJSONObject(ts []Token) JSONObject {
-    return &JSONObjectImpl{ts:ts, jsonObjectFlag: true}
+func rawJSONObject(ts []Token) JSONObject {
+	return newJsonObject(nil, ts)
 }
 
-func toJSONObject(v map[string]Value) JSONObject {
-    return &JSONObjectImpl{valMap:v, jsonObjectFlag: true}
+func jsonObject(v map[string]Value) JSONObject {
+    return newJsonObject(v, nil)
 }
 
-func newClass(name string, v map[string]Value) JSONObject {
-	return &JSONObjectImpl{name:name, valMap:v, jsonObjectFlag: false}
-}
-
-func (obj *JSONObjectImpl) getName() string {
-	if obj.name == "" {
-		return "json object"
-	}
-    return obj.name
+func newJsonObject(v map[string]Value, ts []Token) JSONObject {
+	obj := &JSONObjectImpl{valMap:v, ts: ts}
+	obj.ClassObject.raw = &obj
+	obj.ClassObject.name = "JSONObject"
+	return obj
 }
 
 func (obj *JSONObjectImpl) init() {
@@ -59,15 +52,15 @@ func (obj *JSONObjectImpl) parsed() bool {
     return obj.valMap != nil
 }
 
-func (obj *JSONObjectImpl) size() int {
+func (obj *JSONObjectImpl) Size() int {
     return len(obj.valMap)
 }
 
-func (obj *JSONObjectImpl) remove(key string) {
+func (obj *JSONObjectImpl) Remove(key string) {
     delete(obj.valMap, key)
 }
 
-func (obj *JSONObjectImpl) exist(key string) bool {
+func (obj *JSONObjectImpl) Contain(key string) bool {
     _, ok := obj.valMap[key]
     return ok
 }
@@ -82,10 +75,11 @@ func (obj *JSONObjectImpl) get(key string) Value {
     if ok {
         return v
     }
-    if obj.jsonObjectFlag {
-    	return obj.returnFakeMethod(key)
+	res := obj.ClassObject.get(key)
+    if res == nil {
+    	return NULL
 	}
-    return NULL
+    return res
 }
 
 func (obj *JSONObjectImpl) keys() []string {
@@ -113,9 +107,6 @@ func (obj *JSONObjectImpl) tokens() []Token {
 }
 
 func (obj *JSONObjectImpl) String() string {
-	if !obj.isJsonObject() {
-		return "class " + obj.getName()
-	}
 	return obj.toJSONObjectString()
 }
 
@@ -164,5 +155,5 @@ func (obj *JSONObjectImpl) val() interface{} {
 	return obj
 }
 func (obj *JSONObjectImpl) isJsonObject() bool {
-	return obj.jsonObjectFlag
+	return true
 }

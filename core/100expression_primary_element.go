@@ -19,10 +19,6 @@ func (priExpr *ElementPrimaryExpression) setStack(stack Function) {
     priExpr.arg.setStack(stack)
 }
 
-func (priExpr *ElementPrimaryExpression) getName() string {
-    return "#element"
-}
-
 func (priExpr *ElementPrimaryExpression) doExecute() Value {
     runtimeExcption("running ElementPrimaryExpression.doExecute is error")
     return nil

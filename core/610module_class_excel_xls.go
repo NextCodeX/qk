@@ -11,7 +11,7 @@ func (fns *InternalFunctionSet) Xls(fileName string) Value {
 		runtimeExcption(err)
 	}
 	obj := &XlsClass{workbook}
-	return newClassExecutor("xls", obj, &obj)
+	return newClass("xls", &obj)
 }
 
 type XlsClass struct {
@@ -28,7 +28,7 @@ func (clazz *XlsClass) Sheet(index int) Value {
 		runtimeExcption(err)
 	}
 	obj := &XlsSheetClass{sheet}
-	return newClassExecutor("XlsSheet", obj, &obj)
+	return newClass("XlsSheet", &obj)
 }
 
 type XlsSheetClass struct {
@@ -41,7 +41,7 @@ func (clazz *XlsSheetClass) Name() string {
 
 func (clazz *XlsSheetClass) Row(index int) Value {
 	obj := &XlsRowClass{clazz.obj, index}
-	return newClassExecutor("XlsRow", obj, &obj)
+	return newClass("XlsRow", &obj)
 }
 
 func (clazz *XlsSheetClass) RowNumber() int {
@@ -53,9 +53,9 @@ func (clazz *XlsSheetClass) Rows() Value {
 	size := clazz.obj.GetNumberRows()
 	for index := 1; index < size; index++  {
 		obj := &XlsRowClass{clazz.obj, index}
-		arr = append(arr, newClassExecutor("XlsRow", obj, &obj))
+		arr = append(arr, newClass("XlsRow", &obj))
 	}
-	return toJSONArray(arr)
+	return array(arr)
 }
 
 type XlsRowClass struct {
@@ -72,9 +72,9 @@ func (clazz *XlsRowClass) Cols() Value {
 	var arr []Value
 	for _, cell := range row.GetCols() {
 		obj := &XlsCellClass{cell}
-		arr = append(arr, newClassExecutor("XlsCell", obj, &obj))
+		arr = append(arr, newClass("XlsCell", &obj))
 	}
-	return toJSONArray(arr)
+	return array(arr)
 }
 
 func (clazz *XlsRowClass) Col(index int) Value {
@@ -87,7 +87,7 @@ func (clazz *XlsRowClass) Col(index int) Value {
 		runtimeExcption(err)
 	}
 	obj := &XlsCellClass{cell}
-	return newClassExecutor("XlsCell", obj, &obj)
+	return newClass("XlsCell", &obj)
 }
 
 type XlsCellClass struct {

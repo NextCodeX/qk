@@ -14,10 +14,6 @@ func newArrayPrimaryExpression(val Value) PrimaryExpression {
     return expr
 }
 
-func (priExpr *ArrayPrimaryExpression) getName() string {
-    return "#jsonArray"
-}
-
 func (priExpr *ArrayPrimaryExpression) doExecute() Value {
     array := priExpr.arr
     if array.parsed() {

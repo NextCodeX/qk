@@ -13,12 +13,11 @@ type Value interface {
    isFloat() bool
    isBoolean() bool
    isString() bool
-   isAny() bool
-   isClass() bool
    isJsonArray() bool
    isJsonObject() bool
    isFunction() bool
    isObject() bool
+   isAny() bool
 }
 
 func newQKValue(rawVal interface{}) Value {
@@ -52,15 +51,15 @@ func newQKValue(rawVal interface{}) Value {
     case Value:
         val = v
     case []Value:
-        val = toJSONArray(v)
+        val = array(v)
     case map[string]Value:
-        val = toJSONObject(v)
+        val = jsonObject(v)
     case map[string]string:
         mapRes := make(map[string]Value)
         for key, value := range v {
             mapRes[key] = newQKValue(value)
         }
-        tmp := toJSONObject(mapRes)
+        tmp := jsonObject(mapRes)
         return tmp
 
     case map[string]interface{}:
@@ -68,7 +67,7 @@ func newQKValue(rawVal interface{}) Value {
         for key, value := range v {
             mapRes[key] = newQKValue(value)
         }
-        tmp := toJSONObject(mapRes)
+        tmp := jsonObject(mapRes)
         return tmp
 
     case []string:
@@ -76,7 +75,7 @@ func newQKValue(rawVal interface{}) Value {
         for _, item := range v {
             arrRes = append(arrRes, newQKValue(item))
         }
-        tmp := toJSONArray(arrRes)
+        tmp := array(arrRes)
         return tmp
 
     case []interface{}:
@@ -84,7 +83,7 @@ func newQKValue(rawVal interface{}) Value {
         for _, item := range v {
             arrRes = append(arrRes, newQKValue(item))
         }
-        tmp := toJSONArray(arrRes)
+        tmp := array(arrRes)
         return tmp
 
     default:

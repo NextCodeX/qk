@@ -15,7 +15,7 @@ type HttpResponse struct {
 	statusCode int
 }
 
-func newHttpResponse(resp *http.Response) *HttpResponse {
+func newHttpResponse(resp *http.Response) Value {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		runtimeExcption(err)
@@ -25,7 +25,7 @@ func newHttpResponse(resp *http.Response) *HttpResponse {
 	obj.status = resp.Status
 	obj.statusCode = resp.StatusCode
 	obj.headers = resp.Header
-	return obj
+	return newClass("HttpResponse", &obj)
 }
 
 func (resp *HttpResponse) ShowCookies() {

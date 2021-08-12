@@ -44,8 +44,8 @@ func (stmt *ForeachStatement) parse() {
 
 func (stmt *ForeachStatement) execute() StatementResult {
     varVal := stmt.listExpr.execute()
-    itr := toIterator(varVal)
-    if itr == nil {
+    itr, ok := varVal.(Iterator)
+    if !ok {
         runtimeExcption(varVal.val(), "is not iterator!")
         return newStatementResult(StatementNormal, NULL)
     }

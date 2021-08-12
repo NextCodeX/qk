@@ -23,9 +23,6 @@ func (valAdapter *ValueAdapter) isString() bool {
 func (valAdapter *ValueAdapter) isAny() bool {
     return false
 }
-func (valAdapter *ValueAdapter) isClass() bool {
-    return false
-}
 func (valAdapter *ValueAdapter) isJsonArray() bool {
     return false
 }

@@ -1,19 +1,7 @@
 package core
 
+// 只有实现了Iterator的对象，才可以使用foreach
 type Iterator interface {
-	indexs() []interface{}
-	getItem(interface{}) Value
-}
-
-func toIterator(v Value) Iterator {
-	if v.isJsonArray() {
-		return goArr(v)
-	}
-	if v.isJsonObject() {
-		return goObj(v)
-	}
-	if v.isString() {
-		return newStringIterator(goStr(v))
-	}
-	return nil
+	indexs() []interface{} // 索引列表
+	getItem(interface{}) Value // 根据索引获取值
 }

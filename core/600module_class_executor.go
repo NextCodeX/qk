@@ -16,19 +16,6 @@ type ClassExecutor struct {
 
 var ClassType = reflect.TypeOf(&ClassExecutor{})
 
-func newClassExecutor(name string, objPtr interface{}, objDoublePtr interface{}) Value {
-	fs := collectFieldInfo(objPtr)
-	mts := collectFunctionInfo(objDoublePtr)
-	m := make(map[string]Value)
-	for name, f := range fs {
-		m[name] = newQKValue(f.get())
-	}
-	for name, mt := range mts {
-		m[name] = newModuleFunc(name, mt)
-	}
-	return newClass(name, m)
-}
-
 func (clazz *ClassExecutor) fieldValue(name string) interface{} {
 	field, exist := clazz.fields[name]
 	assert(!exist, fmt.Sprintf("field %v.%v is undefined!", clazz.name, name))
@@ -42,8 +29,8 @@ func (clazz *ClassExecutor) setField(name string, rawVal interface{}) {
 }
 
 //func (clazz *ClassExecutor) callMethod(name string, vals []interface{}) Value {
-//	mt, exist := clazz.methods[name]
-//	assert(!exist, fmt.Sprintf("method %v.%v is undefined!", clazz.name, name))
+//	mt, Contain := clazz.methods[name]
+//	assert(!Contain, fmt.Sprintf("method %v.%v is undefined!", clazz.name, name))
 //	return callFunctionExecutor(mt, vals)
 //}
 

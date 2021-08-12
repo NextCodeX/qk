@@ -69,7 +69,7 @@ func (fns *InternalFunctionSet) Sqlite(dbName string) Value {
 
 func connDB(driverName, sourceName string) Value {
 	ds := &DataSource{driverName, sourceName}
-	return newClassExecutor("db", ds, &ds)
+	return newClass("db", &ds)
 }
 
 

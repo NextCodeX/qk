@@ -4,11 +4,14 @@ import "fmt"
 
 type BooleanValue struct {
 	goValue bool
-	ValueAdapter
+	ClassObject
 }
 
 func newBooleanValue(raw bool) Value {
-	return &BooleanValue{goValue: raw}
+	bl := &BooleanValue{goValue: raw}
+	bl.ClassObject.raw = &bl
+	bl.ClassObject.name = "Boolean"
+	return bl
 }
 
 func (boolVal *BooleanValue) val() interface{} {

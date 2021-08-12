@@ -1,11 +1,14 @@
 package core
 
 type NULLValue struct {
-	ValueAdapter
+	ClassObject
 }
 
 func newNULLValue() Value {
-	return &NULLValue{}
+	nl := &NULLValue{}
+	nl.ClassObject.raw = &nl
+	nl.ClassObject.name = "NULL"
+	return nl
 }
 
 func (null *NULLValue) val() interface{} {

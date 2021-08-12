@@ -4,11 +4,14 @@ import "fmt"
 
 type FloatValue struct {
 	goValue float64
-	ValueAdapter
+	ClassObject
 }
 
 func newFloatValue(raw float64) Value {
-	return &FloatValue{goValue: raw}
+	fl := &FloatValue{goValue: raw}
+	fl.ClassObject.raw = &fl
+	fl.ClassObject.name = "Float"
+	return fl
 }
 
 func (fval *FloatValue) val() interface{} {

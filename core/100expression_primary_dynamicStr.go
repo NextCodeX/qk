@@ -18,10 +18,6 @@ func newDynamicStrPrimaryExpression(val Value) PrimaryExpression {
     return expr
 }
 
-func (priExpr *DynamicStrPrimaryExpression) getName() string {
-    return "#dynamicString"
-}
-
 func (priExpr *DynamicStrPrimaryExpression) doExecute() Value {
     raw := goStr(priExpr.val)
     res := os.Expand(raw, func(key string) string {

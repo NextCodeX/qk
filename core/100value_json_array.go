@@ -7,9 +7,8 @@ import (
 
 type JSONArray interface {
     parsed() bool
-    size() int
+    Size() int
     add(elem Value)
-    remove(index int)
     set(index int, elem Value)
     getElem(index int) Value
     sub(start, end int) Value
@@ -25,37 +24,34 @@ type JSONArray interface {
 type JSONArrayImpl struct {
     valList []Value
     ts []Token
-    ValueAdapter
+    ClassObject
 }
 
-func newJSONArray(ts []Token) JSONArray {
-    return &JSONArrayImpl{ts:ts}
+func rawJSONArray(ts []Token) JSONArray {
+    return newJsonArray(nil, ts)
 }
 
-func toJSONArray(v []Value) JSONArray {
-    return &JSONArrayImpl{valList:v}
+func array(v []Value) JSONArray {
+    return newJsonArray(v, nil)
+}
+
+func newJsonArray(v []Value, ts []Token) JSONArray {
+    arr :=  &JSONArrayImpl{valList:v, ts: ts}
+    arr.ClassObject.raw = &arr
+    arr.ClassObject.name = "JSONArray"
+    return arr
 }
 
 func (arr *JSONArrayImpl) parsed() bool {
     return arr.valList != nil
 }
 
-func (arr *JSONArrayImpl) size() int {
+func (arr *JSONArrayImpl) Size() int {
     return len(arr.valList)
 }
 
 func (arr *JSONArrayImpl) add(elem Value) {
     arr.valList = append(arr.valList, elem)
-}
-
-func (arr *JSONArrayImpl)  remove(index int) {
-    assert(arr.checkOutofIndex(index), "array out of index")
-    newList := make([]Value, 0, arr.size())
-    newList = append(newList, arr.valList[:index]...)
-    if index + 1 < arr.size() {
-        newList = append(newList, arr.valList[index+1:]...)
-    }
-    arr.valList = newList
 }
 
 func (arr *JSONArrayImpl) set(index int, elem Value) {
@@ -67,7 +63,7 @@ func (arr *JSONArrayImpl) getElem(index int) Value {
 }
 
 func (arr *JSONArrayImpl) sub(start, end int) Value {
-    return toJSONArray(arr.valList[start:end])
+    return array(arr.valList[start:end])
 }
 
 func (arr *JSONArrayImpl) checkOutofIndex(index int) bool {
@@ -122,6 +118,35 @@ func (arr *JSONArrayImpl) getItem(index interface{}) Value {
     i := index.(int)
     return arr.valList[i]
 }
+
+func (arr *JSONArrayImpl) Add(args []interface{}) {
+    for _, arg := range args {
+        arr.add(newQKValue(arg))
+    }
+}
+func (arr *JSONArrayImpl) Remove(index int) {
+    assert(arr.checkOutofIndex(index), "array out of index")
+    newList := make([]Value, 0, arr.Size())
+    newList = append(newList, arr.valList[:index]...)
+    if index + 1 < arr.Size() {
+        newList = append(newList, arr.valList[index+1:]...)
+    }
+    arr.valList = newList
+}
+func (arr *JSONArrayImpl) Join(seperator string) string {
+    vals := arr.values()
+    var res bytes.Buffer
+    for i, val := range vals {
+        if i > 0 {
+            res.WriteString(seperator)
+        }
+        valStr := fmt.Sprintf("%v", val.val())
+        res.WriteString(valStr)
+    }
+    return res.String()
+}
+
+
 
 func (arr *JSONArrayImpl) val() interface{} {
     return arr

@@ -14,10 +14,6 @@ func newConstPrimaryExpression(val Value) PrimaryExpression {
     return expr
 }
 
-func (priExpr *ConstPrimaryExpression) getName() string {
-    return "#constant"
-}
-
 func (priExpr *ConstPrimaryExpression) doExecute() Value {
     return priExpr.val
 }

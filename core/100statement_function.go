@@ -111,7 +111,7 @@ func extractModuleFuncArgs(f *FunctionExecutor, args []interface{}) []reflect.Va
 func (f *FunctionImpl) setPreVar(key string, value Value) {
 	if f.preVars == nil {
 		m := make(map[string]Value)
-		f.preVars = toJSONObject(m)
+		f.preVars = jsonObject(m)
 	}
 	f.preVars.put(key, value)
 }
