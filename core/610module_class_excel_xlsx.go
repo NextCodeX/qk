@@ -10,51 +10,51 @@ func (fns *InternalFunctionSet) Xlsx(fileName string) Value {
 	if err != nil {
 		runtimeExcption(f)
 	}
-	obj := &XlsxClass{f}
+	obj := &Xlsx{f}
 	return newClass("Xlsx", &obj)
 }
 
 func (fns *InternalFunctionSet) NewXlsx() Value {
 	f := excelize.NewFile()
-	obj := &XlsxClass{f}
+	obj := &Xlsx{f}
 	return newClass("Xlsx", &obj)
 }
 
-type XlsxClass struct {
+type Xlsx struct {
 	obj *excelize.File
 }
 
 // Create a new sheet.
-func (clazz *XlsxClass) NewSheet(name string) int {
+func (clazz *Xlsx) NewSheet(name string) int {
 	return clazz.NewSheet(name)
 }
 
-func (clazz *XlsxClass) SetActiveSheet(index int) {
+func (clazz *Xlsx) SetActiveSheet(index int) {
 	clazz.obj.SetActiveSheet(index)
 }
 
-func (clazz *XlsxClass) SaveAs(path string) {
+func (clazz *Xlsx) SaveAs(path string) {
 	err := clazz.obj.SaveAs(path)
 	if err != nil {
 		runtimeExcption(err)
 	}
 }
 
-func (clazz *XlsxClass) Save() {
+func (clazz *Xlsx) Save() {
 	err := clazz.obj.Save()
 	if err != nil {
 		runtimeExcption(err)
 	}
 }
 
-func (clazz *XlsxClass) Sheet(index int) Value {
+func (clazz *Xlsx) Sheet(index int) Value {
 	sheetName := clazz.obj.GetSheetName(index)
-	obj := &XlsxSheetClass{clazz.obj, index, sheetName}
+	obj := &XlsxSheet{clazz.obj, index, sheetName}
 	return newClass("XlsxSheet", &obj)
 }
 
 
-type XlsxSheetClass struct {
+type XlsxSheet struct {
 	obj *excelize.File
 	sheetIndex int
 	sheetName string
@@ -62,8 +62,7 @@ type XlsxSheetClass struct {
 
 var colIds = []int32{'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'}
 
-
-func (clazz *XlsxSheetClass) SetData(headers JSONArray, data JSONArray) {
+func (clazz *XlsxSheet) SetData(headers JSONArray, data JSONArray) {
 	for i, item := range headers.values() {
 		header := goStr(item)
 		axis := string(colIds[i]) + "1"
@@ -81,20 +80,20 @@ func (clazz *XlsxSheetClass) SetData(headers JSONArray, data JSONArray) {
 }
 
 // Set value of a cell.
-func (clazz *XlsxSheetClass) SetCellValue(axis string, value string) {
+func (clazz *XlsxSheet) SetCellValue(axis string, value string) {
 	clazz.obj.SetCellValue(clazz.sheetName, axis, value)
 }
 
-func (clazz *XlsxSheetClass) Rows() Value {
+func (clazz *XlsxSheet) Rows() Value {
 	rows, err := clazz.obj.Rows(clazz.sheetName)
 	if err != nil {
 		runtimeExcption(err)
 	}
-	obj := &XlsxRowsClass{rows}
+	obj := &XlsxRows{rows}
 	return newClass("XlsxRows", &obj)
 }
 
-func (clazz *XlsxSheetClass) CellVals() Value {
+func (clazz *XlsxSheet) CellVals() Value {
 	rows, err := clazz.obj.GetRows(clazz.sheetName)
 	if err != nil {
 		runtimeExcption(err)
@@ -110,7 +109,7 @@ func (clazz *XlsxSheetClass) CellVals() Value {
 	return array(arr)
 }
 
-func (clazz *XlsxSheetClass) CellVal(axis string) string {
+func (clazz *XlsxSheet) CellVal(axis string) string {
 	val, err := clazz.obj.GetCellValue(clazz.sheetName, axis)
 	if err != nil {
 		runtimeExcption(err)
@@ -118,15 +117,15 @@ func (clazz *XlsxSheetClass) CellVal(axis string) string {
 	return val
 }
 
-type XlsxRowsClass struct {
+type XlsxRows struct {
 	obj *excelize.Rows
 }
 
-func (clazz *XlsxRowsClass) Next() bool {
+func (clazz *XlsxRows) Next() bool {
 	return clazz.obj.Next()
 }
 
-func (clazz *XlsxRowsClass) Columns() Value {
+func (clazz *XlsxRows) Cols() Value {
 	cols, err := clazz.obj.Columns()
 	if err != nil {
 		runtimeExcption(err)

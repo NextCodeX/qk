@@ -10,6 +10,7 @@ data = [
 f = newXlsx()
 sheet = f.sheet(0)
 sheet.setData(headers, data)
+
 f.saveAs("/home/xp/ws/test.xlsx")
 println("write successfully")
 

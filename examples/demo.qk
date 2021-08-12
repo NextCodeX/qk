@@ -266,3 +266,82 @@ forv ch : str {
 println({}.type(), [].type(), [].type())
 
 println("fastjson".bytes().type())
+
+obj = {name: "changlie", age: 18}
+obj.pretty()
+list = [
+{name: "changlie", age: 18},
+{name: "tom", age: 3},
+{name: "jerry", age: 1},
+]
+list.pretty()
+
+f = xls("d:/tab1.xls")
+println("xlsSheetNumber:", f.sheetNumber())
+sheet = f.sheet(0)
+println("sheetName: ", sheet.name())
+println("sheetRowNumber: ", sheet.rowNumber())
+row = sheet.row(0)
+if row {
+    println("headers:")
+    forv cell : row.cols() {
+        cell && print(cell.str()+", ")
+    }
+}
+
+println("\ndata:")
+rows = sheet.rows()
+forv row : rows {
+    cells = row.cols()
+    forv cell : cells {
+        cell && print(cell.str()+", ")
+    }
+    println("\n=============================")
+}
+
+
+f = xlsx("d:/tab2.xlsx")
+sheet = f.sheet(0)
+forv row : sheet.cellVals() {
+    printf("[%v] ", row.size())
+    forv cell : row {
+        print(cell+", ")
+    }
+    println("\n=====================")
+}
+
+println("way 2:")
+f = xlsx("d:/tab2.xlsx")
+sheet = f.sheet(0)
+rows = sheet.rows()
+for rows.next() {
+    cells = rows.cols()
+    println(cells, cells.type())
+}
+
+xf = $ println("xf output -> Great")
+println(xf.type())
+xf()
+
+headers = ["name", "sex", "age", "addr"]
+data = [
+{name:"jerry", sex:"F", age:9, addr:"America"},
+{name:"tom", sex:"M", age:13, addr:"America"},
+{name:"changlie", sex:"M", age:18, addr:"China"},
+{name:"zhangsan", sex:"F", age:33, addr:"town"},
+{name:"fish", sex:"F", age:2, addr:"The World"},
+]
+
+f = newXlsx()
+sheet = f.sheet(0)
+sheet.setData(headers, data)
+sheet.setCellValue("B2", "boom!")
+f.saveAs("d:/test.xlsx")
+println("write successfully")
+
+
+url = "https://bbuseruploads.s3.amazonaws.com/472a0ba3-a3dd-4b9b-8eea-08bd5fa94e55/downloads/9e4b3104-416d-48ef-a3e0-c0537646c26c/Snipaste-2.6.5-Beta-x64.zip?Signature=AbrsxrgAVIhBPg0lXlnWgMSBORE%3D&Expires=1628780161&AWSAccessKeyId=AKIA6KOSE3BNJRRFUUX6&versionId=7kvuBNqx64jMtuKbAXreEI.1brPgD3vS&response-content-disposition=attachment%3B%20filename%3D%22Snipaste-2.6.5-Beta-x64.zip%22"
+resp = httpGet(url)
+resp.showhs()
+resp.save("snipaste.zip")
+

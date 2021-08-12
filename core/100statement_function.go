@@ -190,9 +190,21 @@ func (f *FunctionImpl) execute() StatementResult {
 func (f *FunctionImpl) val() interface{} {
 	return f
 }
-
 func (f *FunctionImpl) isFunction() bool {
 	return true
+}
+func (f *FunctionImpl) isObject() bool {
+	return true
+}
+
+func (f *FunctionImpl) get(key string) Value {
+	if key == "type" {
+		return newAnonymousFunc(func() Value {
+			return newQKValue("Function")
+		})
+	} else {
+		return NULL
+	}
 }
 
 func (f *FunctionImpl) String() string {

@@ -2,6 +2,7 @@ package core
 
 import (
     "bytes"
+    "encoding/json"
     "fmt"
 )
 
@@ -16,6 +17,7 @@ type JSONArray interface {
     values() []Value
     tokens() []Token
     String() string
+    Pretty()
     toJSONArrayString() string
     Iterator
     Value
@@ -80,6 +82,16 @@ func (arr *JSONArrayImpl) tokens() []Token {
 
 func (arr *JSONArrayImpl) String() string {
     return arr.toJSONArrayString()
+}
+
+func (arr *JSONArrayImpl) Pretty() {
+    uglyBody := arr.toJSONArrayString()
+    var out bytes.Buffer
+    err := json.Indent(&out, []byte(uglyBody), "", "  ")
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println(out.String())
 }
 
 func (arr *JSONArrayImpl) toJSONArrayString() string {

@@ -10,60 +10,60 @@ func (fns *InternalFunctionSet) Xls(fileName string) Value {
 	if err != nil {
 		runtimeExcption(err)
 	}
-	obj := &XlsClass{workbook}
-	return newClass("xls", &obj)
+	obj := &Xls{workbook}
+	return newClass("Xls", &obj)
 }
 
-type XlsClass struct {
+type Xls struct {
 	obj xls.Workbook
 }
 
-func (clazz *XlsClass) SheetNumber() {
-	clazz.obj.GetNumberSheets()
+func (clazz *Xls) SheetNumber() int {
+	return clazz.obj.GetNumberSheets()
 }
 
-func (clazz *XlsClass) Sheet(index int) Value {
+func (clazz *Xls) Sheet(index int) Value {
 	sheet, err := clazz.obj.GetSheet(index)
 	if err != nil {
 		runtimeExcption(err)
 	}
-	obj := &XlsSheetClass{sheet}
+	obj := &XlsSheet{sheet}
 	return newClass("XlsSheet", &obj)
 }
 
-type XlsSheetClass struct {
+type XlsSheet struct {
 	obj *xls.Sheet
 }
 
-func (clazz *XlsSheetClass) Name() string {
+func (clazz *XlsSheet) Name() string {
 	return clazz.obj.GetName()
 }
 
-func (clazz *XlsSheetClass) Row(index int) Value {
-	obj := &XlsRowClass{clazz.obj, index}
+func (clazz *XlsSheet) Row(index int) Value {
+	obj := &XlsRow{clazz.obj, index}
 	return newClass("XlsRow", &obj)
 }
 
-func (clazz *XlsSheetClass) RowNumber() int {
+func (clazz *XlsSheet) RowNumber() int {
 	return clazz.obj.GetNumberRows()
 }
 
-func (clazz *XlsSheetClass) Rows() Value {
+func (clazz *XlsSheet) Rows() Value {
 	var arr []Value
 	size := clazz.obj.GetNumberRows()
 	for index := 1; index < size; index++  {
-		obj := &XlsRowClass{clazz.obj, index}
+		obj := &XlsRow{clazz.obj, index}
 		arr = append(arr, newClass("XlsRow", &obj))
 	}
 	return array(arr)
 }
 
-type XlsRowClass struct {
+type XlsRow struct {
 	obj *xls.Sheet
 	rowIndex int
 }
 
-func (clazz *XlsRowClass) Cols() Value {
+func (clazz *XlsRow) Cols() Value {
 	row, err := clazz.obj.GetRow(clazz.rowIndex)
 	if err != nil {
 		runtimeExcption(err)
@@ -71,13 +71,13 @@ func (clazz *XlsRowClass) Cols() Value {
 
 	var arr []Value
 	for _, cell := range row.GetCols() {
-		obj := &XlsCellClass{cell}
+		obj := &XlsCell{cell}
 		arr = append(arr, newClass("XlsCell", &obj))
 	}
 	return array(arr)
 }
 
-func (clazz *XlsRowClass) Col(index int) Value {
+func (clazz *XlsRow) Col(index int) Value {
 	row, err := clazz.obj.GetRow(clazz.rowIndex)
 	if err != nil {
 		runtimeExcption(err)
@@ -86,30 +86,30 @@ func (clazz *XlsRowClass) Col(index int) Value {
 	if err != nil {
 		runtimeExcption(err)
 	}
-	obj := &XlsCellClass{cell}
+	obj := &XlsCell{cell}
 	return newClass("XlsCell", &obj)
 }
 
-type XlsCellClass struct {
+type XlsCell struct {
 	obj structure.CellData
 }
 
-func (clazz *XlsCellClass) GetInt() int64 {
+func (clazz *XlsCell) GetInt() int64 {
 	return clazz.obj.GetInt64()
 }
 
-func (clazz *XlsCellClass) GetFloat() float64 {
+func (clazz *XlsCell) GetFloat() float64 {
 	return clazz.obj.GetFloat64()
 }
 
-func (clazz *XlsCellClass) Str() string {
+func (clazz *XlsCell) Str() string {
 	return clazz.obj.GetString()
 }
 
-func (clazz *XlsCellClass) GetType() string {
+func (clazz *XlsCell) GetType() string {
 	return clazz.obj.GetType()
 }
 
-func (clazz *XlsCellClass) GetXFIndex() int {
+func (clazz *XlsCell) GetXFIndex() int {
 	return clazz.obj.GetXFIndex()
 }

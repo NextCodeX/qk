@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 )
 
@@ -18,6 +19,7 @@ type JSONObject interface {
 	mapVal() map[string]Value
     tokens() []Token
     String() string
+	Pretty()
 	toJSONObjectString() string
     Iterator
     Value
@@ -104,6 +106,16 @@ func (obj *JSONObjectImpl) mapVal() map[string]Value {
 
 func (obj *JSONObjectImpl) tokens() []Token {
     return obj.ts
+}
+
+func (obj *JSONObjectImpl) Pretty() {
+	uglyBody := obj.toJSONObjectString()
+	var out bytes.Buffer
+	err := json.Indent(&out, []byte(uglyBody), "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(out.String())
 }
 
 func (obj *JSONObjectImpl) String() string {

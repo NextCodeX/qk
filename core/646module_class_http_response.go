@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -95,13 +96,29 @@ func (resp *HttpResponse) Bytes() []byte {
 	return resp.body
 }
 
-func (resp *HttpResponse) Json() map[string]interface{} {
+func (resp *HttpResponse) Pretty() {
+	var out bytes.Buffer
+	err := json.Indent(&out, resp.body, "", "  ")
+	if err != nil {
+		fmt.Println("response body is not json type")
+	}
+	fmt.Println(out.String())
+}
+
+func (resp *HttpResponse) Json() interface{} {
 	var tmp interface{}
-	_ = json.Unmarshal(resp.body, &tmp)
-	if tmp == nil {
+	err := json.Unmarshal(resp.body, &tmp)
+	if err != nil {
 		return nil
 	}
-	return tmp.(map[string]interface{})
+
+	if obj, ok := tmp.(map[string]interface{}); ok {
+		return obj
+	} else if arr, ok := tmp.([]interface{}); ok {
+		return arr
+	} else {
+		return nil
+	}
 }
 
 
