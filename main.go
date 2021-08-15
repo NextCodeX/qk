@@ -15,8 +15,8 @@ import (
 
 func main() {
 	fmt.Println("QK_HOME => ", os.Getenv("QK_HOME"))
-	fmt.Println("GITHUB_TOKEN => ", os.Getenv("GITHUB_TOKEN"))
-	fmt.Println("GOPROXY => ", os.Getenv("GOPROXY"))
+	//fmt.Println("GITHUB_TOKEN => ", os.Getenv("GITHUB_TOKEN"))
+	//fmt.Println("GOPROXY => ", os.Getenv("GOPROXY"))
 	fmt.Println("===============================================")
 	startupTime := time.Now().UnixNano()
 
@@ -27,8 +27,8 @@ func main() {
 		}
 	}
 
-	qkfile := "examples/demo.qk"
-	//qkfile := getScriptFile()
+	//qkfile := "examples/demo.qk"
+	qkfile := getScriptFile()
 	//changeWorkDirectory()
 
 	bs, err := ioutil.ReadFile(qkfile)
