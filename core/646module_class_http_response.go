@@ -92,6 +92,10 @@ func (resp *HttpResponse) String() string {
 	return string(resp.body)
 }
 
+func (resp *HttpResponse) Str() string {
+	return resp.String()
+}
+
 func (resp *HttpResponse) Bytes() []byte {
 	return resp.body
 }

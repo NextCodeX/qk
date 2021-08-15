@@ -104,8 +104,8 @@ func (srv *HttpServer) Startup() {
 			return
 		}
 		if method != mt {
-			w.WriteHeader(http.StatusForbidden)
-			_, _ = io.WriteString(w, "403 Forbidden")
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			_, _ = io.WriteString(w, "405 Method Not Allowed")
 			return
 		}
 
@@ -224,12 +224,18 @@ func (sr *ServerResponse) SetHeader(name, value string) {
 	}
 	sr.headers[name] = value
 }
+func (sr *ServerResponse) Seth(name, value string) {
+	sr.SetHeader(name, value)
+}
 
 func (sr *ServerResponse) SetContentType(value string) {
 	if sr.headers == nil {
 		sr.headers = make(map[string]string)
 	}
 	sr.headers["Content-Type"] = value
+}
+func (sr *ServerResponse) SetType(value string) {
+	sr.SetContentType(value)
 }
 
 func (sr *ServerResponse) isRedirect() bool {

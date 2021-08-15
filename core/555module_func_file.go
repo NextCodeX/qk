@@ -25,6 +25,10 @@ func (fns *InternalFunctionSet) Fbytes(filename string) []byte {
 	log.Fatal(fmt.Sprintf("failed to read %v file: %v", filename, err.Error()))
 	return nil
 }
+// 读取文件所有内容，返回字节数组
+func (fns *InternalFunctionSet) Fbs(filename string) []byte {
+	return fns.Fbytes(filename)
+}
 
 // 读取文件所有内容，返回字符串
 func (fns *InternalFunctionSet) Fstr(filename string) string {

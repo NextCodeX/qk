@@ -77,12 +77,16 @@ func parseArgs(obj *HttpRequest, req *http.Request, method string) {
 	}
 }
 
-func (req *HttpRequest) Showhs() {
+func (req *HttpRequest) ShowHeaders() {
 	fmt.Println("=============================")
 	for k, v := range req.headers {
 		fmt.Printf("%v: %v\n", k, v)
 	}
 	fmt.Println("=============================")
+}
+
+func (req *HttpRequest) Showhs() {
+	req.ShowHeaders()
 }
 
 func (req *HttpRequest) Headers() JSONObject {
