@@ -19,9 +19,6 @@ func (vs Variables) get(name string) Value {
 	if vs.isEmpty() {
 		return nil
 	}
-	res, ok := vs[name]
-	if ok {
-		return res
-	}
-	return nil
+	res := vs[name]
+	return res
 }

@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -135,7 +134,7 @@ func (fns *InternalFunctionSet) Fscan(path string) []interface{} {
 
 func (fns *InternalFunctionSet) FscanAll(path string) []interface{} {
 	var res []interface{}
-	doScan(path, false, &res)
+	doScan(path, true, &res)
 	return res
 }
 
@@ -180,49 +179,4 @@ func (fns *InternalFunctionSet) FappendBytes(path string, bytes []byte) {
 	if err1 := fobj.Close(); err == nil && err1 != nil {
 		log.Fatal(fmt.Sprintf("failed to close file: %v, %v", path, err1.Error()))
 	}
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-func doScan(path string, scanAll bool, res *[]interface{})  {
-	if !isDir(path) {
-		log.Fatal(path, "is not directory.")
-		return
-	}
-	fs, err := ioutil.ReadDir(path)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("failed to read path: %v, %v", path, err.Error()))
-		return
-	}
-	for _, f := range fs {
-		nextPath := filepath.Join(path, f.Name())
-		if f.IsDir() {
-			if scanAll {
-				*res = append(*res, nextPath)
-			}
-			doScan(nextPath, scanAll, res)
-			continue
-		}
-		*res = append(*res, nextPath)
-	}
-}
-
-func isDir(path string) bool {
-	fileInfo, err := os.Stat(path)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("failed to read path: %v, %v", path, err.Error()))
-		return false
-	}
-	return fileInfo.IsDir()
 }

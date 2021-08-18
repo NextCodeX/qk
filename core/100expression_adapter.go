@@ -5,6 +5,23 @@ type ExpressionAdapter struct {
     ValueStack
 }
 
+func (ea *ExpressionAdapter) getVar(name string) Value {
+    if isTmpVar(name) {
+        tmpVars := ea.ValueStack.getVar(tmpVarsKey)
+        return goObj(tmpVars).get(name)
+    }
+    return ea.ValueStack.getVar(name)
+}
+
+func (ea *ExpressionAdapter) setVar(name string, value Value) {
+    if isTmpVar(name) {
+        tmpVars := ea.ValueStack.getVar(tmpVarsKey)
+        goObj(tmpVars).put(name, value)
+    } else {
+        ea.ValueStack.setVar(name, value)
+    }
+}
+
 func (ea *ExpressionAdapter) raw() []Token {
     return ea.ts
 }

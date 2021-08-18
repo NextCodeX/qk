@@ -27,8 +27,8 @@ func main() {
 		}
 	}
 
-	//qkfile := "examples/demo.qk"
-	qkfile := getScriptFile()
+	qkfile := "examples/demo1.qk"
+	//qkfile := getScriptFile()
 	//changeWorkDirectory()
 
 	bs, err := ioutil.ReadFile(qkfile)

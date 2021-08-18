@@ -34,6 +34,7 @@ func (mulExpr *MultiExpressionImpl) setStack(stack Function) {
 }
 
 func (mulExpr *MultiExpressionImpl) execute() Value {
+    mulExpr.setVar(tmpVarsKey, emptyJsonObject())
     res := mulExpr.recursiveEvalMultiExpression(mulExpr.finalExpr, mulExpr.list)
     return res
 }
@@ -66,7 +67,7 @@ func (mulExpr *MultiExpressionImpl) calculateIfNotExist(primaryExpr PrimaryExpre
     }
 
     varExpr := primaryExpr.(*VarPrimaryExpression)
-    if toBoolean(varExpr.execute()) {
+    if !varExpr.execute().isNULL() {
         return
     }
     nextExpr := mulExpr.getNextExprForMultiExpression(varExpr.getName(), exprList)
@@ -88,6 +89,6 @@ func (mulExpr *MultiExpressionImpl) getNextExprForMultiExpression(varname string
             return nil
         }
     }
-    runtimeExcption("executeMultiExpression Exception: no expression for", varname)
+    runtimeExcption("executeMultiExpression Exception: no expression for ", varname)
     return nil
 }

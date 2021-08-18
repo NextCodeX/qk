@@ -39,6 +39,11 @@ func jsonObject(v map[string]Value) JSONObject {
     return newJsonObject(v, nil)
 }
 
+func emptyJsonObject() JSONObject {
+	v := make(map[string]Value)
+    return newJsonObject(v, nil)
+}
+
 func newJsonObject(v map[string]Value, ts []Token) JSONObject {
 	obj := &JSONObjectImpl{valMap:v, ts: ts}
 	obj.ClassObject.raw = &obj

@@ -303,17 +303,16 @@ f.saveAs("/home/xp/ws/test.xlsx")
 println("write successfully")
 
 
-server = httpServer(8888)
+println("/home/xp/ws/mime.xml", fsize("/home/xp/ws/mime.xml"))
 
-server.post("/newUser", $ req, resp {
-    // 打印参数
-    req.args().pretty()
+/*
+server = httpServer(23333)
+server.staticDir("/", "/home/xp/ws")
+server.debug()
+server.startup()*/
 
-    resp.json({"result":"ok"})
-})
-
-server.startup()
-
+res = cmd("cat version.go")
+printf("--%v--", res)
 
 
 
