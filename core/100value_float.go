@@ -22,6 +22,10 @@ func (fval *FloatValue) isFloat() bool {
 	return true
 }
 
+func (fval *FloatValue) Bytes() []byte {
+	return floatToBytes(fval.goValue)
+}
+
 func (fval *FloatValue) String() string {
 	return fmt.Sprint(fval.goValue)
 }

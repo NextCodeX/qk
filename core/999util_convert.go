@@ -1,6 +1,9 @@
 package core
 
 import (
+	"bytes"
+	"encoding/binary"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -96,4 +99,58 @@ func toBoolean(raw Value) bool {
 		runtimeExcption("toBoolean: unknown value type: ", raw)
 		return false
 	}
+}
+
+
+
+func intToBytes(raw int64) []byte {
+	data := uint64(raw)
+	res := make([]byte, 8)
+	for i:=0; i<8; i++ {
+		res[7-i] = uint8(data >> (8*i))
+	}
+	return res
+}
+
+func bytesToInt(bs []byte) int64 {
+	size := len(bs)
+	if size > 8 {
+		return 0
+	}
+	var res uint64
+	for i := 0; i < size; i++ {
+		var num uint64
+		if size < 8 {
+			num = uint64(bs[size-1-i])
+		} else {
+			num = uint64(bs[7-i])
+		}
+		res = res | (num << (i*8))
+	}
+	return int64(res)
+}
+
+func floatToBytes(raw float64) []byte {
+	buf := new(bytes.Buffer)
+	err := binary.Write(buf, binary.LittleEndian, raw)
+	// 这里可以继续往buf里写, 都存在buf里
+	// binary.Write(buf, binary.LittleEndian, uint16(12345))
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	return buf.Bytes()
+}
+
+func bytesToFloat(data []byte) float64 {
+	var res float64
+	buf := bytes.NewReader(data)
+	err := binary.Read(buf, binary.LittleEndian, &res)
+	// 这里可以继续读出来存在变量里, 这样就可以解码出来很多, 读的次序和变量类型要对
+	// binary.Read(buf, binary.LittlEndian, &v2)
+	if err != nil {
+		fmt.Println(err)
+		return 0
+	}
+	return res
 }

@@ -2,6 +2,10 @@ package core
 
 import "fmt"
 
+func (fns *InternalFunctionSet) NewBytes() Value {
+	return newByteArrayValue(nil)
+}
+
 type ByteArrayValue struct {
 	goValue []byte
 	ClassObject
@@ -23,6 +27,22 @@ func (bs *ByteArrayValue) isByteArray() bool {
 
 func (bs *ByteArrayValue) Str() string {
 	return string(bs.goValue)
+}
+
+func (bs *ByteArrayValue) Int() int64 {
+	return bytesToInt(bs.goValue)
+}
+
+func (bs *ByteArrayValue) Float() float64 {
+	return bytesToFloat(bs.goValue)
+}
+
+func (bs *ByteArrayValue) Size() int {
+	return len(bs.goValue)
+}
+
+func (bs *ByteArrayValue) Show() {
+	showBytes(bs.goValue)
 }
 
 func (bs *ByteArrayValue) String() string {

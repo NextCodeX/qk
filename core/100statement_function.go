@@ -165,8 +165,10 @@ func (f *FunctionImpl) execute() StatementResult {
 		return newStatementResult(StatementNormal, newQKValue(res))
 	}
 
+	// 每次执行自定义函数前，初始化本地变量池
 	f.local = newVariables()
 
+	// 初始化预设变量(仅main函数使用)
 	if f.preVars != nil {
 		obj := f.preVars
 		for _, key := range obj.keys() {

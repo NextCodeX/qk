@@ -52,3 +52,10 @@ func printTokensByLine(tokens []Token) {
 		fmt.Printf("count %v-%v: [%v] -> %v \n", i, token.lineIndexString(), token.String(), token.TokenTypeName())
 	}
 }
+
+func showBytes(bs []byte) {
+	for _, b := range bs {
+		fmt.Printf("%08b ", b)
+	}
+	fmt.Println()
+}

@@ -34,6 +34,7 @@ func (mulExpr *MultiExpressionImpl) setStack(stack Function) {
 }
 
 func (mulExpr *MultiExpressionImpl) execute() Value {
+    // 每次执行多元表达式之前，初始化临时变量池
     mulExpr.setVar(tmpVarsKey, emptyJsonObject())
     res := mulExpr.recursiveEvalMultiExpression(mulExpr.finalExpr, mulExpr.list)
     return res

@@ -22,6 +22,9 @@ func (ival *IntValue) isInt() bool {
 	return true
 }
 
+func (ival *IntValue) Bytes() []byte {
+	return intToBytes(ival.goValue)
+}
 
 func (ival *IntValue) String() string {
 	return fmt.Sprint(ival.goValue)

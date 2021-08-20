@@ -27,40 +27,21 @@ func main() {
 		}
 	}
 
-	qkfile := "examples/demo1.qk"
-	//qkfile := getScriptFile()
-	//changeWorkDirectory()
+	//qkfile := "examples/demo.qk"
+	qkfile := getScriptFile()
 
 	bs, err := ioutil.ReadFile(qkfile)
 	if err != nil {
 		log.Fatalf("failed to read %v; error info: %v", qkfile, err)
 	}
+	core.SetRootDir(qkfile)
 	core.Run(bs)
 
 	duration := time.Now().UnixNano() - startupTime
 	fmt.Printf("\n\nspend: %vns, %.3fms, %.3fs  \n", duration, float64(duration) / 1e6, float64(duration) / 1e9)
 }
 
-// change work dirctory to current command directory
-func changeWorkDirectory() {
-	var wd string
-	arg := os.Args[1]
-	if strings.HasPrefix(arg, "abs=") {
-		wd =  filepath.Dir(arg[4:])
-	} else {
-		wd = getCmdDir()
-	}
-
-	err := os.Chdir(wd)
-	if err != nil {
-		fmt.Printf("failed to change work dirctory to current command directory: %v", err.Error())
-		os.Exit(5)
-	}
-	//cwd, _ := os.Getwd()
-	//fmt.Println("current work directory:", cwd)
-}
-
-// find qk script file for run
+// find qk script file to run
 func getScriptFile() string {
 	cmdDir := getCmdDir()
 	if len(os.Args)>1 {
@@ -116,8 +97,8 @@ func getScriptFile() string {
 
 // 判断文件是否存在
 func fileExist(path string) bool {
-	_, err := os.Stat(path)
-	return !os.IsNotExist(err)
+	sta, err := os.Stat(path)
+	return sta != nil && !sta.IsDir() && !os.IsNotExist(err)
 }
 
 // 获取命令所在的路径

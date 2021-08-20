@@ -126,14 +126,14 @@ func (fns *InternalFunctionSet) Fargs(filename string) []interface{} {
 	return res
 }
 
-func (fns *InternalFunctionSet) Fscan(path string) []interface{} {
-	var res []interface{}
+func (fns *InternalFunctionSet) Fscan(path string) []string {
+	var res []string
 	doScan(path, false, &res)
 	return res
 }
 
-func (fns *InternalFunctionSet) FscanAll(path string) []interface{} {
-	var res []interface{}
+func (fns *InternalFunctionSet) FscanAll(path string) []string {
+	var res []string
 	doScan(path, true, &res)
 	return res
 }

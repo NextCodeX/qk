@@ -305,14 +305,20 @@ println("write successfully")
 
 println("/home/xp/ws/mime.xml", fsize("/home/xp/ws/mime.xml"))
 
+res = cmd("cat version.go")
+printf("--%v--\n", res)
+
+//cp("/home/xp/ws/htm/*", "/home/xp/ws/t1")
+
 /*
 server = httpServer(23333)
 server.staticDir("/", "/home/xp/ws")
 server.debug()
-server.startup()*/
+server.startup()
+*/
 
-res = cmd("cat version.go")
-printf("--%v--", res)
+println(`openBrowser("https://so.com")`)
+ob("https://so.com")
 
 
 

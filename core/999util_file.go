@@ -38,7 +38,7 @@ func fileName(uri string) string {
 }
 
 
-func doScan(path string, scanAll bool, res *[]interface{})  {
+func doScan(path string, scanAll bool, res *[]string)  {
 	if !isDir(path) {
 		log.Fatal(path, "is not directory.")
 		return
@@ -58,6 +58,27 @@ func doScan(path string, scanAll bool, res *[]interface{})  {
 			continue
 		}
 		*res = append(*res, nextPath)
+	}
+}
+
+func doScanForInfo(path string, res *[]*FileInfo)  {
+	if !isDir(path) {
+		log.Fatal(path, "is not directory.")
+		return
+	}
+	fs, err := ioutil.ReadDir(path)
+	if err != nil {
+		log.Fatal(fmt.Sprintf("failed to read path: %v, %v", path, err.Error()))
+		return
+	}
+	for _, f := range fs {
+		nextPath := filepath.Join(path, f.Name())
+		finfo := newFileInfo(nextPath, f)
+		*res = append(*res, finfo)
+
+		if f.IsDir() {
+			doScanForInfo(nextPath, res)
+		}
 	}
 }
 
