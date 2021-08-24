@@ -14,9 +14,9 @@ type HttpFileServer struct {
 	serverPort int
 	staticResourcePath string
 	staticResourceDir string
-	dirInitSize       int64
-	fileInitSizes     map[string]int64
-	mux sync.Mutex
+	dirInitSize  int64
+	fileModTimes map[string]int64
+	mux          sync.Mutex
 	debugFlag bool
 	listenDirFlag bool
 }
@@ -100,15 +100,15 @@ func (hfs *HttpFileServer) localFilePath(urlPath string) string {
 	return ""
 }
 
-func (hfs *HttpFileServer) recordFilesInitSize() {
+func (hfs *HttpFileServer) initFileInfos() {
 	hfs.dirInitSize = fileSize(hfs.staticResourceDir)
 
-	hfs.fileInitSizes = make(map[string]int64)
+	hfs.fileModTimes = make(map[string]int64)
 	var fpaths []string
 	doScan(hfs.staticResourceDir, false, &fpaths)
 	for _, fpath := range fpaths {
 		if strings.HasSuffix(fpath, ".html") {
-			hfs.fileInitSizes[fpath] = fileSize(fpath)
+			hfs.fileModTimes[fpath] = fileModTime(fpath)
 		}
 	}
 }
@@ -119,9 +119,9 @@ func (hfs *HttpFileServer) resetDirSize(fsize int64) {
 	hfs.mux.Unlock()
 }
 
-func (hfs *HttpFileServer) resetFileSize(fname string, fsize int64) {
+func (hfs *HttpFileServer) resetFileModTime(fname string, fsize int64) {
 	hfs.mux.Lock()
-	hfs.fileInitSizes[fname] = fsize
+	hfs.fileModTimes[fname] = fsize
 	hfs.mux.Unlock()
 }
 
@@ -199,10 +199,10 @@ func (hfs *HttpFileServer) FileStateListener(w http.ResponseWriter, req *http.Re
 		return
 	}
 
-	size := fileSize(localPath)
-	if hfs.fileInitSizes[localPath] != size {
+	modTime := fileModTime(localPath)
+	if hfs.fileModTimes[localPath] != modTime {
 		setResponseBody(w, "text/plain", []byte("changed"))
-		hfs.resetFileSize(localPath, size)
+		hfs.resetFileModTime(localPath, modTime)
 	} else {
 		setResponseBody(w, "text/plain", []byte("nothing is changed"))
 	}

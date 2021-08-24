@@ -2,25 +2,22 @@ package core
 
 
 type ObjectPrimaryExpression struct {
-    obj JSONObject
+    objTokens []Token
     PrimaryExpressionImpl
 }
 
-func newObjectPrimaryExpression(val Value) PrimaryExpression {
+func newObjectPrimaryExpression(ts []Token) PrimaryExpression {
     expr := &ObjectPrimaryExpression{}
     expr.t = ObjectPrimaryExpressionType
-    expr.obj = goObj(val)
+    expr.objTokens = ts
     expr.doExec = expr.doExecute
     return expr
 }
 
 func (priExpr *ObjectPrimaryExpression) doExecute() Value {
-    object := priExpr.obj
-    if object.parsed() {
-        return object
-    }
-    object.init()
-    ts := clearBraces(object.tokens())
+    object := emptyJsonObject()
+
+    ts := clearBraces(priExpr.objTokens)
     size := len(ts)
 
     if size < 1 {

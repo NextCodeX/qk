@@ -35,11 +35,19 @@ func (priExpr *SubListPrimaryExpression) startEndIndex(defaultEndIndex int) (int
     var start, end int
     if priExpr.start != nil {
         start = toInt(priExpr.start.execute().val())
+        if start < 0 {
+            // compatible
+           start = 0
+        }
     } else {
         start = 0
     }
     if priExpr.end != nil {
         end = toInt(priExpr.end.execute().val())
+        if end > defaultEndIndex {
+            // compatible
+            end = defaultEndIndex
+        }
     } else {
         end = defaultEndIndex
     }
@@ -49,6 +57,11 @@ func (priExpr *SubListPrimaryExpression) startEndIndex(defaultEndIndex int) (int
 func (priExpr *SubListPrimaryExpression) subArr(arr JSONArray) Value {
     startIndex, endIndex := priExpr.startEndIndex(arr.Size())
     return arr.sub(startIndex, endIndex)
+}
+
+func (priExpr *SubListPrimaryExpression) subByteArray(arr *ByteArrayValue) Value {
+    startIndex, endIndex := priExpr.startEndIndex(arr.Size())
+    return newQKValue(arr.sub(startIndex, endIndex))
 }
 
 func (priExpr *SubListPrimaryExpression) subStr(str *StringValue) Value {

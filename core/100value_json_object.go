@@ -7,8 +7,6 @@ import (
 )
 
 type JSONObject interface {
-    parsed() bool
-    init()
     Size() int
 	Contain(key string) bool
     Remove(key string)
@@ -17,7 +15,6 @@ type JSONObject interface {
     keys() []string
     values() []Value
 	mapVal() map[string]Value
-    tokens() []Token
     String() string
 	Pretty()
 	toJSONObjectString() string
@@ -27,36 +24,19 @@ type JSONObject interface {
 
 type JSONObjectImpl struct {
     valMap map[string]Value
-    ts []Token
 	ClassObject
 }
 
-func rawJSONObject(ts []Token) JSONObject {
-	return newJsonObject(nil, ts)
-}
-
 func jsonObject(v map[string]Value) JSONObject {
-    return newJsonObject(v, nil)
-}
-
-func emptyJsonObject() JSONObject {
-	v := make(map[string]Value)
-    return newJsonObject(v, nil)
-}
-
-func newJsonObject(v map[string]Value, ts []Token) JSONObject {
-	obj := &JSONObjectImpl{valMap:v, ts: ts}
+	obj := &JSONObjectImpl{valMap:v}
 	obj.ClassObject.raw = &obj
 	obj.ClassObject.name = "JSONObject"
 	return obj
 }
 
-func (obj *JSONObjectImpl) init() {
-    obj.valMap =  make(map[string]Value)
-}
-
-func (obj *JSONObjectImpl) parsed() bool {
-    return obj.valMap != nil
+func emptyJsonObject() JSONObject {
+	v := make(map[string]Value)
+    return jsonObject(v)
 }
 
 func (obj *JSONObjectImpl) Size() int {
@@ -107,10 +87,6 @@ func (obj *JSONObjectImpl) values() []Value {
 
 func (obj *JSONObjectImpl) mapVal() map[string]Value {
     return obj.valMap
-}
-
-func (obj *JSONObjectImpl) tokens() []Token {
-    return obj.ts
 }
 
 func (obj *JSONObjectImpl) Pretty() {

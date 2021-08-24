@@ -70,7 +70,7 @@ func (srv *HttpServer) Any(path string, service Function) {
 
 func (srv *HttpServer) Startup() {
 	if srv.fileServer != nil && srv.fileServer.debugFlag {
-		srv.fileServer.recordFilesInitSize()
+		srv.fileServer.initFileInfos()
 		http.HandleFunc("/listenFileState", srv.fileServer.FileStateListener)
 		log.Println("Debug Mode is running...")
 	}

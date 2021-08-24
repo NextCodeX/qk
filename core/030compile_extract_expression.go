@@ -392,15 +392,17 @@ func parsePrimaryExpression(t Token) PrimaryExpression {
 		res = newElemFunctionCallPrimaryExpression(headExpr, priExprs)
 
 	} else if v != nil {
-		if t.isObjLiteral() {
-			res = newObjectPrimaryExpression(v)
-		} else  if t.isArrLiteral() {
-			res = newArrayPrimaryExpression(v)
-		} else if t.isDynamicStr() {
-			res = newDynamicStrPrimaryExpression(v)
-		} else {
-			res = newConstPrimaryExpression(v)
-		}
+		res = newConstPrimaryExpression(v)
+
+	} else  if t.isObjLiteral() {
+		res = newObjectPrimaryExpression(t.tokens())
+
+	} else  if t.isArrLiteral() {
+		res = newArrayPrimaryExpression(t.tokens())
+
+	} else if t.isDynamicStr() {
+		res = newDynamicStrPrimaryExpression(t.raw())
+
 	} else if t.isElement() {
 		expr := extractExpression(t.tokens())
 		res = newElementPrimaryExpression(t.raw(), expr)

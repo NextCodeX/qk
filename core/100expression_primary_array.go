@@ -2,24 +2,22 @@ package core
 
 
 type ArrayPrimaryExpression struct {
-    arr JSONArray
+    arrTokens []Token
     PrimaryExpressionImpl
 }
 
-func newArrayPrimaryExpression(val Value) PrimaryExpression {
+func newArrayPrimaryExpression(ts []Token) PrimaryExpression {
     expr := &ArrayPrimaryExpression{}
     expr.t = ArrayPrimaryExpressionType
-    expr.arr = goArr(val)
+    expr.arrTokens = ts
     expr.doExec = expr.doExecute
     return expr
 }
 
 func (priExpr *ArrayPrimaryExpression) doExecute() Value {
-    array := priExpr.arr
-    if array.parsed() {
-        return array
-    }
-    ts := clearBrackets(array.tokens())
+    array := emptyArray()
+
+    ts := clearBrackets(priExpr.arrTokens)
     size := len(ts)
 
     if size < 1 {

@@ -10,6 +10,16 @@ import (
 	"strings"
 )
 
+// 文件修改时间(纳秒)
+func fileModTime(fpath string) int64 {
+	stat, err := os.Stat(fpath)
+	if err != nil {
+		fmt.Println(err)
+		return 0
+	}
+	return stat.ModTime().UnixNano()
+}
+
 // 获取文件的mime type
 func fileType(name string) string {
 	index := strings.LastIndex(name, ".")

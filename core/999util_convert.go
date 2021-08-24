@@ -34,15 +34,7 @@ func toInt(any interface{}) int {
 }
 
 func tokenToValue(t Token)  Value {
-	if t.isArrLiteral() {
-		v := rawJSONArray(t.tokens())
-		return newQKValue(v)
-
-	} else if t.isObjLiteral() {
-		v := rawJSONObject(t.tokens())
-		return newQKValue(v)
-
-	} else if t.isFloat() {
+	if t.isFloat() {
 		f, err := strconv.ParseFloat(t.raw(), 64)
 		assert(err != nil, "failed to parse float", t.String(), "line:", t.getLineIndex())
 		return newQKValue(f)
@@ -51,9 +43,6 @@ func tokenToValue(t Token)  Value {
 		i, err := strconv.Atoi(t.raw())
 		assert(err != nil, "failed to parse int", t.String(), "line:", t.getLineIndex())
 		return newQKValue(i)
-
-	} else if t.isDynamicStr() {
-		return newQKValue(t.raw())
 
 	} else if t.isStr() {
 		str := strings.Replace(t.raw(), "\\\\", "\\", -1)

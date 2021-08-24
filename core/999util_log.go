@@ -53,6 +53,25 @@ func printTokensByLine(tokens []Token) {
 	}
 }
 
+// 用于定位发生的位置
+func line(tokens []Token) string {
+	var start, end int
+	for _, tk := range tokens {
+		index := tk.getLineIndex()
+		if start == 0 && end == 0 {
+			start, end = index, index
+			continue
+		}
+		if index < start {
+			start = index
+		}
+		if index > end {
+			end = index
+		}
+	}
+	return fmt.Sprintf("line%v:%v", start, end)
+}
+
 func showBytes(bs []byte) {
 	for _, b := range bs {
 		fmt.Printf("%08b ", b)

@@ -2,12 +2,14 @@ package core
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	"strings"
+	"time"
 )
 
 /*
@@ -58,6 +60,8 @@ func (fns *InternalFunctionSet) HttpGet(args []interface{}) Value {
 	if err != nil {
 		runtimeExcption(err)
 	}
+	ctx, _ := context.WithTimeout(context.Background(), time.Minute)
+	req.WithContext(ctx)
 	if headers != nil {
 		for key, val := range headers.mapVal() {
 			req.Header.Set(key, val.String())

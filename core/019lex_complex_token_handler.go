@@ -344,7 +344,8 @@ func checkJSONObjectLiteral(currentIndex int, ts []Token) bool {
 	return ts[currentIndex].assertSymbol("{") &&
 		(currentIndex == 0 ||
 			(currentIndex > 0 &&
-				((ts[currentIndex-1].isSymbol() && !ts[currentIndex-1].assertSymbols(")", "++")) ||
+				( (ts[currentIndex-1].isSymbol() &&
+					!ts[currentIndex-1].assertSymbols(")", "++", "--")) ||
 					ts[currentIndex-1].assertIdentifier("return"))))
 }
 

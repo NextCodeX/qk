@@ -7,7 +7,6 @@ import (
 )
 
 type JSONArray interface {
-    parsed() bool
     Size() int
     add(elem Value)
     set(index int, elem Value)
@@ -15,7 +14,6 @@ type JSONArray interface {
     sub(start, end int) Value
     checkOutofIndex(index int) bool
     values() []Value
-    tokens() []Token
     String() string
     Pretty()
     toJSONArrayString() string
@@ -25,27 +23,19 @@ type JSONArray interface {
 
 type JSONArrayImpl struct {
     valList []Value
-    ts []Token
     ClassObject
 }
 
-func rawJSONArray(ts []Token) JSONArray {
-    return newJsonArray(nil, ts)
-}
-
 func array(v []Value) JSONArray {
-    return newJsonArray(v, nil)
-}
-
-func newJsonArray(v []Value, ts []Token) JSONArray {
-    arr :=  &JSONArrayImpl{valList:v, ts: ts}
+    arr :=  &JSONArrayImpl{valList:v}
     arr.ClassObject.raw = &arr
     arr.ClassObject.name = "JSONArray"
     return arr
 }
 
-func (arr *JSONArrayImpl) parsed() bool {
-    return arr.valList != nil
+func emptyArray() JSONArray {
+    vals := make([]Value, 0, 16)
+    return array(vals)
 }
 
 func (arr *JSONArrayImpl) Size() int {
@@ -74,10 +64,6 @@ func (arr *JSONArrayImpl) checkOutofIndex(index int) bool {
 
 func (arr *JSONArrayImpl) values() []Value {
     return arr.valList
-}
-
-func (arr *JSONArrayImpl) tokens() []Token {
-    return arr.ts
 }
 
 func (arr *JSONArrayImpl) String() string {

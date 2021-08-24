@@ -6,21 +6,20 @@ import (
 )
 
 type DynamicStrPrimaryExpression struct {
-    val Value
+    tmpl string
     PrimaryExpressionImpl
 }
 
-func newDynamicStrPrimaryExpression(val Value) PrimaryExpression {
+func newDynamicStrPrimaryExpression(tmpl string) PrimaryExpression {
     expr := &DynamicStrPrimaryExpression{}
     expr.t = DynamicStrPrimaryExpressionType
-    expr.val = val
+    expr.tmpl = tmpl
     expr.doExec = expr.doExecute
     return expr
 }
 
 func (priExpr *DynamicStrPrimaryExpression) doExecute() Value {
-    raw := goStr(priExpr.val)
-    res := os.Expand(raw, func(key string) string {
+    res := os.Expand(priExpr.tmpl, func(key string) string {
         qkValue := evalScript(key, priExpr.getStack())
         return fmt.Sprint(qkValue.val())
     })

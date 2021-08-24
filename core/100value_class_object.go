@@ -39,6 +39,9 @@ func (clazz *ClassObject) String() string {
 func (clazz *ClassObject) val() interface{} {
 	return clazz
 }
+func (clazz *ClassObject) typeName() string {
+	return clazz.name
+}
 func (clazz *ClassObject) isObject() bool {
 	return true
 }

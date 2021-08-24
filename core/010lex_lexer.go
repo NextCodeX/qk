@@ -137,7 +137,7 @@ func (lexer *Lexer) whenDynamicStringLiterial() {
 			lexer.ts = append(lexer.ts, &TokenImpl{
 				lineIndex: lexer.lineIndex,
 				str: "",
-				t:   DynamicStr | Str,
+				t:   DynamicStr,
 			})
 			lexer.setState(stateNormal)
 		} else {
@@ -306,18 +306,21 @@ func (lexer *Lexer) pushLongToken() {
 	var tokenType TokenType
 	if lexer.inStateFloat() {
 		tokenType = Float
+
 	} else if lexer.inStateInt() {
 		if lexer.currentByte == '.' {
 			return
 		}
 		tokenType = Int
+
 	} else if lexer.inStateIdentifier() {
 		tokenType = Identifier
+
 	} else if lexer.inStateStrLiteral() {
 		tokenType = Str
 
 	} else if lexer.inStateDynamicStrLiteral() {
-		tokenType = Str | DynamicStr
+		tokenType = DynamicStr
 	} else {}
 
 	lexer.ts = append(lexer.ts, &TokenImpl{

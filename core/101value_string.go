@@ -68,6 +68,14 @@ func (str *StringValue) Bytes() []byte {
 func (str *StringValue) Size() int {
     return len(str.chars)
 }
+
+func (str *StringValue) Index(subStr string) int {
+    return strings.Index(str.goValue, subStr)
+}
+
+func (str *StringValue) LastIndex(subStr string) int {
+    return strings.LastIndex(str.goValue, subStr)
+}
 func (str *StringValue) Trim() string {
     return strings.TrimSpace(str.goValue)
 }

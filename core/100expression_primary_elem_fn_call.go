@@ -47,6 +47,14 @@ func (priExpr *ElemFunctionCallPrimaryExpression) exprExec(chainExprs []PrimaryE
                 chain = chainExprs[1:]
             }
         }
+
+        // handle function is undefined.
+        if currentObj.isNULL() {
+            if _, ok := chain[0].(*FunctionCallPrimaryExpression); ok {
+                headExpr := priExpr.head.(*VarPrimaryExpression)
+                errorf("%v %v() is undefined", line(headExpr.raw()), headExpr.varname)
+            }
+        }
     }
 
     return priExpr.runScopeChain(currentObj, chain)
@@ -68,6 +76,12 @@ func (priExpr *ElemFunctionCallPrimaryExpression) runScopeChain(currentObj Value
             arr := goArr(currentObj)
             nextExpr := subExpr.(*SubListPrimaryExpression)
             intermediateVal = nextExpr.subArr(arr)
+
+        } else if currentObj.isByteArray() && subExpr.isSubList() {
+            // ByteArray[:]
+            byteArr := currentObj.(*ByteArrayValue)
+            nextExpr := subExpr.(*SubListPrimaryExpression)
+            intermediateVal = nextExpr.subByteArray(byteArr)
 
         } else if currentObj.isString() && subExpr.isSubList() {
             // str[:]
@@ -100,17 +114,16 @@ func (priExpr *ElemFunctionCallPrimaryExpression) runScopeChain(currentObj Value
             intermediateVal = nextExpr.callFunc(fn)
 
         } else {
-            errorf("invalid mixture expression: %v{%v} chainLen: %v", currentObj.val(), tokensString(subExpr.raw()), len(chain))
+            errorf("invalid mixture expression: %v{%v} chainLen: %v", currentObj.val(), tokensString(priExpr.raw()), len(chain))
         }
 
         if intermediateVal != nil  {
           currentObj = intermediateVal
         } else {
-          runtimeExcption("failed to run Element and Function Call Mixture: %v%v", currentObj.val(), tokensString(subExpr.raw()))
+          runtimeExcption("failed to run Element and Function Call Mixture: %v%v", currentObj.val(), tokensString(priExpr.raw()))
         }
     }
-    //fmt.Println("mix#runScopeChain result -> ", currentObj.val())
-    //fmt.Println("*****************************")
+
     return currentObj
 }
 
@@ -118,9 +131,12 @@ func (priExpr *ElemFunctionCallPrimaryExpression) runScopeChain(currentObj Value
 func (priExpr *ElemFunctionCallPrimaryExpression) runWith(obj Object) Value {
 	varExpr, ok := priExpr.head.(*VarPrimaryExpression)
 	if !ok {
-	    errorf("object.%v is error", tokensString(priExpr.raw()))
+	    errorf("%v.%v is error", obj.typeName(), tokensString(priExpr.raw()))
     }
 	currentObj := varExpr.getField(obj)
+	if currentObj == nil || currentObj.isNULL() {
+        errorf("%v %v(%v).%v is undefined", line(varExpr.raw()), obj, obj.typeName(), varExpr.varname)
+    }
 	return priExpr.runScopeChain(currentObj, priExpr.chain)
 }
 // 与Chain Call表达式结合, 被赋值

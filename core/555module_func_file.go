@@ -15,6 +15,14 @@ import (
 
 var regBlankChar = regexp.MustCompile(`\s+`)
 
+// 创建目录
+func (fns *InternalFunctionSet) Mkdir(dir string) {
+	err := os.MkdirAll(dir, os.ModePerm)
+	if err != nil {
+		fmt.Println("mkdir()", err)
+	}
+}
+
 // 读取文件所有内容，返回字节数组
 func (fns *InternalFunctionSet) Fbytes(filename string) []byte {
 	bs, err := ioutil.ReadFile(filename)

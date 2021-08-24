@@ -7,6 +7,7 @@ var NULL = newNULLValue()
 type Value interface {
    String() string
    val() interface{}
+   typeName() string
    isNULL() bool
    isByteArray() bool
    isInt() bool
@@ -28,6 +29,13 @@ func newQKValue(rawVal interface{}) Value {
     switch v := rawVal.(type) {
     case []byte:
         val = newByteArrayValue(v)
+    case [][]byte:
+        var arr []Value
+        for _, bs := range v {
+            arr = append(arr, newByteArrayValue(bs))
+        }
+        val = array(arr)
+
     case int:
         val = newIntValue(int64(v))
     case int64:
