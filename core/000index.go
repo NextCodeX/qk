@@ -45,12 +45,12 @@ func addModuleFunc(name string, moduleFunc *FunctionExecutor) {
 }
 
 func Run(bs []byte) {
-	//defer func() {
-	//	// 全局异常处理
-	//	if err := recover(); err != nil {
-	//		fmt.Println(err)
-	//	}
-	//}()
+	defer func() {
+		// 全局异常处理
+		if err := recover(); err != nil {
+			fmt.Println(err)
+		}
+	}()
 
 
 	// 词法分析

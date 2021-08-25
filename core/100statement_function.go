@@ -167,7 +167,7 @@ func (f *FunctionImpl) execute() StatementResult {
 
 	// 每次执行自定义函数前，初始化本地变量池
 	f.local = newVariables()
-	defer func() {f.local = nil}()
+	//defer func() {f.local = nil}()
 
 	// 初始化预设变量(仅main函数使用)
 	if f.preVars != nil {

@@ -39,6 +39,9 @@ func (srv *HttpServer) Debug(args []interface{}) {
 func (srv *HttpServer) StaticDir(basePath , localDir string) {
 	srv.fileServer = newHttpFileServer(basePath, localDir, srv.port)
 }
+func (srv *HttpServer) Static(basePath , localDir string) {
+	srv.StaticDir(basePath, localDir)
+}
 
 func formatPath(path string) string {
 	if path == "" {

@@ -347,8 +347,10 @@ func parseBinaryExpression(ts []Token) BinaryExpression {
 	return expr
 }
 
+// 解析原始表达式
+// 实际上就是一个复合Token转化成Expression的过程
 func parsePrimaryExpression(t Token) PrimaryExpression {
-	v := tokenToValue(t)
+
 	var res PrimaryExpression
 	if t.isChainCall() {
 		var priExprs []PrimaryExpression
@@ -391,7 +393,7 @@ func parsePrimaryExpression(t Token) PrimaryExpression {
 
 		res = newElemFunctionCallPrimaryExpression(headExpr, priExprs)
 
-	} else if v != nil {
+	} else if v := tokenToValue(t); v != nil {
 		res = newConstPrimaryExpression(v)
 
 	} else  if t.isObjLiteral() {
