@@ -9,8 +9,7 @@ type BooleanValue struct {
 
 func newBooleanValue(raw bool) Value {
 	bl := &BooleanValue{goValue: raw}
-	bl.ClassObject.raw = &bl
-	bl.ClassObject.name = "Boolean"
+	bl.ClassObject.initAsClass("Boolean", &bl)
 	return bl
 }
 

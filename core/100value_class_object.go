@@ -21,11 +21,18 @@ type ClassObject struct {
 }
 
 func newClass(name string, raw interface{}) Value {
-	return &ClassObject{name: name, raw: raw}
+	clazz := &ClassObject{name: name, raw: raw}
+	clazz.initMethods()
+	return clazz
+}
+
+func (clazz *ClassObject) initAsClass(name string, raw interface{}) {
+	clazz.name = name
+	clazz.raw = raw
+	clazz.initMethods()
 }
 
 func (clazz *ClassObject) String() string {
-	clazz.initMethods()
 	if clazz.show != nil {
 		var args []reflect.Value
 		resList := clazz.show.Call(args)
@@ -47,7 +54,6 @@ func (clazz *ClassObject) isObject() bool {
 }
 
 func (clazz *ClassObject) get(key string) Value {
-	clazz.initMethods()
 	mt, ok := clazz.methods[key]
 	if !ok {
 		if key == "type" {
@@ -66,7 +72,10 @@ func (clazz *ClassObject) initMethods() {
 	if clazz.methods != nil {
 		return
 	}
+
 	clazz.mux.Lock()
+	defer clazz.mux.Unlock()
+
 	if clazz.methods != nil {
 		return
 	}
@@ -79,8 +88,6 @@ func (clazz *ClassObject) initMethods() {
 		}
 		clazz.methods[name] = newModuleFunc(name, mt)
 	}
-
-	defer clazz.mux.Unlock()
 }
 
 

@@ -6,8 +6,7 @@ type NULLValue struct {
 
 func newNULLValue() Value {
 	nl := &NULLValue{}
-	nl.ClassObject.raw = &nl
-	nl.ClassObject.name = "NULL"
+	nl.ClassObject.initAsClass("NULL", &nl)
 	return nl
 }
 

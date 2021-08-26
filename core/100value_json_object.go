@@ -29,8 +29,7 @@ type JSONObjectImpl struct {
 
 func jsonObject(v map[string]Value) JSONObject {
 	obj := &JSONObjectImpl{valMap:v}
-	obj.ClassObject.raw = &obj
-	obj.ClassObject.name = "JSONObject"
+	obj.ClassObject.initAsClass("JSONObject", &obj)
 	return obj
 }
 

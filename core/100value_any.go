@@ -11,8 +11,7 @@ type AnyValue struct {
 
 func newAnyValue(raw interface{}) Value {
 	any := &AnyValue{goValue: raw}
-	any.ClassObject.raw = &any
-	any.ClassObject.name = "Anything"
+	any.initAsClass("Anything", &any)
 	return any
 }
 

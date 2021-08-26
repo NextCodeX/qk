@@ -9,8 +9,7 @@ type IntValue struct {
 
 func newIntValue(raw int64) Value {
 	i := &IntValue{goValue: raw}
-	i.ClassObject.raw = &i
-	i.ClassObject.name = "Int"
+	i.ClassObject.initAsClass("Int", &i)
 	return i
 }
 

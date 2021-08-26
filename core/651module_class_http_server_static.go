@@ -143,11 +143,10 @@ func (hfs *HttpFileServer) addListenScript(ftype string, bs []byte) []byte {
             console.log(e)
         }
     }, 1000);
-    var count = 0
+    
     xhr.onreadystatechange = function(){
     　　if ( xhr.readyState == 4 && xhr.status == 200 ) {
-            count ++
-    　　　　　console.log(count, xhr.responseText)
+    　　　　　console.log(xhr.responseText)
             if (xhr.responseText == "changed") {
                 window.location.reload()
             }

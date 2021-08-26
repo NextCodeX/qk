@@ -17,8 +17,7 @@ func newStringValue(raw string) Value {
         chs = append(chs, ch)
     }
     str := &StringValue{goValue: raw, chars: chs}
-    str.ClassObject.raw = &str
-    str.ClassObject.name = "String"
+    str.initAsClass("String", &str)
     return str
 }
 

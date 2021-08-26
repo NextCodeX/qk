@@ -28,8 +28,7 @@ type JSONArrayImpl struct {
 
 func array(v []Value) JSONArray {
     arr :=  &JSONArrayImpl{valList:v}
-    arr.ClassObject.raw = &arr
-    arr.ClassObject.name = "JSONArray"
+    arr.ClassObject.initAsClass("JSONArray", &arr)
     return arr
 }
 

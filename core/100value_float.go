@@ -9,8 +9,7 @@ type FloatValue struct {
 
 func newFloatValue(raw float64) Value {
 	fl := &FloatValue{goValue: raw}
-	fl.ClassObject.raw = &fl
-	fl.ClassObject.name = "Float"
+	fl.ClassObject.initAsClass("Float", &fl)
 	return fl
 }
 
