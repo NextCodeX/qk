@@ -107,11 +107,15 @@ func parse4ComplexTokens(ts []Token) []Token {
 				i = endIndex
 				goto nextLoop
 
-			} else if endIndex := minFuncEndIndex(ts, i); endIndex > 0 {
+			} else if endIndex := minFuncEndIndex(ts, i); (endIndex > 0 || endIndex == -1) {
 				var argsTokens []Token
+
+				if endIndex == -1 {
+					endIndex = len(ts)
+				}
 				bodyTokens := ts[i+1:endIndex]
 				bodyTokens = parse4ComplexTokens(bodyTokens)
-
+				
 				funcToken := &TokenImpl{t:FuncLiteral, ts:argsTokens, bodyTokens: bodyTokens}
 				res = append(res, funcToken)
 
