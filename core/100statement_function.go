@@ -37,7 +37,7 @@ type FunctionImpl struct {
 	anonymousFunc func()Value
 	internalFunc func([]interface{})interface{}
 	internalFuncFlag bool
-	preVars JSONObject // 预设变量列表
+	preVars map[string]Value // 预设变量列表
 	StatementAdapter
 	ValueAdapter
 }
@@ -110,10 +110,9 @@ func extractModuleFuncArgs(f *FunctionExecutor, args []interface{}) []reflect.Va
 // 预设变量
 func (f *FunctionImpl) setPreVar(key string, value Value) {
 	if f.preVars == nil {
-		m := make(map[string]Value)
-		f.preVars = jsonObject(m)
+		f.preVars = make(map[string]Value)
 	}
-	f.preVars.put(key, value)
+	f.preVars[key] = value
 }
 
 func (f *FunctionImpl) isInternalFunc() bool {
@@ -171,9 +170,8 @@ func (f *FunctionImpl) execute() StatementResult {
 
 	// 初始化预设变量(仅main函数使用)
 	if f.preVars != nil {
-		obj := f.preVars
-		for _, key := range obj.keys() {
-			f.local.add(key, obj.get(key))
+		for key, val := range f.preVars {
+			f.local.add(key, val)
 		}
 	}
 

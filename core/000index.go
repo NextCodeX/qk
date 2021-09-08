@@ -2,48 +2,11 @@ package core
 
 import (
 	"fmt"
-	"os"
-	"path"
-	"path/filepath"
 )
 
 var mainFunc = newFuncWithoutTokens("main")
 
-func init() {
-
-	// 提供qk执行文件所在的目录
-	if executable, err := os.Executable(); err == nil {
-		rootDir := path.Dir(executable)
-		mainFunc.setPreVar("qkDir", newQKValue(rootDir))
-	} else {
-		fmt.Println(err)
-	}
-
-	// 当前命令行所在的路径，与`pwd`等同
-	if cwd, err := os.Getwd(); err==nil {
-		mainFunc.setPreVar("pwd", newQKValue(cwd))
-	}else{
-		fmt.Println(err)
-	}
-}
-
-func SetRootDir(scriptFileName string) {
-	// 提供当前脚本文件所在的目录
-	if dir, err := filepath.Abs(filepath.Dir(scriptFileName)); err == nil {
-		mainFunc.setPreVar("root", newQKValue(dir))
-	} else {
-		fmt.Println(err)
-	}
-}
-
-// 添加 Quick 系统内部函数
-func addInternalFunc(name string, internalFunc func([]interface{})interface{}) {
-	mainFunc.addFunc(name, newInternalFunc(name, internalFunc))
-}
-func addModuleFunc(name string, moduleFunc *FunctionExecutor) {
-	mainFunc.addFunc(name, newModuleFunc(name, moduleFunc))
-}
-
+// 脚本解析执行
 func Run(bs []byte) {
 	defer func() {
 		// 全局异常处理
@@ -87,6 +50,7 @@ func evalScript(src string, stack Function) Value {
 	return qkValue
 }
 
+// 从字节流中提取token列表。
 func ParseTokens(bs []byte) []Token {
 	// 提取原始token列表
 	ts := parse4PrimaryTokens(bs)
@@ -99,6 +63,7 @@ func ParseTokens(bs []byte) []Token {
 	return ts
 }
 
+// 将token列表转化成可执行的go数据结构
 func Compile(stmt Statement) {
 	extractStatement(stmt)
 	for _, stmt := range stmt.stmts() {
