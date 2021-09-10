@@ -2,7 +2,6 @@ package core
 
 import (
 	"reflect"
-	"sync"
 )
 
 // 用于实现多种形式的方法调用。
@@ -16,7 +15,6 @@ type ClassObject struct {
 	raw interface{}
 	show *reflect.Value
 	methods map[string]Function
-	mux sync.Mutex
 	ValueAdapter
 }
 
@@ -69,17 +67,6 @@ func (clazz *ClassObject) get(key string) Value {
 }
 
 func (clazz *ClassObject) initMethods() {
-	if clazz.methods != nil {
-		return
-	}
-
-	clazz.mux.Lock()
-	defer clazz.mux.Unlock()
-
-	if clazz.methods != nil {
-		return
-	}
-
 	mts := collectFunctionInfo(clazz.raw)
 	clazz.methods = make(map[string]Function)
 	for name, mt := range mts {

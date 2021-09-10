@@ -14,17 +14,6 @@ type Statement interface {
     parse() // 解析 各子statement, expression; 并将stack传递给 它们
     execute() StatementResult
 
-    isExpressionStatement() bool
-    isIfStatement() bool
-    isForStatement() bool
-    isForeachStatement() bool
-    isForIndexStatement() bool
-    isForItemStatement() bool
-    isSwitchStatement() bool
-    isMultiStatement() bool
-    isContinueStatement() bool
-    isBreakStatement() bool
-    isReturnStatement() bool
     String() string
 }
 

@@ -63,40 +63,6 @@ func (stmtAdapter *StatementAdapter) setParent(p Function) {
     stmtAdapter.ValueStack.stack = stmtAdapter.getStack()
 }
 
-func (stmtAdapter *StatementAdapter) isExpressionStatement() bool {
-    return false
-}
-func (stmtAdapter *StatementAdapter) isIfStatement() bool {
-    return false
-}
-func (stmtAdapter *StatementAdapter) isForStatement() bool {
-    return false
-}
-func (stmtAdapter *StatementAdapter) isForeachStatement() bool {
-    return false
-}
-func (stmtAdapter *StatementAdapter) isForIndexStatement() bool {
-    return false
-}
-func (stmtAdapter *StatementAdapter) isForItemStatement() bool {
-    return false
-}
-func (stmtAdapter *StatementAdapter) isSwitchStatement() bool {
-    return false
-}
-func (stmtAdapter *StatementAdapter) isMultiStatement() bool {
-    return false
-}
-func (stmtAdapter *StatementAdapter) isContinueStatement() bool {
-    return false
-}
-func (stmtAdapter *StatementAdapter) isBreakStatement() bool {
-    return false
-}
-func (stmtAdapter *StatementAdapter) isReturnStatement() bool {
-    return false
-}
-
 func (stmtAdapter *StatementAdapter) String() string {
     return "statement"
 }

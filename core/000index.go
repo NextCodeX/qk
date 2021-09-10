@@ -18,7 +18,7 @@ func Run(bs []byte) {
 
 	// 词法分析
 	ts := ParseTokens(bs)
-	// printTokensByLine(ts)
+	printTokensByLine(ts)
 
 	// 语法分析(解析)
 	mainFunc.setRaw(ts)
@@ -52,13 +52,12 @@ func evalScript(src string, stack Function) Value {
 
 // 从字节流中提取token列表。
 func ParseTokens(bs []byte) []Token {
-	// 提取原始token列表
+	// 提取原始token列表(包括提取'++', '--'等运算符以及负数表达式)
 	ts := parse4PrimaryTokens(bs)
 
 	// 语法预处理
-	// 提取'++', '--'等运算符以及负数表达式
-	ts = parse4OperatorTokens(ts)
-	// 去掉无用的';', 合并token生成函数调用token(Fcall), 方法调用token(Mtcall)等复合token
+	// 去掉无用的';'
+	// 提取复合token。复合token是指包含嵌套的原始表达式，比如：函数调用，JSONObject字面值
 	ts = parse4ComplexTokens(ts)
 	return ts
 }
