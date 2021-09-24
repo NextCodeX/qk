@@ -10,6 +10,7 @@ type Statement interface {
     getParent() Function
 
     getStack() Function
+    setVar(name string, value Value)
 
     parse() // 解析 各子statement, expression; 并将stack传递给 它们
     execute() StatementResult

@@ -36,10 +36,10 @@ func init() {
 		fmt.Println(err)
 	}
 
-	// 当前命令行所在的路径，与`pwd`等同
+	// 当前命令行所在的路径，与`pwd`等同(工作路径)
 	if cwd, err := os.Getwd(); err==nil {
 		mainFunc.setPreVar("pwd", newQKValue(cwd))
-	}else{
+	} else {
 		fmt.Println(err)
 	}
 }

@@ -10,5 +10,6 @@ require (
 	github.com/sijms/go-ora/v2 v2.1.22
 	github.com/xuri/excelize/v2 v2.4.1
 	golang.org/x/net v0.0.0-20210813160813-60bc85c4be6d // indirect
+	golang.org/x/text v0.3.7 // indirect
 	modernc.org/sqlite v1.11.2
 )

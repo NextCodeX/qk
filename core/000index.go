@@ -1,19 +1,15 @@
 package core
 
-import (
-	"fmt"
-)
-
 var mainFunc = newFuncWithoutTokens("main")
 
 // 脚本解析执行
 func Run(bs []byte) {
-	defer func() {
-		// 全局异常处理
-		if err := recover(); err != nil {
-			fmt.Println(err)
-		}
-	}()
+	//defer func() {
+	//	// 全局异常处理
+	//	if err := recover(); err != nil {
+	//		fmt.Println(err)
+	//	}
+	//}()
 
 
 	// 词法分析

@@ -1,7 +1,21 @@
-println(cmd(`
-ls -al ~
+println(cpuNum(), sys())
 
-echo "中华人民共和国"
+setpwd("d:/ws")
 
-which vs
-`))
+println("final wd:", pwd)
+
+println(cmd(`echo 你好，世界`))
+
+println(cmd(`cd`))
+
+println(cmd(`dir`))
+
+println(cmd(`qk he hello hell dick devil`))
+
+println(cmd(`date /t`))
+
+//ob("http://taobao.com")
+
+//cmd(`D:\software\Plants_Vs_Zombies_V1.0.0.1051_EN/PlantsVsZombies.exe`)
+
+
