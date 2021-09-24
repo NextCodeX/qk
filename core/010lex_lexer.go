@@ -230,8 +230,9 @@ func (lexer *Lexer) whenDivOrComment() {
 		// 终结状态机的多行注释状态
 		lexer.setState(stateNormal)
 
-	default:
-		errorf("line%v: unknown case('/')", lexer.lineIndex)
+	//default:
+	// 默认啥也不做， 忽略注释内符号'/'
+	//	errorf("line%v: unknown case('/')", lexer.lineIndex)
 	}
 }
 
