@@ -12,6 +12,11 @@ type StatementAdapter struct {
 func (stmtAdapter *StatementAdapter) initStatement(stmt Statement) {
     // 为getStack()判断当前的statement 是否为stack引用
     stmtAdapter.owner = stmt
+
+    if fn, ok := stmt.(Function); ok {
+        // 初始化main函数的值栈
+        stmtAdapter.ValueStack.stack = fn
+    }
 }
 
 func (stmtAdapter *StatementAdapter) getStack() Function {

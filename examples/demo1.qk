@@ -4,4 +4,30 @@ ls -al ~
 echo "中华人民共和国"
 
 which vs
+
+which gl
 `))
+
+
+/*
+println(cpuNum(), sys())
+
+setpwd("d:/ws")
+
+println("final wd:", pwd)
+
+println(cmd(`echo 你好，世界`))
+
+println(cmd(`cd`))
+
+println(cmd(`dir`))
+
+println(cmd(`qk he hello hell dick devil`))
+
+println(cmd(`date /t`))
+
+//ob("http://taobao.com")
+
+//cmd(`D:\software\Plants_Vs_Zombies_V1.0.0.1051_EN/PlantsVsZombies.exe`)
+
+*/

@@ -68,7 +68,7 @@ func (lexer *Lexer) run() []Token {
 			lexer.whenIdentifier()
 		case b >= '0' && b <= '9':
 			lexer.whenNumber()
-		case b == ' ' || b == '\t' || b == '\n':
+		case b == ' ' || b == '\r' || b == '\t' || b == '\n':
 			lexer.whenSpace()
 		case lexer.isSymbol():
 			lexer.whenSymbol()
