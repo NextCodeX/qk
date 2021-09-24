@@ -1,13 +1,7 @@
--12.9
+println(cmd(`
+ls -al ~
 
-/*println("hello world")
+echo "中华人民共和国"
 
-n = -2.9
-c = -1
-println(n + c, n - c)
-
-sum = 0
-for i=0; i<10; i++ {
-    sum += i + 1
-}
-println("result:", sum)*/
+which vs
+`))
