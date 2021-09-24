@@ -1,8 +1,8 @@
 package core
 
 type Hover struct {
-	ready bool
-	index int
+	ready   bool
+	index   int
 	lastLen int
 }
 
@@ -17,7 +17,7 @@ func parse4ComplexTokens(ts []Token) []Token {
 	var chainToken Token
 	dotHover := initHover()
 	notOperatorHover := initHover()
-	for i:=0; i<size; {
+	for i := 0; i < size; {
 		token := ts[i]
 
 		var complexToken Token
@@ -77,18 +77,18 @@ func parse4ComplexTokens(ts []Token) []Token {
 		// 捕获函数字面值
 		if token.assertSymbol("$") {
 			if endIndex := nextSymbolIndexNotError(ts, i, "{", ";"); endIndex > 0 {
-				argsTokens := ts[i+1:endIndex]
+				argsTokens := ts[i+1 : endIndex]
 				currentIndex := endIndex
 				endIndex = scopeEndIndex(ts, currentIndex, "{", "}")
-				bodyTokens := ts[currentIndex+1:endIndex]
+				bodyTokens := ts[currentIndex+1 : endIndex]
 				bodyTokens = parse4ComplexTokens(bodyTokens)
-				funcToken := &TokenImpl{t:FuncLiteral, ts:argsTokens, bodyTokens: bodyTokens}
+				funcToken := &TokenImpl{t: FuncLiteral, ts: argsTokens, bodyTokens: bodyTokens}
 				res = append(res, funcToken)
-				i = endIndex+1
+				i = endIndex + 1
 				goto nextLoop
 
 			} else if endIndex := nextSymbolIndexNotError(ts, i, "->", ";", ")", "]", "}"); endIndex > 0 {
-				argsTokens := ts[i+1:endIndex]
+				argsTokens := ts[i+1 : endIndex]
 				currentIndex := endIndex
 				endIndex = minFuncEndIndex(ts, currentIndex)
 				// 这时的endIndex已不是条件判断时的endIndex
@@ -96,27 +96,27 @@ func parse4ComplexTokens(ts []Token) []Token {
 					endIndex = len(ts)
 				}
 
-				bodyTokens := ts[currentIndex+1:endIndex]
+				bodyTokens := ts[currentIndex+1 : endIndex]
 				bodyTokens = parse4ComplexTokens(bodyTokens)
 				bodyTokens = insert(newToken("return", Identifier), bodyTokens)
 
-				funcToken := &TokenImpl{t:FuncLiteral, ts:argsTokens, bodyTokens: bodyTokens}
+				funcToken := &TokenImpl{t: FuncLiteral, ts: argsTokens, bodyTokens: bodyTokens}
 				res = append(res, funcToken)
 
 				// 不能使endIndex+1, 避免";", ",", ")", "]", "}"这些分隔符被删除
 				i = endIndex
 				goto nextLoop
 
-			} else if endIndex := minFuncEndIndex(ts, i); (endIndex > 0 || endIndex == -1) {
+			} else if endIndex := minFuncEndIndex(ts, i); endIndex > 0 || endIndex == -1 {
 				var argsTokens []Token
 
 				if endIndex == -1 {
 					endIndex = len(ts)
 				}
-				bodyTokens := ts[i+1:endIndex]
+				bodyTokens := ts[i+1 : endIndex]
 				bodyTokens = parse4ComplexTokens(bodyTokens)
-				
-				funcToken := &TokenImpl{t:FuncLiteral, ts:argsTokens, bodyTokens: bodyTokens}
+
+				funcToken := &TokenImpl{t: FuncLiteral, ts: argsTokens, bodyTokens: bodyTokens}
 				res = append(res, funcToken)
 
 				// 不能使endIndex+1, 避免";", ",", ")", "]", "}"这些分隔符被删除
@@ -130,7 +130,7 @@ func parse4ComplexTokens(ts []Token) []Token {
 		// 处理非逻辑运算符 "!"
 		if token.assertSymbol("!") {
 			notOperatorHover.ready = true
-			notOperatorHover.index ++
+			notOperatorHover.index++
 			if notOperatorHover.lastLen == -1 {
 				notOperatorHover.lastLen = len(res)
 			}
@@ -138,23 +138,24 @@ func parse4ComplexTokens(ts []Token) []Token {
 		} else {
 			if notOperatorHover.ready && checkConflict(dotHover, i, ts) {
 				lastIndex := len(res) - 1
-				if len(res) == notOperatorHover.lastLen && token.assertSymbol("(")  {
+				if len(res) == notOperatorHover.lastLen && token.assertSymbol("(") {
 					endIndex := scopeEndIndex(ts, i, "(", ")")
-					exprTokens := ts[i+1:endIndex]
+					exprTokens := ts[i+1 : endIndex]
 					exprTokens = parse4ComplexTokens(exprTokens)
 					res = append(res, &TokenImpl{
-						t: Expr | Not,
-						ts: exprTokens,
-						not: notOperatorHover.index % 2 == 1,
+						t:   Expr | Not,
+						ts:  exprTokens,
+						not: notOperatorHover.index%2 == 1,
 					})
 					i = endIndex + 1
 					notOperatorHover = initHover()
 					goto nextLoop
 				} else if res != nil && len(res) > notOperatorHover.lastLen {
-					res[lastIndex].setNotFlag(notOperatorHover.index % 2 == 1)
+					res[lastIndex].setNotFlag(notOperatorHover.index%2 == 1)
 					res[lastIndex].addType(Not)
 					notOperatorHover = initHover()
-				} else {}
+				} else {
+				}
 			}
 		}
 
@@ -199,7 +200,8 @@ func parse4ComplexTokens(ts []Token) []Token {
 				last(res).addType(SubSelf)
 				goto endCurrentIterate
 
-			} else {}
+			} else {
+			}
 		}
 
 		// token 原样返回
@@ -209,7 +211,6 @@ func parse4ComplexTokens(ts []Token) []Token {
 		i++
 	nextLoop:
 	}
-
 
 	if dotHover.ready && dotHover.lastLen < len(res) {
 		// 𥈱悬停监听有延迟， 需要在循环结束后进行数据进行收尾
@@ -224,7 +225,7 @@ func parse4ComplexTokens(ts []Token) []Token {
 	if notOperatorHover.ready && !dotHover.ready && res != nil && len(res) > notOperatorHover.lastLen {
 		// 𥈱悬停监听有延迟， 需要在循环结束后进行数据进行收尾
 		lastIndex := len(res) - 1
-		res[lastIndex].setNotFlag(notOperatorHover.index % 2 == 1)
+		res[lastIndex].setNotFlag(notOperatorHover.index%2 == 1)
 		res[lastIndex].addType(Not)
 	}
 
@@ -237,12 +238,12 @@ func extractScopeOperator(tailToken Token, ts []Token, currentIndex int, dotHove
 		var nextToken Token
 		if ts[currentIndex].assertSymbol("[") {
 			endIndex := scopeEndIndex(ts, currentIndex, "[", "]")
-			exprTokens := ts[currentIndex+1:endIndex]
+			exprTokens := ts[currentIndex+1 : endIndex]
 			exprTokens = parse4ComplexTokens(exprTokens)
 
 			currentIndex = endIndex + 1
 
-			if midIndex := nextSymbolIndex(exprTokens, 0, ":"); midIndex>-1 {
+			if midIndex := nextSymbolIndex(exprTokens, 0, ":"); midIndex > -1 {
 				startTokens := exprTokens[:midIndex]
 				var endTokens []Token
 				if endIndex == len(exprTokens)-1 {
@@ -250,27 +251,26 @@ func extractScopeOperator(tailToken Token, ts []Token, currentIndex int, dotHove
 				} else {
 					endTokens = exprTokens[midIndex+1:]
 				}
-				nextToken = &TokenImpl{t:SubList, startExpr: startTokens, endExpr: endTokens}
+				nextToken = &TokenImpl{t: SubList, startExpr: startTokens, endExpr: endTokens}
 			} else {
-				nextToken = &TokenImpl{t:Element, ts:exprTokens}
+				nextToken = &TokenImpl{t: Element, ts: exprTokens}
 			}
-
 
 		} else if ts[currentIndex].assertSymbol("(") {
 			endIndex := scopeEndIndex(ts, currentIndex, "(", ")")
-			argsTokens := parse4ComplexTokens(ts[currentIndex+1:endIndex])
+			argsTokens := parse4ComplexTokens(ts[currentIndex+1 : endIndex])
 
 			currentIndex = endIndex + 1
 
 			if !dotHover.ready && currentIndex < len(ts) && ts[currentIndex].assertSymbol("{") {
 				// 捕获函数字面值
 				endIndex = scopeEndIndex(ts, currentIndex, "{", "}")
-				bodyTokens := parse4ComplexTokens(ts[currentIndex+1:endIndex])
-				nextToken = &TokenImpl{t:FuncLiteral, ts:argsTokens, bodyTokens: bodyTokens}
+				bodyTokens := parse4ComplexTokens(ts[currentIndex+1 : endIndex])
+				nextToken = &TokenImpl{t: FuncLiteral, ts: argsTokens, bodyTokens: bodyTokens}
 				currentIndex = endIndex + 1
 
 			} else {
-				nextToken = &TokenImpl{t:Fcall, ts:argsTokens}
+				nextToken = &TokenImpl{t: Fcall, ts: argsTokens}
 			}
 		} else {
 			break
@@ -310,7 +310,7 @@ func checkConflict(dotHover *Hover, currentIndex int, ts []Token) bool {
 	if !dotHover.ready {
 		return true
 	}
-	if currentIndex + 1 < len(ts) && next(ts, currentIndex).assertSymbol(".") {
+	if currentIndex+1 < len(ts) && next(ts, currentIndex).assertSymbol(".") {
 		return false
 	} else {
 		return true
@@ -318,7 +318,7 @@ func checkConflict(dotHover *Hover, currentIndex int, ts []Token) bool {
 }
 
 // 判断当前token是否为无用";"
-func checkUselessBoundary(currentIndex int, ts []Token, resTs []Token) bool  {
+func checkUselessBoundary(currentIndex int, ts []Token, resTs []Token) bool {
 	if !ts[currentIndex].assertSymbol(";") {
 		return false
 	}
@@ -348,7 +348,7 @@ func checkJSONObjectLiteral(currentIndex int, ts []Token) bool {
 	return ts[currentIndex].assertSymbol("{") &&
 		(currentIndex == 0 ||
 			(currentIndex > 0 &&
-				( (ts[currentIndex-1].isSymbol() &&
+				((ts[currentIndex-1].isSymbol() &&
 					!ts[currentIndex-1].assertSymbols(")", "++", "--")) ||
 					ts[currentIndex-1].assertIdentifier("return"))))
 }
@@ -359,13 +359,13 @@ func extractArrayLiteral(currentIndex int, ts []Token) (t Token, nextIndex int) 
 	var elems []Token
 	lineIndex := ts[currentIndex].getLineIndex()
 	var endLineIndex int
-	for i := currentIndex+1; i < size; i++ {
+	for i := currentIndex + 1; i < size; i++ {
 		token := ts[i]
 		if token.assertSymbol("[") {
-			scopeOpenCount ++
+			scopeOpenCount++
 		}
 		if token.assertSymbol("]") {
-			scopeOpenCount --
+			scopeOpenCount--
 		}
 		if scopeOpenCount == 0 {
 			nextIndex = i + 1
@@ -389,11 +389,11 @@ func extractArrayLiteral(currentIndex int, ts []Token) (t Token, nextIndex int) 
 	// 合并数组字面值内的复合token
 	elems = parse4ComplexTokens(elems)
 	t = &TokenImpl{
-		str:    "[]",
-		t:      ArrLiteral | Complex,
-		ts:     elems,
-		lineIndex:lineIndex,
-		endLineIndex:endLineIndex,
+		str:          "[]",
+		t:            ArrLiteral | Complex,
+		ts:           elems,
+		lineIndex:    lineIndex,
+		endLineIndex: endLineIndex,
 	}
 	return t, nextIndex
 }
@@ -406,23 +406,23 @@ func extractObjectLiteral(currentIndex int, ts []Token) (t Token, nextIndex int)
 	var elems []Token
 	lineIndex := ts[currentIndex].getLineIndex()
 	var endLineIndex int
-	for i := currentIndex+1; i < size; i++ {
+	for i := currentIndex + 1; i < size; i++ {
 		token := ts[i]
 		if token.assertSymbol("{") {
-			scopeOpenCount ++
+			scopeOpenCount++
 			if funcScope {
-				funcScopeOpenCount ++
+				funcScopeOpenCount++
 			}
 		}
 		if token.assertSymbol("}") {
-			scopeOpenCount --
+			scopeOpenCount--
 			if scopeOpenCount == 0 {
 				nextIndex = i + 1
 				endLineIndex = token.getLineIndex()
 				break
 			}
 			if funcScope {
-				funcScopeOpenCount --
+				funcScopeOpenCount--
 				if funcScopeOpenCount == 0 {
 					funcScope = false
 				}
@@ -448,11 +448,11 @@ func extractObjectLiteral(currentIndex int, ts []Token) (t Token, nextIndex int)
 	// 合并对象字面值内的复合token
 	elems = parse4ComplexTokens(elems)
 	t = &TokenImpl{
-		str:    "{}",
-		t:      ObjLiteral | Complex,
-		ts:     elems,
-		lineIndex:lineIndex,
-		endLineIndex:endLineIndex,
+		str:          "{}",
+		t:            ObjLiteral | Complex,
+		ts:           elems,
+		lineIndex:    lineIndex,
+		endLineIndex: endLineIndex,
 	}
 	return t, nextIndex
 }
@@ -460,17 +460,17 @@ func extractObjectLiteral(currentIndex int, ts []Token) (t Token, nextIndex int)
 func extractElement(currentIndex int, ts []Token) (t Token, nextIndex int) {
 	size := len(ts)
 	// 检测不符合元素定义直接返回
-	if size - currentIndex < 3 || !ts[currentIndex+1].assertSymbol("[") {
+	if size-currentIndex < 3 || !ts[currentIndex+1].assertSymbol("[") {
 		return
 	}
 	var indexs []Token
 	extractElementIndexTokens(currentIndex+2, ts, &nextIndex, &indexs)
 
 	t = &TokenImpl{
-		str:    ts[currentIndex].raw(),
-		t:      Element | Complex,
-		ts:     indexs,
-		lineIndex:ts[currentIndex].getLineIndex(),
+		str:       ts[currentIndex].raw(),
+		t:         Element | Complex,
+		ts:        indexs,
+		lineIndex: ts[currentIndex].getLineIndex(),
 	}
 	return t, nextIndex
 }
@@ -481,12 +481,12 @@ func extractElementIndexTokens(currentIndex int, ts []Token, nextIndex *int, ind
 	for i := currentIndex; i < size; i++ {
 		token := ts[i]
 		if token.assertSymbol("]") {
-			scopeOpenCount --
+			scopeOpenCount--
 			*nextIndex = i + 1
 			break
 		}
 		if token.isSymbol() && !match(token.raw(), "{", "}", ",", ";", "[", "=") {
-			runtimeExcption("extract element index Exception, illegal character:"+token.raw())
+			runtimeExcption("extract element index Exception, illegal character:" + token.raw())
 		}
 		*indexs = append(*indexs, token)
 	}
@@ -506,21 +506,20 @@ func extractElementIndexTokens(currentIndex int, ts []Token, nextIndex *int, ind
 func extractFunctionCall(currentIndex int, ts []Token) (t Token, nextIndex int) {
 	size := len(ts)
 	// 检测不符合函数调用定义直接返回
-	if size - currentIndex < 3 || !ts[currentIndex+1].assertSymbol("(") {
+	if size-currentIndex < 3 || !ts[currentIndex+1].assertSymbol("(") {
 		return
 	}
 
-	args, nextIndex := getCallArgsTokens(currentIndex + 2, ts)
+	args, nextIndex := getCallArgsTokens(currentIndex+2, ts)
 
 	t = &TokenImpl{
-		str:    ts[currentIndex].raw(),
-		t:      Fcall | Complex,
-		ts:     args,
-		lineIndex:ts[currentIndex].getLineIndex(),
+		str:       ts[currentIndex].raw(),
+		t:         Fcall | Complex,
+		ts:        args,
+		lineIndex: ts[currentIndex].getLineIndex(),
 	}
 	return t, nextIndex
 }
-
 
 func getCallArgsTokens(currentIndex int, ts []Token) (args []Token, nextIndex int) {
 	size := len(ts)
@@ -528,10 +527,10 @@ func getCallArgsTokens(currentIndex int, ts []Token) (args []Token, nextIndex in
 	for i := currentIndex; i < size; i++ {
 		token := ts[i]
 		if token.assertSymbol("(") {
-			scopeOpenCount ++
+			scopeOpenCount++
 		}
 		if token.assertSymbol(")") {
-			scopeOpenCount --
+			scopeOpenCount--
 			if scopeOpenCount == 0 {
 				nextIndex = i + 1
 				break
@@ -539,7 +538,7 @@ func getCallArgsTokens(currentIndex int, ts []Token) (args []Token, nextIndex in
 		}
 		if token.assertSymbols(";", "=") {
 			msg := printCurrentPositionTokens(ts, i)
-			runtimeExcption("extract call args Exception, illegal character:"+msg)
+			runtimeExcption("extract call args Exception, illegal character:" + msg)
 		}
 		args = append(args, token)
 	}
@@ -551,4 +550,3 @@ func getCallArgsTokens(currentIndex int, ts []Token) (args []Token, nextIndex in
 
 	return args, nextIndex
 }
-

@@ -42,7 +42,6 @@ func init() {
 	mainFunc.setPreVar("mime", jsonObject(mimes))
 }
 
-
 func (fns *InternalFunctionSet) HttpGet(args []interface{}) Value {
 	if len(args) < 1 {
 		runtimeExcption("HttpGet() url is required")
@@ -105,6 +104,20 @@ func (fns *InternalFunctionSet) HttpPost(args []interface{}) Value {
 		for key, val := range headers.mapVal() {
 			req.Header.Set(key, val.String())
 		}
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		runtimeExcption(err)
+	}
+
+	return newHttpResponse(resp)
+}
+
+func (fns *InternalFunctionSet) HttpHead(url string) Value {
+	client := &http.Client{}
+	req, err := http.NewRequest("HEAD", url, nil)
+	if err != nil {
+		runtimeExcption(err)
 	}
 	resp, err := client.Do(req)
 	if err != nil {
