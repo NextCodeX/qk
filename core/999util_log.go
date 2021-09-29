@@ -3,10 +3,10 @@ package core
 import (
 	"bytes"
 	"fmt"
+	"runtime/debug"
 )
 
-
-func assert(flag bool, msg ...interface{})  {
+func assert(flag bool, msg ...interface{}) {
 	if flag {
 		runtimeExcption(msg)
 	}
@@ -26,7 +26,7 @@ func errorf(format string, args ...interface{}) {
 }
 
 // 报错并退出程序(不带格式化)
-func runtimeExcption(raw ...interface{}){
+func runtimeExcption(raw ...interface{}) {
 	var msg []interface{}
 	for _, item := range raw {
 		if err, ok := item.(error); ok && err != nil {
@@ -77,4 +77,12 @@ func showBytes(bs []byte) {
 		fmt.Printf("%08b ", b)
 	}
 	fmt.Println()
+}
+
+// 全局异常处理
+func catch() {
+	if err := recover(); err != nil {
+		fmt.Println(err)
+		debug.PrintStack()
+	}
 }

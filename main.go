@@ -14,21 +14,17 @@ import (
 )
 
 func main() {
-	fmt.Println("QK_HOME => ", os.Getenv("QK_HOME"))
-	//fmt.Println("GITHUB_TOKEN => ", os.Getenv("GITHUB_TOKEN"))
-	//fmt.Println("GOPROXY => ", os.Getenv("GOPROXY"))
-	fmt.Println("===============================================")
 	startupTime := time.Now().UnixNano()
 
-	if len(os.Args)>1 {
+	if len(os.Args) > 1 {
 		if arg := os.Args[1]; arg == "-v" {
 			fmt.Println("Quick version:", version)
 			return
 		}
 	}
 
-	qkfile := "examples/demo1.qk"
-	//qkfile := getScriptFile()
+	//qkfile := "examples/demo1.qk"
+	qkfile := getScriptFile()
 
 	bs, err := ioutil.ReadFile(qkfile)
 	if err != nil {
@@ -37,14 +33,16 @@ func main() {
 	core.SetRootDir(qkfile)
 	core.Run(bs)
 
-	duration := time.Now().UnixNano() - startupTime
-	fmt.Printf("\n\nspend: %vns, %.3fms, %.3fs  \n", duration, float64(duration) / 1e6, float64(duration) / 1e9)
+	if core.IsCost {
+		duration := time.Now().UnixNano() - startupTime
+		fmt.Printf("\n\nspend: %vns, %.3fms, %.3fs  \n", duration, float64(duration)/1e6, float64(duration)/1e9)
+	}
 }
 
 // find qk script file to run
 func getScriptFile() string {
 	cmdDir := getCmdDir()
-	if len(os.Args)>1 {
+	if len(os.Args) > 1 {
 		arg := os.Args[1]
 		// optimize script running
 		if !strings.HasSuffix(arg, ".qk") {
@@ -84,11 +82,11 @@ func getScriptFile() string {
 			fnames = append(fnames, fname)
 		}
 	}
-	if len(fnames)<1 {
+	if len(fnames) < 1 {
 		fmt.Println("qk script file is not found in current directory!")
 		os.Exit(5)
 	}
-	if len(fnames)>1 {
+	if len(fnames) > 1 {
 		fmt.Println("Multiple qk script file exist in current directory!")
 		os.Exit(5)
 	}
@@ -115,4 +113,3 @@ func getCmdDir() string {
 	pwd := strings.TrimSpace(string(d))
 	return pwd
 }
-

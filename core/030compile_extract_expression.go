@@ -50,13 +50,13 @@ func parseTernaryOperator(ts []Token) Expression {
 	condBoundryIndex := nextSymbolIndex(ts, 0, "?")
 	valueBoundryIndex := scopeEndIndex(ts, condBoundryIndex, "?", ":")
 
-	if condBoundryIndex < 1 || valueBoundryIndex <= condBoundryIndex + 1 || valueBoundryIndex >= len(ts) - 1 {
+	if condBoundryIndex < 1 || valueBoundryIndex <= condBoundryIndex+1 || valueBoundryIndex >= len(ts)-1 {
 		errorf("invalid ternary operator expression: %v, %v", len(ts), tokensString(ts))
 		return nil
 	}
 
 	condExpr = extractExpression(ts[:condBoundryIndex])
-	ifExpr = extractExpression(ts[condBoundryIndex+1:valueBoundryIndex])
+	ifExpr = extractExpression(ts[condBoundryIndex+1 : valueBoundryIndex])
 	elseExpr = extractExpression(ts[valueBoundryIndex+1:])
 	return newTernaryOperatorPrimaryExpression(condExpr, ifExpr, elseExpr, receiver)
 }
@@ -113,7 +113,7 @@ func parseMultivariateExpression(ts []Token) Expression {
 		return finalExpr
 	}
 
-	expr = &MultiExpressionImpl{list:exprs, finalExpr: finalExpr}
+	expr = &MultiExpressionImpl{list: exprs, finalExpr: finalExpr}
 	expr.setRaw(ts)
 	return expr
 }
@@ -143,7 +143,8 @@ func generateMulExprFactor(exprTokensList [][]Token, resToken Token) ([]BinaryEx
 			} else if exprsLen == 1 {
 				finalExpr = expr
 				continue
-			} else {}
+			} else {
+			}
 		}
 
 		res = append(res, expr)
@@ -213,7 +214,7 @@ func reduceTokensForExpression(res Token, ts []Token, exprTokensList *[][]Token)
 		}
 		*exprTokensList = append(*exprTokensList, exprTokens)
 
-	} else if  !isSymbolParentheses && (last(exprTokens).equal(ts[i+1]) || last(exprTokens).lower(ts[i+1])) {
+	} else if !isSymbolParentheses && (last(exprTokens).equal(ts[i+1]) || last(exprTokens).lower(ts[i+1])) {
 		// 处理根据运算符优先级, 左向归约的情况
 		// e.g. a + 9 + c
 		// a + 9 => tmpVarToken
@@ -257,7 +258,7 @@ func reduceTokensForExpression(res Token, ts []Token, exprTokensList *[][]Token)
 
 	} else if isSymbolParentheses {
 		endIndex := scopeEndIndex(ts, i, "(", ")")
-		if endIndex == size - 1 {
+		if endIndex == size-1 {
 			// e.g. a * (b + c)
 			// a * tmpVarToken => res
 			tmpVarToken := getTmpVarToken()
@@ -342,7 +343,7 @@ func parseBinaryExpression(ts []Token) BinaryExpression {
 		runtimeExcption("parseBinaryExpression# invalid expression", tokensString(ts))
 	}
 
-	expr := &BinaryExpressionImpl{t:op, left:left, right:right}
+	expr := &BinaryExpressionImpl{t: op, left: left, right: right}
 	expr.setRaw(ts)
 	return expr
 }
@@ -396,10 +397,10 @@ func parsePrimaryExpression(t Token) PrimaryExpression {
 	} else if v := tokenToValue(t); v != nil {
 		res = newConstPrimaryExpression(v)
 
-	} else  if t.isObjLiteral() {
+	} else if t.isObjLiteral() {
 		res = newObjectPrimaryExpression(t.tokens())
 
-	} else  if t.isArrLiteral() {
+	} else if t.isArrLiteral() {
 		res = newArrayPrimaryExpression(t.tokens())
 
 	} else if t.isDynamicStr() {
@@ -420,9 +421,7 @@ func parsePrimaryExpression(t Token) PrimaryExpression {
 
 	} else if t.isFuncLiteral() {
 		paramNames := getFuncParamNames(t.tokens())
-		f := newFunc(t.raw(), t.getBodyTokens(), paramNames)
-		Compile(f)
-		res = newFunctionPrimaryExpression(f)
+		res = newFunctionPrimaryExpression(t.raw(), paramNames, t.getBodyTokens())
 
 	} else if t.isExpr() {
 		expr := extractExpression(t.tokens())
@@ -493,5 +492,3 @@ func extractExpressionTokensByComma(currentIndex int, ts []Token) (exprTokens []
 	}
 	return exprTokens, nextIndex
 }
-
-

@@ -5,7 +5,11 @@ import (
 	"fmt"
 )
 
+// 新建ByteArray
 func (fns *InternalFunctionSet) NewBytes() Value {
+	return newByteArrayValue(nil)
+}
+func (fns *InternalFunctionSet) Newbs() Value {
 	return newByteArrayValue(nil)
 }
 
@@ -30,6 +34,12 @@ func (bs *ByteArrayValue) sub(start, end int) []byte {
 	return bs.goValue[start:end]
 }
 
+// 获取指定位置的单个字节字符，以字符串形式返回
+func (bs *ByteArrayValue) At(index int) string {
+	return string(bs.goValue[index])
+}
+
+// 字节数组与ByteArray或String比较
 func (bs *ByteArrayValue) Equal(arg interface{}) bool {
 	var data []byte
 	if subBytes, ok := arg.([]byte); ok {
@@ -56,18 +66,22 @@ func (bs *ByteArrayValue) Eq(arg interface{}) bool {
 	return bs.Equal(arg)
 }
 
+// 转字符串
 func (bs *ByteArrayValue) Str() string {
 	return string(bs.goValue)
 }
 
+// 转Integer
 func (bs *ByteArrayValue) Int() int64 {
 	return bytesToInt(bs.goValue)
 }
 
+// 转Float
 func (bs *ByteArrayValue) Float() float64 {
 	return bytesToFloat(bs.goValue)
 }
 
+// 是否包含指定ByteArray或String
 func (bs *ByteArrayValue) Contain(arg interface{}) bool {
 	if subBytes, ok := arg.([]byte); ok {
 		return bytes.Contains(bs.goValue, subBytes)
@@ -78,6 +92,7 @@ func (bs *ByteArrayValue) Contain(arg interface{}) bool {
 	}
 }
 
+// 指定ByteArray或String在当前字节数组的位置
 func (bs *ByteArrayValue) Index(arg interface{}) int {
 	if subBytes, ok := arg.([]byte); ok {
 		return bytes.Index(bs.goValue, subBytes)
@@ -88,6 +103,7 @@ func (bs *ByteArrayValue) Index(arg interface{}) int {
 	}
 }
 
+// 根据ByteArray, String, Integer或Float对字节数组进行切割
 func (bs *ByteArrayValue) Split(arg interface{}) [][]byte {
 	var sep []byte
 	if bs, ok := arg.([]byte); ok {
@@ -104,6 +120,7 @@ func (bs *ByteArrayValue) Split(arg interface{}) [][]byte {
 	return bytes.Split(bs.goValue, sep)
 }
 
+// 往字节数组里添加ByteArray, String, Integer或Float
 func (bs *ByteArrayValue) Add(arg interface{}) {
 	if subBytes, ok := arg.([]byte); ok {
 		bs.goValue = append(bs.goValue, subBytes...)
@@ -118,10 +135,12 @@ func (bs *ByteArrayValue) Add(arg interface{}) {
 	}
 }
 
+// 字节数组大小
 func (bs *ByteArrayValue) Size() int {
 	return len(bs.goValue)
 }
 
+// 以二进制形式打印字节数组
 func (bs *ByteArrayValue) Show() {
 	showBytes(bs.goValue)
 }

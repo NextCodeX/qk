@@ -2,6 +2,7 @@ package core
 
 // 语句列表类型， 配合StatementResult实现return, continue, break
 type StmtListType int
+
 const (
 	StmtListTypeFunc StmtListType = 1 << iota
 	StmtListTypeIf
@@ -10,12 +11,14 @@ const (
 )
 
 // StatementExecutor 用于执行statement列表
-type StatementExecutor struct {}
+type StatementExecutor struct{}
 
 func (stmtExec *StatementExecutor) executeStatementList(stmts []Statement, t StmtListType) StatementResult {
 	var res StatementResult
 	for _, stmt := range stmts {
+
 		res = stmt.execute()
+
 		if res == nil {
 			println("executeStatement return error")
 			break

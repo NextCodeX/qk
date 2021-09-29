@@ -1,31 +1,36 @@
 package core
 
 type FunctionPrimaryExpression struct {
-    val Function
-    PrimaryExpressionImpl
+	name       string
+	paramNames []string
+	bodyTokens []Token
+	PrimaryExpressionImpl
 }
 
-func newFunctionPrimaryExpression(val Function) PrimaryExpression {
-    expr := &FunctionPrimaryExpression{}
-    expr.t = FunctionPrimaryExpressionType
-    expr.val = val
-    expr.doExec = expr.doExecute
-    return expr
+func newFunctionPrimaryExpression(name string, paramNames []string, bodyTokens []Token) PrimaryExpression {
+	expr := &FunctionPrimaryExpression{}
+	expr.t = FunctionPrimaryExpressionType
+	expr.name = name
+	expr.paramNames = paramNames
+	expr.bodyTokens = bodyTokens
+
+	expr.doExec = expr.doExecute
+	return expr
 }
 
 func (priExpr *FunctionPrimaryExpression) setStack(stack Function) {
-    priExpr.stack = stack
-
-    priExpr.val.setParent(stack)
+	priExpr.stack = stack
 }
 
 func (priExpr *FunctionPrimaryExpression) doExecute() Value {
-    fn := priExpr.val
-    funcName := fn.getName()
-    if funcName != "" {
-        priExpr.setVar(funcName, fn)
-    }
+	fn := newFunc(priExpr.name, priExpr.bodyTokens, priExpr.paramNames)
+	fn.setParent(priExpr.stack)
+	Compile(fn)
 
-    return fn
+	funcName := priExpr.name
+	if funcName != "" {
+		priExpr.setVar(funcName, fn)
+	}
+
+	return fn
 }
-

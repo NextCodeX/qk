@@ -1,24 +1,36 @@
 package core
 
+import "sync"
+
 // 变量池
-type Variables map[string]Value
+type Variables interface {
+	add(name string, v Value)
+	get(name string) Value
+}
+
+type VariablesImpl struct {
+	pool sync.Map
+}
 
 func newVariables() Variables {
-	return make(map[string]Value)
+	obj := &VariablesImpl{}
+	return obj
 }
 
-func (vs Variables) isEmpty() bool {
-	return vs == nil || len(vs) < 1
+func (vs *VariablesImpl) add(name string, v Value) {
+	for i := 0; i < 5; i++ {
+		vs.pool.Store(name, v)
+
+		if _, ok := vs.pool.Load(name); ok {
+			return
+		}
+	}
 }
 
-func (vs Variables) add(name string, v Value) {
-	vs[name] = v
-}
-
-func (vs Variables) get(name string) Value {
-	if vs.isEmpty() {
+func (vs *VariablesImpl) get(name string) Value {
+	res, ok := vs.pool.Load(name)
+	if !ok {
 		return nil
 	}
-	res := vs[name]
-	return res
+	return res.(Value)
 }

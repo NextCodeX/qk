@@ -4,27 +4,23 @@ var mainFunc = newFuncWithoutTokens("main")
 
 // 脚本解析执行
 func Run(bs []byte) {
-	//defer func() {
-	//	// 全局异常处理
-	//	if err := recover(); err != nil {
-	//		fmt.Println(err)
-	//	}
-	//}()
-
+	defer catch()
 
 	// 词法分析
 	ts := ParseTokens(bs)
-	printTokensByLine(ts)
+	//printTokensByLine(ts)
 
 	// 语法分析(解析)
 	mainFunc.setRaw(ts)
 	Compile(mainFunc)
 
 	// 程序执行
+	mainFunc.setInternalVars(internalVars)
 	mainFunc.execute()
 
 	// 等待所有协程执行完，再结束程序
-	goroutineWaiter.Wait()
+	//goroutineWaiter.Wait()
+	goroutineManager.wait()
 }
 
 // 指定变量𣏾, 执行qk代码片段.
@@ -65,4 +61,3 @@ func Compile(stmt Statement) {
 		stmt.parse()
 	}
 }
-

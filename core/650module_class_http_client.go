@@ -33,14 +33,6 @@ application/x-www-form-urlencoded ： <form encType="">中默认的encType，for
 multipart/form-data ： 需要在表单中进行文件上传时，就需要使用该格式
 */
 // cookie, set-cookie
-func init() {
-	mimes := make(map[string]Value)
-	mimes["txt"] = newQKValue("text/plain")
-	mimes["json"] = newQKValue("application/json")
-	mimes["form"] = newQKValue("application/x-www-form-urlencoded")
-	mimes["data"] = newQKValue("multipart/form-data")
-	mainFunc.setPreVar("mime", jsonObject(mimes))
-}
 
 func (fns *InternalFunctionSet) HttpGet(args []interface{}) Value {
 	if len(args) < 1 {

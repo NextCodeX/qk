@@ -1,33 +1,9 @@
-println(cmd(`
-ls -al ~
-
-echo "中华人民共和国"
-
-which vs
-
-which gl
-`))
+reg = regexp(`tx`)
+println(reg.match("txt, jpg"))
+println(reg.match("tx"))
+println(reg.match("t"))
 
 
-/*
-println(cpuNum(), sys())
+reg = regexp(`,+`)
+println(reg.split(`hello,,,, world, loading data`))
 
-setpwd("d:/ws")
-
-println("final wd:", pwd)
-
-println(cmd(`echo 你好，世界`))
-
-println(cmd(`cd`))
-
-println(cmd(`dir`))
-
-println(cmd(`qk he hello hell dick devil`))
-
-println(cmd(`date /t`))
-
-//ob("http://taobao.com")
-
-//cmd(`D:\software\Plants_Vs_Zombies_V1.0.0.1051_EN/PlantsVsZombies.exe`)
-
-*/

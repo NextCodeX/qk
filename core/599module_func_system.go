@@ -6,10 +6,11 @@ import (
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 )
-
 
 // 获取当前系统名称
 func (fns *InternalFunctionSet) Sys() string {
@@ -21,8 +22,22 @@ func (fns *InternalFunctionSet) CpuNum() int {
 	return runtime.NumCPU()
 }
 
+// 活跃协程数量
+func (fns *InternalFunctionSet) RoutineNum() int {
+	return runtime.NumGoroutine()
+}
+
 // 设置工作路径
 func (fns *InternalFunctionSet) Setpwd(pwd string) {
+	if !strings.HasPrefix(pwd, "/") {
+		wd, err := os.Getwd()
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		pwd = filepath.Join(wd, pwd)
+	}
+
 	err := os.Chdir(pwd)
 	if err != nil {
 		fmt.Println(err)
@@ -30,9 +45,48 @@ func (fns *InternalFunctionSet) Setpwd(pwd string) {
 		mainFunc.setVar("pwd", newQKValue(pwd))
 	}
 }
+func (fns *InternalFunctionSet) Cd(pwd string) {
+	fns.Setpwd(pwd)
+}
+
+// 获取所有环境变量
+func (fns *InternalFunctionSet) Envs() []string {
+	return os.Environ()
+}
+
+// 获取单个环境变量
+func (fns *InternalFunctionSet) Env(key string) string {
+	return os.Getenv(key)
+}
+
+// 设置环境变量(仅对当前脚本有效)
+func (fns *InternalFunctionSet) Setenv(key, val string) {
+	err := os.Setenv(key, val)
+	if err != nil {
+		fmt.Println(err)
+	}
+}
+
+// 获取并打印环境变量QK_HOME
+func (fns *InternalFunctionSet) Home() string {
+	home := os.Getenv("QK_HOME")
+	if home == "" {
+		fmt.Println("QK_HOME is not configured")
+	} else {
+		fmt.Println("QK_HOME:", home)
+	}
+	return home
+}
+
+// 统计脚本耗时
+var IsCost = false
+
+func (fns *InternalFunctionSet) Cost() {
+	IsCost = true
+}
 
 // 当前协程进入休眠
-func (fns *InternalFunctionSet) Sleep(t int64)  {
+func (fns *InternalFunctionSet) Sleep(t int64) {
 	time.Sleep(time.Duration(t) * time.Millisecond)
 }
 
@@ -83,4 +137,3 @@ func (fns *InternalFunctionSet) OpenBrowser(url string) {
 func (fns *InternalFunctionSet) Ob(url string) {
 	fns.OpenBrowser(url)
 }
-

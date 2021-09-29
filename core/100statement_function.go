@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
 )
@@ -9,11 +10,12 @@ type Function interface {
 	setRaw(ts []Token)
 	setParamNames(paramNames []string)
 
-	setPreVar(key string, value Value)
 	getName() string
 	getParent() Function
+	getCurrentStack() Function
 	getLocalVars() Variables
 
+	setInternalVars(vars map[string]Value)
 	setArgs(args []Value)
 	setRawArgs(rawArgs []interface{})
 
@@ -27,17 +29,16 @@ type Function interface {
 }
 
 type FunctionImpl struct {
-	local      Variables        // 当前作用域的变量列表
-	fns 	   map[string]Function
-	name       string           // 函数名
-	paramNames []string         // 形参名列表
-	args []Value
-	rawArgs []interface{}
-	moduleFunc *FunctionExecutor
-	anonymousFunc func()Value
-	internalFunc func([]interface{})interface{}
+	local            Variables // 当前作用域的变量列表
+	fns              map[string]Function
+	name             string   // 函数名
+	paramNames       []string // 形参名列表
+	args             []Value
+	rawArgs          []interface{}
+	moduleFunc       *FunctionExecutor
+	anonymousFunc    func() Value
+	internalFunc     func([]interface{}) interface{}
 	internalFuncFlag bool
-	preVars map[string]Value // 预设变量列表
 	StatementAdapter
 	ValueAdapter
 }
@@ -47,7 +48,7 @@ func newFuncWithoutTokens(name string) Function {
 }
 
 func newFunc(name string, ts []Token, paramNames []string) Function {
-	f := &FunctionImpl{name:name}
+	f := &FunctionImpl{name: name}
 	f.StatementAdapter.ts = ts
 	f.paramNames = paramNames
 	f.fns = make(map[string]Function)
@@ -55,7 +56,7 @@ func newFunc(name string, ts []Token, paramNames []string) Function {
 	return f
 }
 
-func newAnonymousFunc(anonymousFunc func()Value) Function {
+func newAnonymousFunc(anonymousFunc func() Value) Function {
 	f := &FunctionImpl{}
 	f.anonymousFunc = anonymousFunc
 	f.internalFuncFlag = true
@@ -63,8 +64,8 @@ func newAnonymousFunc(anonymousFunc func()Value) Function {
 	return f
 }
 
-func newInternalFunc(name string, internalFunc func([]interface{})interface{}) Function {
-	f := &FunctionImpl{name:name}
+func newInternalFunc(name string, internalFunc func([]interface{}) interface{}) Function {
+	f := &FunctionImpl{name: name}
 	f.internalFunc = internalFunc
 	f.internalFuncFlag = true
 	f.initStatement(f)
@@ -72,7 +73,7 @@ func newInternalFunc(name string, internalFunc func([]interface{})interface{}) F
 }
 
 func newModuleFunc(name string, moduleFunc *FunctionExecutor) Function {
-	f := &FunctionImpl{name:name}
+	f := &FunctionImpl{name: name}
 	f.moduleFunc = moduleFunc
 	f.internalFuncFlag = true
 	f.initStatement(f)
@@ -81,8 +82,14 @@ func newModuleFunc(name string, moduleFunc *FunctionExecutor) Function {
 
 func extractModuleFuncArgs(f *FunctionExecutor, args []interface{}) []reflect.Value {
 	var res []reflect.Value
+	var bs []byte
 	if len(f.ins) == 1 && f.ins[0].Kind() == reflect.Slice {
-		res = append(res, reflect.ValueOf(args))
+		if f.ins[0] == reflect.TypeOf(bs) {
+			res = append(res, reflect.ValueOf(args[0]))
+		} else {
+			res = append(res, reflect.ValueOf(args))
+		}
+
 		return res
 	}
 
@@ -105,14 +112,6 @@ func extractModuleFuncArgs(f *FunctionExecutor, args []interface{}) []reflect.Va
 		res = append(res, reflect.ValueOf(arg))
 	}
 	return res
-}
-
-// 预设变量
-func (f *FunctionImpl) setPreVar(key string, value Value) {
-	if f.preVars == nil {
-		f.preVars = make(map[string]Value)
-	}
-	f.preVars[key] = value
 }
 
 func (f *FunctionImpl) isInternalFunc() bool {
@@ -146,8 +145,28 @@ func (f *FunctionImpl) setRawArgs(rawArgs []interface{}) {
 	f.rawArgs = rawArgs
 }
 
+func (f *FunctionImpl) setInternalVars(vars map[string]Value) {
+	// 初始化main函数本地变量池
+	f.local = newVariables()
+	for name, val := range vars {
+		f.local.add(name, val)
+	}
+}
+
 func (f *FunctionImpl) setArgs(args []Value) {
+	// 每次执行自定义函数前，初始化本地变量池
+	f.local = newVariables()
 	f.args = args
+
+	for i, paramName := range f.paramNames {
+		var arg Value
+		if i >= len(f.args) {
+			arg = NULL
+		} else {
+			arg = f.args[i]
+		}
+		f.local.add(paramName, arg)
+	}
 }
 
 func (f *FunctionImpl) execute() StatementResult {
@@ -160,33 +179,17 @@ func (f *FunctionImpl) execute() StatementResult {
 			res = f.moduleFunc.Run(params)
 		} else if f.anonymousFunc != nil {
 			res = f.anonymousFunc()
-		} else {}
+		} else {
+		}
 		return newStatementResult(StatementNormal, newQKValue(res))
 	}
 
-	// 每次执行自定义函数前，初始化本地变量池
-	f.local = newVariables()
-	//defer func() {f.local = nil}()
-
-	// 初始化预设变量(仅main函数使用)
-	if f.preVars != nil {
-		for key, val := range f.preVars {
-			f.local.add(key, val)
-		}
+	if f.local == nil || (f.name != "main" && len(f.paramNames) < 1) {
+		f.local = newVariables()
 	}
 
-	for i, paramName := range f.paramNames {
-		var arg Value
-		if i >= len(f.args) {
-			arg = NULL
-		} else {
-			arg = f.args[i]
-		}
-		f.local.add(paramName, arg)
-	}
 	return f.executeStatementList(f.block, StmtListTypeFunc)
 }
-
 
 func (f *FunctionImpl) val() interface{} {
 	return f
@@ -213,4 +216,13 @@ func (f *FunctionImpl) get(key string) Value {
 
 func (f *FunctionImpl) String() string {
 	return "func:" + f.name + "()"
+}
+
+func (f *FunctionImpl) showArgs() string {
+	var res bytes.Buffer
+	for _, name := range f.paramNames {
+		res.WriteString(fmt.Sprint(f.getVar(name)))
+		res.WriteString(", ")
+	}
+	return res.String()
 }
