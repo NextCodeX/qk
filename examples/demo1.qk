@@ -1,9 +1,41 @@
-reg = regexp(`tx`)
-println(reg.match("txt, jpg"))
-println(reg.match("tx"))
-println(reg.match("t"))
+db = sqlite("db2")
+
+db.exec(`
+create table if not exists stu (
+    id integer primary key,
+    num int,
+    icon blob,
+    name nvarchar(50),
+    sex int(1),
+    age int,
+    tall real,
+    birth varchar(20),
+    tel char(11),
+    province nvarchar(50),
+    city nvarchar(50),
+    depart nvarchar(50),
+    degree  nvarchar(50),
+    salary real,
+    remark text
+)
+`)
+
+db.exec(`
+create table if not exists emps (
+    id integer primary key,
+    name varchar(50)
+)
+`)
 
 
-reg = regexp(`,+`)
-println(reg.split(`hello,,,, world, loading data`))
+rows = db.rows("SELECT * FROM sqlite_schema")
 
+rows.pr()
+
+//db.insert("insert into emps(name) values('mouse')")
+//db.insert("insert into emps(name) values('fish')")
+
+db.getRows("select * from emps").pr()
+
+val = db.val("select count(*) from emps")
+println("count:", val, val.type(), val==7)

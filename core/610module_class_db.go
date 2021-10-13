@@ -5,9 +5,10 @@ import (
 	"fmt"
 	_ "github.com/denisenkom/go-mssqldb" // sql server
 	_ "github.com/go-sql-driver/mysql"
+	"io"
 	"strings"
 
-	_ "github.com/lib/pq" // postgreSQL
+	_ "github.com/lib/pq"          // postgreSQL
 	_ "github.com/sijms/go-ora/v2" // oracle
 	_ "modernc.org/sqlite"
 )
@@ -15,12 +16,12 @@ import (
 func (fns *InternalFunctionSet) Sqlserver(username, password, url string) Value {
 	seperatorIndex := strings.Index(url, "/")
 	var host, port, dbName string
-	if seperatorIndex < 0 || seperatorIndex == len(url) - 1 {
+	if seperatorIndex < 0 || seperatorIndex == len(url)-1 {
 		runtimeExcption("error: database name is empty!")
 	} else {
 		netAddress := url[:seperatorIndex]
 		colonIndex := strings.Index(netAddress, ":")
-		if colonIndex < 0 || colonIndex == len(netAddress) - 1 {
+		if colonIndex < 0 || colonIndex == len(netAddress)-1 {
 			runtimeExcption("host address format is error!")
 		} else {
 			host = netAddress[:colonIndex]
@@ -68,24 +69,26 @@ func (fns *InternalFunctionSet) Sqlite(dbName string) Value {
 }
 
 func connDB(driverName, sourceName string) Value {
-	ds := &DataSource{driverName, sourceName}
+	db, err := dbManager.Open(driverName, sourceName)
+	assert(err != nil, "failed to build db connection:", err)
+
+	ds := &DataSource{driverName,
+		sourceName,
+		db}
 	return newClass("db", &ds)
 }
-
 
 // 数据库连接对象
 type DataSource struct {
 	driver string
 	source string
+	db     *dbManager.DB
 }
 
 func (ds *DataSource) Exec(args []interface{}) int64 {
 	sql, vals := ds.parseArgs("update", args)
-	db, err := dbManager.Open(ds.driver, ds.source)
-	assert(err != nil, "failed to build db connection:", err)
-	defer db.Close()
 
-	execResult, err := db.Exec(sql, vals...)
+	execResult, err := ds.db.Exec(sql, vals...)
 	assert(err != nil, "failed to execute sql:", sql, err)
 
 	affected, err := execResult.RowsAffected()
@@ -95,13 +98,10 @@ func (ds *DataSource) Exec(args []interface{}) int64 {
 
 func (ds *DataSource) Insert(args []interface{}) interface{} {
 	sql, vals := ds.parseArgs("insert", args)
-	db, err := dbManager.Open(ds.driver, ds.source)
-	assert(err != nil, "failed to build db connection:", err)
-	defer db.Close()
 
-	stmt, err := db.Prepare(sql)
-	assert(err != nil, "failed to build db connection:", err)
-	defer stmt.Close()
+	stmt, err := ds.db.Prepare(sql)
+	assert(err != nil, "failed to prepare:", err)
+	defer cl(stmt)
 
 	execResult, err := stmt.Exec(vals...)
 	assert(err != nil, "failed to insert:", err)
@@ -113,13 +113,10 @@ func (ds *DataSource) Insert(args []interface{}) interface{} {
 
 func (ds *DataSource) Update(args []interface{}) int64 {
 	sql, vals := ds.parseArgs("update", args)
-	db, err := dbManager.Open(ds.driver, ds.source)
-	assert(err != nil, "failed to build db connection:", err)
-	defer db.Close()
 
-	stmt, err := db.Prepare(sql)
-	assert(err != nil, "failed to build db connection:", err)
-	defer stmt.Close()
+	stmt, err := ds.db.Prepare(sql)
+	assert(err != nil, "failed to prepare:", err)
+	defer cl(stmt)
 
 	execResult, err := stmt.Exec(vals...)
 	assert(err != nil, "failed to update:", err)
@@ -131,27 +128,22 @@ func (ds *DataSource) Update(args []interface{}) int64 {
 
 func (ds *DataSource) GetValue(args []interface{}) interface{} {
 	sql, vals := ds.parseArgs("getValue", args)
-	db, err := dbManager.Open(ds.driver, ds.source)
-	assert(err != nil, "failed to build db connection:", err)
-	defer db.Close()
 
-	rows, err := db.Query(sql, vals...)
+	rows, err := ds.db.Query(sql, vals...)
 	assert(err != nil, "failed to query data:", err)
-	defer rows.Close()
-
+	defer cl(rows)
 
 	colTypes, _ := rows.ColumnTypes()
 	colCount := len(colTypes)
-	assert(colCount>1, "sql query return over more field value")
+	assert(colCount > 1, "sql query return over more field value")
 
 	var value interface{}
 	rowCount := 1
 	for rows.Next() {
-		assert(rowCount>1, "sql query return over more row data")
+		assert(rowCount > 1, "sql query return over more row data")
 
 		err = rows.Scan(&value)
 		assert(err != nil, "failed to extract field value:", err)
-
 
 		value = ds.getFieldValue(value)
 
@@ -159,23 +151,23 @@ func (ds *DataSource) GetValue(args []interface{}) interface{} {
 	}
 	return value
 }
+func (ds *DataSource) Val(args []interface{}) interface{} {
+	return ds.GetValue(args)
+}
 
 func (ds *DataSource) GetRow(args []interface{}) map[string]interface{} {
 	sql, vals := ds.parseArgs("getRow", args)
-	db, err := dbManager.Open(ds.driver, ds.source)
-	assert(err != nil, "failed to build db connection:", err)
-	defer db.Close()
 
-	rows, err := db.Query(sql, vals...)
+	rows, err := ds.db.Query(sql, vals...)
 	assert(err != nil, "failed to query data:", err)
-	defer rows.Close()
+	defer cl(rows)
 
 	colTypes, _ := rows.ColumnTypes()
 	colCount := len(colTypes)
 	var list []map[string]interface{}
 	rowCount := 1
 	for rows.Next() {
-		assert(rowCount>1, "sql query return over more row data")
+		assert(rowCount > 1, "sql query return over more row data")
 
 		valueContainers := getValueContainers(colCount)
 		err = rows.Scan(valueContainers...)
@@ -197,16 +189,16 @@ func (ds *DataSource) GetRow(args []interface{}) map[string]interface{} {
 		return nil
 	}
 }
+func (ds *DataSource) Row(args []interface{}) map[string]interface{} {
+	return ds.GetRow(args)
+}
 
 func (ds *DataSource) GetRows(args []interface{}) []interface{} {
 	sql, vals := ds.parseArgs("getRows", args)
-	db, err := dbManager.Open(ds.driver, ds.source)
-	assert(err != nil, "failed to build db connection:", err)
-	defer db.Close()
 
-	rows, err := db.Query(sql, vals...)
+	rows, err := ds.db.Query(sql, vals...)
 	assert(err != nil, "failed to query data:", err)
-	defer rows.Close()
+	defer cl(rows)
 
 	colTypes, _ := rows.ColumnTypes()
 	colCount := len(colTypes)
@@ -227,6 +219,9 @@ func (ds *DataSource) GetRows(args []interface{}) []interface{} {
 	}
 	return list
 }
+func (ds *DataSource) Rows(args []interface{}) []interface{} {
+	return ds.GetRows(args)
+}
 
 func (ds *DataSource) parseArgs(methodName string, args []interface{}) (sql string, values []interface{}) {
 	assert(len(args) < 1, fmt.Sprintf("method db.%v() must has one parameters.", methodName))
@@ -246,9 +241,17 @@ func (ds *DataSource) getFieldValue(tmp interface{}) interface{} {
 
 func getValueContainers(size int) []interface{} {
 	var valueContainers []interface{}
-	for i:=0; i<size; i++ {
+	for i := 0; i < size; i++ {
 		var container interface{}
 		valueContainers = append(valueContainers, &container)
 	}
 	return valueContainers
+}
+
+// 释放资源
+func cl(obj io.Closer) {
+	err := obj.Close()
+	if err != nil {
+		runtimeExcption(err)
+	}
 }
