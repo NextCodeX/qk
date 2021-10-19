@@ -5,13 +5,26 @@ import (
 	"fmt"
 	_ "github.com/denisenkom/go-mssqldb" // sql server
 	_ "github.com/go-sql-driver/mysql"
-	"io"
-	"strings"
-
 	_ "github.com/lib/pq"          // postgreSQL
 	_ "github.com/sijms/go-ora/v2" // oracle
+	"io"
 	_ "modernc.org/sqlite"
+	"strings"
 )
+
+const (
+	dbSqlite    = "sqlite"
+	dbMysql     = "mysql"
+	dbOracle    = "oracle"
+	dbSqlServer = "sqlserver"
+	dbPostgres  = "postgres"
+)
+
+func (fns *InternalFunctionSet) Pg(username, password, url string) Value {
+	// e.g. postgres://postgres:12345678@192.168.8.200:5432/douyin?sslmode=disable
+	source := fmt.Sprintf("postgres://%v:%v@%v", username, password, url)
+	return connDB(dbPostgres, source)
+}
 
 func (fns *InternalFunctionSet) Sqlserver(username, password, url string) Value {
 	seperatorIndex := strings.Index(url, "/")
@@ -31,7 +44,7 @@ func (fns *InternalFunctionSet) Sqlserver(username, password, url string) Value 
 	}
 	// e.g. "server=192.168.1.103;port=1433;database=STG;user id=SA;password=root@123"
 	sourceName := fmt.Sprintf("server=%v;port=%v;database=%v;user id=%v;password=%v", host, port, dbName, username, password)
-	return connDB("mysql", sourceName)
+	return connDB(dbSqlServer, sourceName)
 }
 
 func (fns *InternalFunctionSet) Oracle(username, password, url string) Value {
@@ -46,7 +59,7 @@ func (fns *InternalFunctionSet) Oracle(username, password, url string) Value {
 	}
 	// e.g. oracle://user:pass@server/service_name
 	sourceName := fmt.Sprintf("oracle://%v:%v@%v/%v", username, password, netAddress, uri)
-	return connDB("oracle", sourceName)
+	return connDB(dbOracle, sourceName)
 }
 
 func (fns *InternalFunctionSet) Mysql(username, password, url string) Value {
@@ -61,11 +74,11 @@ func (fns *InternalFunctionSet) Mysql(username, password, url string) Value {
 	}
 	// e.g. root:root@tcp(192.168.1.103:3306)/tx?charset=utf8
 	sourceName := fmt.Sprintf("%v:%v@tcp(%v)%v", username, password, netAddress, uri)
-	return connDB("mysql", sourceName)
+	return connDB(dbMysql, sourceName)
 }
 
 func (fns *InternalFunctionSet) Sqlite(dbName string) Value {
-	return connDB("sqlite", dbName)
+	return connDB(dbSqlite, dbName)
 }
 
 func connDB(driverName, sourceName string) Value {
@@ -126,6 +139,24 @@ func (ds *DataSource) Update(args []interface{}) int64 {
 	return affected
 }
 
+// 记录数统计
+func (ds *DataSource) Count(obj string) int {
+	sql := "select count(*) from " + obj
+	rows, err := ds.db.Query(sql)
+	assert(err != nil, "failed to count:", err)
+	defer cl(rows)
+
+	for rows.Next() {
+		var res int
+		err = rows.Scan(&res)
+		assert(err != nil, "failed to extract count() result:", err)
+
+		return res
+	}
+	return 0
+}
+
+// 获取单个值
 func (ds *DataSource) GetValue(args []interface{}) interface{} {
 	sql, vals := ds.parseArgs("getValue", args)
 
@@ -145,7 +176,7 @@ func (ds *DataSource) GetValue(args []interface{}) interface{} {
 		err = rows.Scan(&value)
 		assert(err != nil, "failed to extract field value:", err)
 
-		value = ds.getFieldValue(value)
+		value = ds.getFieldValue(value, colTypes[0])
 
 		rowCount++
 	}
@@ -178,7 +209,7 @@ func (ds *DataSource) GetRow(args []interface{}) map[string]interface{} {
 			colName := colType.Name()
 			tmp := *valueContainers[i].(*interface{})
 
-			row[colName] = ds.getFieldValue(tmp)
+			row[colName] = ds.getFieldValue(tmp, colType)
 		}
 		list = append(list, row)
 		rowCount++
@@ -213,7 +244,7 @@ func (ds *DataSource) GetRows(args []interface{}) []interface{} {
 			colName := colType.Name()
 			tmp := *valueContainers[i].(*interface{})
 
-			row[colName] = ds.getFieldValue(tmp)
+			row[colName] = ds.getFieldValue(tmp, colType)
 		}
 		list = append(list, row)
 	}
@@ -226,17 +257,75 @@ func (ds *DataSource) Rows(args []interface{}) []interface{} {
 func (ds *DataSource) parseArgs(methodName string, args []interface{}) (sql string, values []interface{}) {
 	assert(len(args) < 1, fmt.Sprintf("method db.%v() must has one parameters.", methodName))
 	sql, ok := args[0].(string)
+	sql = ds.parseSqlServerSql(sql)
+	sql = ds.parsePostgresSql(sql)
+	sql = ds.parseOracleSql(sql)
 	assert(!ok, fmt.Sprintf("method db.%v() the first parameter must be string type.", methodName))
 	return sql, args[1:]
 }
 
-func (ds *DataSource) getFieldValue(tmp interface{}) interface{} {
-	bs, ok := tmp.([]byte)
-	if ok {
-		return string(bs)
-	} else {
-		return tmp
+func (ds *DataSource) parseOracleSql(sql string) string {
+	if ds.driver != dbOracle {
+		return sql
 	}
+
+	argsCount := 1
+	var chs []rune
+	for _, ch := range sql {
+		//fmt.Println(string(ch), ch == '?')
+		if ch == '?' {
+			chs = append(chs, ':')
+			chs = append(chs, intToRunes(argsCount)...)
+			argsCount++
+		} else {
+			chs = append(chs, ch)
+		}
+	}
+	//fmt.Println("final sql:", string(chs))
+	return string(chs)
+}
+
+func (ds *DataSource) parseSqlServerSql(sql string) string {
+	if ds.driver != dbSqlServer {
+		return sql
+	}
+
+	argsCount := 1
+	var chs []rune
+	for _, ch := range sql {
+		//fmt.Println(string(ch), ch == '?')
+		if ch == '?' {
+			chs = append(chs, '@')
+			chs = append(chs, 'p')
+			chs = append(chs, intToRunes(argsCount)...)
+			argsCount++
+		} else {
+			chs = append(chs, ch)
+		}
+	}
+	//fmt.Println("final sql:", string(chs))
+	return string(chs)
+}
+
+func (ds *DataSource) parsePostgresSql(sql string) string {
+	if ds.driver != dbPostgres {
+		return sql
+	}
+
+	argsCount := 1
+	var chs []rune
+	for _, ch := range sql {
+		//fmt.Println(string(ch), ch == '?')
+		if ch == '?' {
+			chs = append(chs, '$')
+			chs = append(chs, intToRunes(argsCount)...)
+			argsCount++
+		} else {
+			chs = append(chs, ch)
+		}
+	}
+	//fmt.Println("final sql:", string(chs))
+	return string(chs)
 }
 
 func getValueContainers(size int) []interface{} {

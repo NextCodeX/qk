@@ -1,5 +1,0 @@
-
-flist = file_scan("/home/xp/repo/blog/qk-doc")
-forv item : flist {
-    println(item)
-}

@@ -8,6 +8,14 @@ import (
 	"strings"
 )
 
+func intToRunes(raw int) []rune {
+	s := fmt.Sprint(raw)
+	var res []rune
+	for _, ch := range s {
+		res = append(res, ch)
+	}
+	return res
+}
 
 func toInt(any interface{}) int {
 	switch v := any.(type) {
@@ -23,7 +31,7 @@ func toInt(any interface{}) int {
 		return int(v)
 	case string:
 		i, err := strconv.Atoi(v)
-		assert(err!=nil, err, "Value:", any)
+		assert(err != nil, err, "Value:", any)
 		return i
 	case Value:
 		return toInt(v.val())
@@ -33,7 +41,7 @@ func toInt(any interface{}) int {
 	return -1
 }
 
-func tokenToValue(t Token)  Value {
+func tokenToValue(t Token) Value {
 	if t.isFloat() {
 		f, err := strconv.ParseFloat(t.raw(), 64)
 		assert(err != nil, "failed to parse float", t.String(), "line:", t.getLineIndex())
@@ -64,7 +72,6 @@ func tokenToValue(t Token)  Value {
 	}
 }
 
-
 // QK Value 转 go 类型bool
 func toBoolean(raw Value) bool {
 	if raw == nil || raw.isNULL() {
@@ -90,13 +97,11 @@ func toBoolean(raw Value) bool {
 	}
 }
 
-
-
 func intToBytes(raw int64) []byte {
 	data := uint64(raw)
 	res := make([]byte, 8)
-	for i:=0; i<8; i++ {
-		res[7-i] = uint8(data >> (8*i))
+	for i := 0; i < 8; i++ {
+		res[7-i] = uint8(data >> (8 * i))
 	}
 	return res
 }
@@ -114,7 +119,7 @@ func bytesToInt(bs []byte) int64 {
 		} else {
 			num = uint64(bs[7-i])
 		}
-		res = res | (num << (i*8))
+		res = res | (num << (i * 8))
 	}
 	return int64(res)
 }
@@ -132,6 +137,7 @@ func floatToBytes(raw float64) []byte {
 }
 
 func bytesToFloat(data []byte) float64 {
+	data = fix8bit(data)
 	var res float64
 	buf := bytes.NewReader(data)
 	err := binary.Read(buf, binary.LittleEndian, &res)
@@ -142,4 +148,21 @@ func bytesToFloat(data []byte) float64 {
 		return 0
 	}
 	return res
+}
+
+// 字节数组如果不足8位，则进行补全
+func fix8bit(data []byte) []byte {
+	bsLen := len(data)
+	if bsLen < 8 {
+		res := make([]byte, 0, 8)
+		for i := 0; i < 8-bsLen; i++ {
+			res = append(res, 0)
+		}
+		for i := 0; i < bsLen; i++ {
+			res = append(res, data[i])
+		}
+		return res
+	}
+
+	return data
 }

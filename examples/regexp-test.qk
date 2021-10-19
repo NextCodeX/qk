@@ -1,8 +1,0 @@
-res = reg_match("Go\\w{2}", "Hello Gopher，Hello GoLang")
-println(res) // [["Goph"], ["GoLa"]]
-
-println(reg_match("Go\\w+", "Hello Gopher，Hello GoLang")) // [["Gopher"], ["GoLang"]]
-
-println(reg_match("Go(\\w+)", "Hello Gopher，Hello GoLang")) // [["Gopher", "pher"], ["GoLang", "Lang"]]
-
-println(reg_match("Gx", "Hello Gopher，Hello GoLang")) // []

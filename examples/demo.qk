@@ -1,324 +1,48 @@
-/**/
-upper = $ str -> str.upper()
-println(upper("helloxa"))
-
-service(name, fn) {
-    println("fn is", fn) // fn is func:()
-    printf("%v => %v\n", name, fn(name)) // tom => tom is a cat!
-}
-
-service("tom", $ name {
-    return name + " is a cat!"
-})
-
-test(a, b, add) {
-    printf("%v + %v = %v\n", a, b, add(a, b)) // 5 + 7 = 12
-}
-
-test(5, 7, $ num1, num2 -> num1 + num2)
-
-student = {
-    name:"changlie",
-    age:18,
-    show:${
-        println(`my name is ${this.name}, ${this.age} years old.`) // my name is changlie, 18 years old.
-    }
-}
-student.show()
-
-
-add(num1, num2) {
-    res = num1 + num2
-    return res
-}
-c = add(3*3, 4*4)
-println("result:", add(5, 9), c)
-
-test(a, b, c) {
-    printf("a=%v, b=%v, c=%v\n", a, b, c) // a=fast, b=null, c=null
-}
-test("fast")
-
-${
-    println("It's in anonymous function")
-}() // It's in anonymous function
-
-testx(name){
-    printf("It's in %v function\n", name)
-}("normal") // It's in normal function
-
-
-rows = [
-{name:"changlie", age:18},
-{name:"philip", age:30},
-{name:"baby", age:1}
-]
-
-forv row : rows {
-    line = `this age of student ${row.name} is ${row.age}`
-    println(line)
-}
-
-s = ``
-s1 = ""
-
-animal = "dog"
-number = 23
-s2 = `the number of ${animal} is ${number}`
-s4 = "China."
-println(s2)
-println(s4)
-
-s5 = `++++++++++
-line 1
-line 2
-++++++++++`
-s6 = "##############
-number one
-number two
-number three
-##############"
-println(s5)
-println(s6)
-
-
-str = "中华人民共和国Great"
-println(str[3]) // 民
-println(str[8]) // r
-
-println("China".size()) // 5
-println("疑是银河落九天".size()) // 7
-
-
-str = "中华人民共和国Great"
-println(str[:3]) // 中华人
-println(str[4:7]) //共和国
-println(str[7:]) //Great
-
-str = "中华人民共和国Great"
-foreach i, char : str {
-    println(i, char)
-}
-
-println("HELL".lower())
-
-pt = $println("It's simple function!!!")
-pt() // It's simple function!!!
-
-arr1 = []
-
-arr2 = [1, false, "NT"]
-
-str = "thor"
-arr3 = [str, true]
-
-arr = [1, false, "NT"]
-println(arr.size())
-
-arr = [1, 2, 3, "a", "b", "c"]
-println(arr[1]) // 1
-println(arr[3]) // "a"
-
-
-println(arr[4:]) // ["b", "c"]
-println(arr[:2]) // [1, 2]
-println(arr[3:5]) // ["a", "b"]
-
-arr = [1, false, "NT"]
-arr[1] = "change"
-println(arr) // [1, "change", "NT"]
-
-arr = [1, false, "NT"]
-arr.add(998)
-arr.add(3.14, "jerry")
-println(arr) // [1, false, "NT", 998, 3.14, "jerry"]
-
-
-arr = [1, false, "NT"]
-arr.remove(1)
-println(arr) // [1, "NT"]
-
-arr = [1, false, "D"]
-println( arr.join(",")) // 1,false,D
-println( arr.join(", ")) // 1, false, D
-println( arr.join("#")) // 1#false#D
-
-
-arr = [1, false, "NT"]
-for i=0; i<arr.size(); i++ {
-    println(i, arr[i])
-}
-
-arr = [998, true, "DONE"]
-foreach i, item : arr {
-    println(i, item)
-}
-
-
-println(true ? "blue" : "red")  // blue
-println(false ? "kind" : "dom") // dom
-
-println(10 + -5.5) // 4.5
-println(-3.14 + 2) // -1.1400000000000001
-
-println(-6.234+"")
-
-// way 1
-obj = {}
-
-// way 2
-obj = {name:"tom", age: 88}
-
-// way 3
-color = "strawberry"
-obj = {
-    name: "car",
-    special: "carry",
-    food: "oil",
-    colors: ["red", color, "black"]
-}
-
-
-obj = {}
-// way 1
-obj["name"] = "jerry"
-// way 2
-obj.age = 3
-println(obj) // {"name":"jerry", "age":3}
-
-
-obj = {name:"tom", age: 88}
-println(obj.size())
-
-
-obj = {name:"tom", age: 88}
-obj.remove("age")
-println(obj)
-
-obj = {"name":"jerry", "age":3}
-// way 1
-obj["name"] = "tom"
-// way 2
-obj.age = 18
-println(obj) //
-
-
-obj = {name:"tom", age: 88}
-println(obj.contain("name")) // true
-println(obj.contain("addr")) // false
-obj = {name:"tom", age: 88}
-foreach k, v : obj {
-    println(k, v)
-}
-
-println(timestamp()) // 1628643356690
-println(nanosecond()) // 1628643387685050100
-
-dt = now()
-// 日期格式化
-println(dt.format("y/M/d h:m:s.S")) // 2021/08/11 17:02:01.837
-// 年
-println(dt.year()) // 2021
-// 月
-println(dt.month()) // 8
-// 日
-println(dt.day()) // 11
-// 时
-println(dt.hour()) // 17
-// 分
-println(dt.minute()) // 2
-// 秒
-println(dt.second()) // 1
-
-s = "helle"
-println(s.eic("helle")) // true
-println(s.eic("heLLE")) // true
-println(s.eic("heiie")) // false
-println(s.eic("hei")) // false
-
-println(parseDate("2017/05/12", "y/M/d").string()) // 2017-05-12 00:00:00
-println(newDate(1118643356690).string()) // 2005-06-13 14:15:56
-println(newDate1(1238643387685050123).string()) // 2009-04-02 11:36:27
-
-println(parseDate("2017/05/31", "y/M/d").day())
-
-
-i = 0
-for i<5 {
-    println("i is", i)
-    i++
-}
-
-//for {
-//    println("it's dead loop")
-//}
-
-println("hello".size())
-println(now().ms(), now())
-bs = "abc".bytes()
-println(bs, bs.type(), bs.str())
-
-str = "中华人民共和国Great"
-forv ch : str {
-    println(ch)
-}
-
-println({}.type(), [].type(), [].type())
-
-println("fastjson".bytes().type())
-
-obj = {name: "changlie", age: 18}
-obj.pretty()
-list = [
-{name: "changlie", age: 18},
-{name: "tom", age: 3},
-{name: "jerry", age: 1},
-]
-list.pretty()
-
-
-
-
-
-
-
-xf = $ println("xf output -> Great")
-println(xf.type())
-xf()
-
-headers = ["name", "sex", "age", "addr"]
-data = [
-{name:"jerry", sex:"F", age:9, addr:"America"},
-{name:"tom", sex:"M", age:13, addr:"America"},
-{name:"changlie", sex:"M", age:18, addr:"China"},
-{name:"zhangsan", sex:"F", age:33, addr:"town"},
-{name:"fish", sex:"F", age:2, addr:"The World"},
-]
-
-f = newXlsx()
-sheet = f.sheet(0)
-sheet.setData(headers, data)
-sheet.setCellValue("B2", "boom!")
-f.saveAs("/home/xp/ws/test.xlsx")
-println("write successfully")
-
-
-println("/home/xp/ws/mime.xml", fsize("/home/xp/ws/mime.xml"))
-
-res = cmd("cat version.go")
-printf("--%v--\n", res)
-
-//cp("/home/xp/ws/htm/*", "/home/xp/ws/t1")
-
-/*
-server = httpServer(23333)
-server.staticDir("/", "/home/xp/ws")
-server.debug()
-server.startup()
-*/
-
-println(`openBrowser("https://so.com")`)
-ob("https://so.com")
-
-
-
+db = sqlite("d:/db3")
+
+// db.tables().pr()
+// println(db.exists("emps"), db.exists("stu"), db.count("stu"))
+// println(db.fs("stu").join(","))
+// db.rows("select name from sqlite_schema where type = 'table'").pr()
+
+dbMysql = mysql("root", "123456", "192.168.1.101:3306/iot")
+
+// dbMysql.tables().pr()
+// println(dbMysql.exists("emps"), dbMysql.exists("stu"), dbMysql.count("emps"))
+// dbMysql.fields("emps").pr()
+// dbMysql.rows("show tables").pr()
+// dbMysql.rows("select * from emps").pr()
+// dbMysql.rows("select column_name from information_schema.columns where table_name=? and table_schema=? ", "emps", "iot").pr()
+
+db = sqlserver("SA", "root@123", "192.168.1.101:1433/STG")
+
+//db.exec(`create table users(id int primary key, name nvarchar)`)
+// println(db.rows("select * from sys.tables"))
+//db.rows("select name from sys.tables").pr()
+//println(db.tables().join(","))
+//println(db.fs("account"))
+//println(db.rows("select name from syscolumns where id=(select max(id) from sysobjects where xtype='u' and name='account')"))
+// cost()
+// println(db.rows("select * from account where id=? and name=?", 2, "fox"))
+// db.rows("select * from account where id=? and name=?", 2, "fox").pr()
+//db.rows("select * from account").pr()
+//println(db.count("account"))
+// println(db.tables(), db.exists("users"), db.exists("emps"))
+
+db = pg("postgres", "123456", "192.168.1.101:5432/postgres?sslmode=disable")
+
+//println(db.rows("select * from pg_tables where schemaname=?", "public"))
+//db.rows("select tablename from pg_tables where schemaname=?", "public").pr()
+//db.rows("select * from users").pr()
+//db.rows("select column_name from information_schema.columns where table_schema='public' and table_name=$1", "users").pr()
+// println(db.tables())
+// println(db.fs("users"), db.fs("book"))
+// println(db.count("users"), db.exists("book"), db.exists("animal"))
+
+db = oracle("system", "oracle", "192.168.1.101:1521/xe")
+
+// db.tables().pr()
+// db.fs("users").pr()
+// println(db.count("users"), db.exists("users"), db.exists("book"))
+// db.rows("select * from users").pr()
+db.rows("select * from users where id=? or name=?", 114, "police").pr()

@@ -5,6 +5,10 @@ import (
 	"time"
 )
 
+const (
+	CommonDatetimeFormat = "2006-01-02 15:04:05"
+	CommonDateFormat     = "2006-01-02"
+)
 
 // current timestamp (Microsecond)
 func (fns *InternalFunctionSet) Timestamp() interface{} {
@@ -23,7 +27,7 @@ func (fns *InternalFunctionSet) Now() Value {
 }
 
 func (fns *InternalFunctionSet) NewDate(ms int64) Value {
-	dt := &Datetime{time.Unix(0, ms * 1e6)}
+	dt := &Datetime{time.Unix(0, ms*1e6)}
 	return newClass("date", &dt)
 }
 
@@ -46,10 +50,8 @@ func (fns *InternalFunctionSet) ParseDate(dateStr string, tmpl string) Value {
 	return newClass("date", &dt)
 }
 
-const CommonDatetimeFormat = "2006-01-02 15:04:05"
-
 type Datetime struct {
-	val       time.Time
+	val time.Time
 }
 
 // date format: y-M-d H:m:s:S
@@ -93,7 +95,6 @@ func (dt *Datetime) Ns() int64 {
 func (dt *Datetime) String() string {
 	return dt.val.Format(CommonDatetimeFormat)
 }
-
 
 func convertDateFmt(tmpl string) string {
 	tmpl = strings.Replace(tmpl, "y", "2006", 1)
