@@ -53,11 +53,10 @@ func (clazz *Xlsx) Sheet(index int) Value {
 	return newClass("XlsxSheet", &obj)
 }
 
-
 type XlsxSheet struct {
-	obj *excelize.File
+	obj        *excelize.File
 	sheetIndex int
-	sheetName string
+	sheetName  string
 }
 
 var colIds = []int32{'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'}
@@ -81,6 +80,13 @@ func (clazz *XlsxSheet) SetData(headers JSONArray, data JSONArray) {
 
 // Set value of a cell.
 func (clazz *XlsxSheet) SetCellValue(axis string, value string) {
+	clazz.obj.SetCellValue(clazz.sheetName, axis, value)
+}
+
+func (clazz *XlsxSheet) SetValue(axisX, axisY int, value string) {
+	x := colIds[axisX]
+	y := axisY + 1
+	axis := fmt.Sprintf("%v%v", x, y)
 	clazz.obj.SetCellValue(clazz.sheetName, axis, value)
 }
 
@@ -110,6 +116,17 @@ func (clazz *XlsxSheet) CellVals() Value {
 }
 
 func (clazz *XlsxSheet) CellVal(axis string) string {
+	val, err := clazz.obj.GetCellValue(clazz.sheetName, axis)
+	if err != nil {
+		runtimeExcption(err)
+	}
+	return val
+}
+
+func (clazz *XlsxSheet) Val(axisX, axisY int) string {
+	x := colIds[axisX]
+	y := axisY + 1
+	axis := fmt.Sprintf("%v%v", x, y)
 	val, err := clazz.obj.GetCellValue(clazz.sheetName, axis)
 	if err != nil {
 		runtimeExcption(err)

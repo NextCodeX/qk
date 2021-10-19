@@ -111,9 +111,11 @@ func (m *Mailer) Send() {
 
 var mailHostMap = map[string]string{
 	"sohu.com": "smtp.sohu.com",
+	"163.com":  "smtp.163.com",
 }
 var mailPortMap = map[string]int{
 	"sohu.com": 25,
+	"163.com":  465,
 }
 
 func (m *Mailer) parseHost() string {
