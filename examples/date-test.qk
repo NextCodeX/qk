@@ -1,8 +1,0 @@
-d = now()
-println(d.format("y/M/d"))
-println(d.format("H:m:s.S"))
-println(d.time)
-println(d.stdfmt)
-
-println("now >>> " + now())
-println("current timestamp: ", timestamp()+100)

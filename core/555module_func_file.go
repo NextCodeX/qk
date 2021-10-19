@@ -12,7 +12,6 @@ import (
 	"strings"
 )
 
-
 var regBlankChar = regexp.MustCompile(`\s+`)
 
 // 创建目录
@@ -32,6 +31,7 @@ func (fns *InternalFunctionSet) Fbytes(filename string) []byte {
 	log.Fatal(fmt.Sprintf("failed to read %v file: %v", filename, err.Error()))
 	return nil
 }
+
 // 读取文件所有内容，返回字节数组
 func (fns *InternalFunctionSet) Fbs(filename string) []byte {
 	return fns.Fbytes(filename)
@@ -134,54 +134,57 @@ func (fns *InternalFunctionSet) Fargs(filename string) []interface{} {
 	return res
 }
 
+// 获取当前路径下的所有子文件路径，不包含子目录
 func (fns *InternalFunctionSet) Fscan(path string) []string {
 	var res []string
 	doScan(path, false, &res)
 	return res
 }
 
+// 获取当前路径下的所有子文件路径，包含子目录
 func (fns *InternalFunctionSet) FscanAll(path string) []string {
 	var res []string
 	doScan(path, true, &res)
 	return res
 }
 
-func (fns *InternalFunctionSet) Fout(path, content string) {
-	err := ioutil.WriteFile(path, []byte(content), 0666)
+// 保存一个字符串或字节数组至指定文件（文件若已存在，清空其内容再保存）
+func (fns *InternalFunctionSet) Fsave(path string, content interface{}) {
+	var data []byte
+	if bs, ok := content.([]byte); ok {
+		data = bs
+	} else if str, ok := content.(string); ok {
+		data = []byte(str)
+	} else {
+		runtimeExcption("function fsave(path, content): the parameter content must be type String/ByteArray")
+	}
+
+	err := ioutil.WriteFile(path, data, 0666)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to write content to file: %v, %v", path, err.Error()))
 	}
 }
+func (fns *InternalFunctionSet) Fsv(path string, content interface{}) {
+	fns.Fsave(path, content)
+}
 
-func (fns *InternalFunctionSet) Fappend(path, content string) {
-	data := []byte(content)
+// 文件内容追加
+func (fns *InternalFunctionSet) Fappend(path string, content interface{}) {
+	var data []byte
+	if bs, ok := content.([]byte); ok {
+		data = bs
+	} else if str, ok := content.(string); ok {
+		data = []byte(str)
+	} else {
+		runtimeExcption("function Fappend(path, content): the parameter content must be type String/ByteArray")
+	}
+
 	fobj, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to open file: %v, %v", path, err.Error()))
 	}
 	n, err := fobj.Write(data)
 	if err == nil && n < len(data) {
-		log.Fatal(fmt.Sprintf("failed to write content to file: %v, %v", path, io.ErrShortWrite.Error()))
-	}
-	if err1 := fobj.Close(); err == nil && err1 != nil {
-		log.Fatal(fmt.Sprintf("failed to close file: %v, %v", path, err1.Error()))
-	}
-}
-
-func (fns *InternalFunctionSet) Fsave(path string, bytes []byte) {
-	err := ioutil.WriteFile(path, bytes, 0666)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("failed to write content to file: %v, %v", path, err.Error()))
-	}
-}
-
-func (fns *InternalFunctionSet) FappendBytes(path string, bytes []byte) {
-	fobj, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("failed to open file: %v, %v", path, err.Error()))
-	}
-	n, err := fobj.Write(bytes)
-	if err == nil && n < len(bytes) {
 		log.Fatal(fmt.Sprintf("failed to write content to file: %v, %v", path, io.ErrShortWrite.Error()))
 	}
 	if err1 := fobj.Close(); err == nil && err1 != nil {

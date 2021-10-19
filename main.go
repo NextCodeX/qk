@@ -23,7 +23,7 @@ func main() {
 		}
 	}
 
-	//qkfile := "examples/demo1.qk"
+	//qkfile := "examples/demo.qk"
 	qkfile := getScriptFile()
 
 	bs, err := ioutil.ReadFile(qkfile)

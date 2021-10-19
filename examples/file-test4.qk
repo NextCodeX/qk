@@ -1,7 +1,0 @@
-
-args = file_args("/home/xp/ws/test/inputFile")
-println(args) // [["name", "age", "salary"], ["tom", "9", "1000"], ["jerry", "5", "5000"]]
-
-
-args = file_args("/home/xp/ws/test/inputFile2")
-println(args) // [["chenlh.cn", "192.1.1.1"], ["github.com", "192.168.0.1"]]

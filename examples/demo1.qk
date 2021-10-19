@@ -1,9 +1,0 @@
-reg = regexp(`tx`)
-println(reg.match("txt, jpg"))
-println(reg.match("tx"))
-println(reg.match("t"))
-
-
-reg = regexp(`,+`)
-println(reg.split(`hello,,,, world, loading data`))
-

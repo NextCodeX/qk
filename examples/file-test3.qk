@@ -1,4 +1,0 @@
-
-file_out("/home/changlie/test/out.txt", "line 1")
-file_out("/home/changlie/test/out.txt", "line 2")
-

@@ -1,5 +1,0 @@
-s = str_uuid()
-println("uuid:", s)
-
-s1 = str_rawUUID()
-println("rawuuid:", s1)
