@@ -53,6 +53,20 @@ func lastToken(ts []Token) (t Token, ok bool) {
     return ts[size-1], true
 }
 
+// token列表的最后一个token重新设置
+func lastTokenSet(ts []Token, newLast Token) {
+	size := len(ts)
+	if size > 0 {
+		ts[size-1] = newLast
+	}
+}
+func lastTokenPop(ts []Token) Token {
+	size := len(ts)
+	last := ts[size-1]
+	ts = ts[:size-1]
+	return last
+}
+
 // token列表的倒数第二个token， 并返回倒数第二个token是否存在的判断
 func lastSecondToken(ts []Token) (t Token, ok bool) {
 	size := len(ts)
@@ -179,7 +193,8 @@ func scopeEndIndex(ts []Token, currentIndex int, open, close string) int {
 		}
 	}
 	if scopeOpenCount > 0 {
-		errorf(`scopeEndIndex: no match final character "%v" for scope %v%v: %v`, close, open, close, tokensString(ts))
+		rowIndex := ts[currentIndex].row()
+		errorf(`line[%v]: scopeEndIndex: no match final character "%v" for scope %v%v: %v`, rowIndex, close, open, close, tokensShow10(ts[currentIndex:]))
 	}
 	return -1
 }

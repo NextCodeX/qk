@@ -8,7 +8,7 @@ func Run(bs []byte) {
 
 	// 词法分析
 	ts := ParseTokens(bs)
-	//printTokensByLine(ts)
+	printTokensByLine(ts)
 
 	// 语法分析(解析)
 	mainFunc.setRaw(ts)
@@ -50,6 +50,7 @@ func ParseTokens(bs []byte) []Token {
 	// 语法预处理
 	// 去掉无用的';'
 	// 提取复合token。复合token是指包含嵌套的原始表达式，比如：函数调用，JSONObject字面值
+	// 这一步执行完毕，每一个非符号，非关键字Token都会对应一个PrimaryExpression
 	ts = parse4ComplexTokens(ts)
 	return ts
 }

@@ -28,11 +28,11 @@ func (priExpr *ArrayPrimaryExpression) doExecute() Value {
         var nextCommaIndex int
         var exprTokens []Token
         if ts[i].assertSymbol("[") {
-            complexToken, endIndex := extractArrayLiteral(i, ts)
+            complexToken, endIndex := extractArrLiteral(ts, i)
             nextCommaIndex = endIndex+1
             exprTokens = append(exprTokens, complexToken)
         } else if ts[i].assertSymbol("{") {
-            complexToken, endIndex := extractObjectLiteral(i, ts)
+            complexToken, endIndex := extractObjLiteral(ts, i)
             nextCommaIndex = endIndex+1
             exprTokens = append(exprTokens, complexToken)
         } else {

@@ -1,5 +1,7 @@
 package core
 
+import "reflect"
+
 type ElemFunctionCallPrimaryExpression struct {
     chain []PrimaryExpression
     head  PrimaryExpression
@@ -114,7 +116,7 @@ func (priExpr *ElemFunctionCallPrimaryExpression) runScopeChain(currentObj Value
             intermediateVal = nextExpr.callFunc(fn)
 
         } else {
-            errorf("invalid mixture expression: %v{%v} chainLen: %v", currentObj.val(), tokensString(priExpr.raw()), len(chain))
+            errorf("invalid mixture expression: %v sub %v chainLen: %v", currentObj.val(), reflect.TypeOf(subExpr), len(chain))
         }
 
         if intermediateVal != nil  {

@@ -13,19 +13,14 @@ const (
     SubListPrimaryExpressionType
     ElementPrimaryExpressionType
     FunctionCallPrimaryExpressionType
+    NestedPrimaryExpressionType
     NotPrimaryExpressionType
-    ExprPrimaryExpressionType
+    SelfIncrPrimaryExpressionType
+    SelfDecrPrimaryExpressionType
     TernaryOperatorPrimaryExpressionType
 )
 
 type PrimaryExpression interface {
-    notFlag() bool
-    setNotFlag(flag bool)
-    addType(t PrimaryExpressionType)
-    typeName() string
-
-    execute() Value
-
     isVar() bool
     isConst() bool
     isDynamicStr() bool
@@ -38,14 +33,12 @@ type PrimaryExpression interface {
     isElement() bool
     isFunctionCall() bool
     isNot() bool
-    isExpr() bool
 
     Expression
 }
 
 type PrimaryExpressionImpl struct {
     t PrimaryExpressionType
-    not   bool             // 是否进行非处理
     doExec func() Value
     ExpressionAdapter
 }
@@ -66,136 +59,60 @@ func (priExpr *PrimaryExpressionImpl) execute() Value {
         runtimeExcption("ExpressionExecutor#evalPrimaryExpr: unknown primary expression type")
     }
 
-    if priExpr.isNot() { // 是否为非类型表达式
-        flag := toBoolean(res)
-        if priExpr.not { // 是否需要对表达式进行非逻辑运算
-            return newQKValue(!flag)
-        } else {
-            return newQKValue(flag)
-        }
-    } else {
-        if res == nil {
-            res = NULL
-        }
-        return res
+    if res == nil {
+        res = NULL
     }
-}
-
-func (priExpr *PrimaryExpressionImpl) typeName() string {
-    var typeNames string
-    if priExpr.isVar() {
-        typeNames += "variable, "
-    }
-    if priExpr.isConst() {
-        typeNames += "constant, "
-    }
-    if priExpr.isDynamicStr() {
-        typeNames += "dynamic string, "
-    }
-    if priExpr.isArray() {
-        typeNames += "json array, "
-    }
-    if priExpr.isObject() {
-        typeNames += "json object, "
-    }
-    if priExpr.isChainCall() {
-        typeNames += "chain call, "
-    }
-    if priExpr.isElemFunctionCall() {
-        typeNames += "element and function call mixture, "
-    }
-    if priExpr.isFunction() {
-        typeNames += "function, "
-    }
-    if priExpr.isSubList() {
-        typeNames += "subList, "
-    }
-    if priExpr.isElement() {
-        typeNames += "element, "
-    }
-    if priExpr.isFunctionCall() {
-        typeNames += "function call, "
-    }
-    if priExpr.isNot() {
-        typeNames += "not operator, "
-    }
-    if priExpr.isExpr() {
-        typeNames += "expression, "
-    }
-    if priExpr.isTernaryOperator() {
-        typeNames += "ternary operator, "
-    }
-
-    if typeNames == "" {
-        return "unknown expression type"
-    } else {
-        return typeNames
-    }
-}
-
-func (priExpr *PrimaryExpressionImpl) notFlag() bool {
-    return priExpr.not
-}
-func (priExpr *PrimaryExpressionImpl) setNotFlag(flag bool) {
-    priExpr.not = flag
-}
-
-func (priExpr *PrimaryExpressionImpl) addType(t PrimaryExpressionType) {
-    priExpr.t = priExpr.t | t
+    return res
 }
 
 func (priExpr *PrimaryExpressionImpl) isVar() bool {
-    return (priExpr.t & VarPrimaryExpressionType) == VarPrimaryExpressionType
+    return priExpr.t & VarPrimaryExpressionType > 0
 }
 
 func (priExpr *PrimaryExpressionImpl) isConst() bool {
-    return (priExpr.t & ConstPrimaryExpressionType) == ConstPrimaryExpressionType
+    return priExpr.t & ConstPrimaryExpressionType > 0
 }
 
 func (priExpr *PrimaryExpressionImpl) isDynamicStr() bool {
-    return (priExpr.t & DynamicStrPrimaryExpressionType) == DynamicStrPrimaryExpressionType
+    return priExpr.t & DynamicStrPrimaryExpressionType > 0
 }
 
 func (priExpr *PrimaryExpressionImpl) isArray() bool {
-    return (priExpr.t & ArrayPrimaryExpressionType) == ArrayPrimaryExpressionType
+    return priExpr.t & ArrayPrimaryExpressionType > 0
 }
 
 func (priExpr *PrimaryExpressionImpl) isObject() bool {
-    return (priExpr.t & ObjectPrimaryExpressionType) == ObjectPrimaryExpressionType
+    return priExpr.t & ObjectPrimaryExpressionType > 0
 }
 
 func (priExpr *PrimaryExpressionImpl) isChainCall() bool {
-    return (priExpr.t & ChainCallPrimaryExpressionType) == ChainCallPrimaryExpressionType
+    return priExpr.t & ChainCallPrimaryExpressionType > 0
 }
 
 func (priExpr *PrimaryExpressionImpl) isElemFunctionCall() bool {
-    return (priExpr.t & ElemFunctionCallPrimaryExpressionType) == ElemFunctionCallPrimaryExpressionType
+    return priExpr.t & ElemFunctionCallPrimaryExpressionType > 0
 }
 
 func (priExpr *PrimaryExpressionImpl) isFunction() bool {
-    return (priExpr.t & FunctionPrimaryExpressionType) == FunctionPrimaryExpressionType
+    return priExpr.t & FunctionPrimaryExpressionType > 0
 }
 
 func (priExpr *PrimaryExpressionImpl) isSubList() bool {
-    return (priExpr.t & SubListPrimaryExpressionType) == SubListPrimaryExpressionType
+    return priExpr.t & SubListPrimaryExpressionType > 0
 }
 
 func (priExpr *PrimaryExpressionImpl) isElement() bool {
-    return (priExpr.t & ElementPrimaryExpressionType) == ElementPrimaryExpressionType
+    return priExpr.t & ElementPrimaryExpressionType > 0
 }
 
 func (priExpr *PrimaryExpressionImpl) isFunctionCall() bool {
-    return (priExpr.t & FunctionCallPrimaryExpressionType) == FunctionCallPrimaryExpressionType
+    return priExpr.t & FunctionCallPrimaryExpressionType > 0
 }
 
 func (priExpr *PrimaryExpressionImpl) isNot() bool {
-    return (priExpr.t & NotPrimaryExpressionType) == NotPrimaryExpressionType
-}
-
-func (priExpr *PrimaryExpressionImpl) isExpr() bool {
-    return (priExpr.t & ExprPrimaryExpressionType) == ExprPrimaryExpressionType
+    return priExpr.t & NotPrimaryExpressionType > 0
 }
 
 func (priExpr *PrimaryExpressionImpl) isTernaryOperator() bool {
-    return (priExpr.t & TernaryOperatorPrimaryExpressionType) == TernaryOperatorPrimaryExpressionType
+    return priExpr.t & TernaryOperatorPrimaryExpressionType > 0
 }

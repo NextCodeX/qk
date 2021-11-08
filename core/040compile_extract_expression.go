@@ -10,7 +10,7 @@ func extractExpression(ts []Token) Expression {
 		return expr
 	}
 	if tlen%2 == 0 {
-		runtimeExcption("failed to extract expression from token list: ", len(ts), tokensString(ts))
+		errorf("failed to extract expression from token list: %v[%v]", tokensString(ts), len(ts))
 	}
 
 	if hasSymbol(ts, "?") {
@@ -21,7 +21,7 @@ func extractExpression(ts []Token) Expression {
 	switch {
 	case tlen == 1:
 		// 处理一元表达式
-		return parseUnaryExpression(ts)
+		return ts[0].toExpr()
 
 	case tlen == 3:
 		// 处理二元表达式
@@ -43,7 +43,7 @@ func extractExpression(ts []Token) Expression {
 func parseTernaryOperator(ts []Token) Expression {
 	var receiver PrimaryExpression
 	if len(ts) > 2 && ts[1].assertSymbol("=") {
-		receiver = parsePrimaryExpression(ts[0])
+		receiver = ts[0].toExpr()
 		ts = clearParentheses(ts[2:])
 	}
 	var condExpr, ifExpr, elseExpr Expression
@@ -59,34 +59,6 @@ func parseTernaryOperator(ts []Token) Expression {
 	ifExpr = extractExpression(ts[condBoundryIndex+1 : valueBoundryIndex])
 	elseExpr = extractExpression(ts[valueBoundryIndex+1:])
 	return newTernaryOperatorPrimaryExpression(condExpr, ifExpr, elseExpr, receiver)
-}
-
-// 获取一元表达式
-func parseUnaryExpression(ts []Token) Expression {
-	token := ts[0]
-	var expr Expression
-	if token.isAddSelf() || token.isSubSelf() {
-
-		// 处理自增, 自减
-		var op Token
-		if token.isSubSelf() {
-			token.setTyp(^SubSelf & token.typ())
-			op = symbolToken("-")
-		} else {
-			token.setTyp(^AddSelf & token.typ())
-			op = symbolToken("+")
-		}
-		var tmpTokens []Token
-
-		tmpTokens = append(tmpTokens, token)
-		tmpTokens = append(tmpTokens, op)
-		tmpTokens = append(tmpTokens, newToken("1", Int))
-		tmpTokens = append(tmpTokens, token)
-		expr = generateBinaryExpr(tmpTokens)
-	} else {
-		expr = parsePrimaryExpression(token)
-	}
-	return expr
 }
 
 func parseMultivariateExpression(ts []Token) Expression {
@@ -130,7 +102,7 @@ func generateMulExprFactor(exprTokensList [][]Token, resToken Token) ([]BinaryEx
 		if finalExpr == nil {
 			// finalExpr 不添加到exprList中
 			tokensLen := len(tokens)
-			if resToken != nil && tokensLen == 4 && tokens[3].raw() == resToken.raw() {
+			if resToken != nil && tokensLen == 4 && tokens[3].String() == resToken.String() {
 				// 当表达式存在 赋值运算"="时, 存在resToken, 且分割出来的二元表达式的结果接收Token等于resToken
 				// 说明这个二元表达式是应该最后被执行的
 				finalExpr = expr
@@ -163,7 +135,7 @@ func generateBinaryExpr(ts []Token) BinaryExpression {
 	var expr BinaryExpression
 	if size == 4 {
 		expr = parseBinaryExpression(ts[:3])
-		expr.setReceiver(parsePrimaryExpression(ts[3]))
+		expr.setReceiver(ts[3].toExpr())
 	} else {
 		expr = parseBinaryExpression(ts)
 	}
@@ -196,7 +168,7 @@ func reduceTokensForExpression(res Token, ts []Token, exprTokensList *[][]Token)
 		}
 
 		exprTokens = append(exprTokens, res)
-		exprTokens = append(exprTokens, symbolToken("="))
+		exprTokens = append(exprTokens, newSymbolToken("=", ts[0].rowIndex()))
 		exprTokens = append(exprTokens, ts[0])
 		*exprTokensList = append(*exprTokensList, exprTokens)
 		return
@@ -214,7 +186,7 @@ func reduceTokensForExpression(res Token, ts []Token, exprTokensList *[][]Token)
 		}
 		*exprTokensList = append(*exprTokensList, exprTokens)
 
-	} else if !isSymbolParentheses && (last(exprTokens).equal(ts[i+1]) || last(exprTokens).lower(ts[i+1])) {
+	} else if !isSymbolParentheses && priorityLE(last(exprTokens), ts[i+1]) {
 		// 处理根据运算符优先级, 左向归约的情况
 		// e.g. a + 9 + c
 		// a + 9 => tmpVarToken
@@ -227,7 +199,7 @@ func reduceTokensForExpression(res Token, ts []Token, exprTokensList *[][]Token)
 		nextTokens := insert(tmpVarToken, ts[i+1:])
 		reduceTokensForExpression(res, nextTokens, exprTokensList)
 
-	} else if !isSymbolParentheses && last(exprTokens).upper(ts[i+1]) {
+	} else if !isSymbolParentheses && priorityGT(last(exprTokens), ts[i+1]) {
 		// 处理根据运算符优先级, 右向归约的情况
 		if i+3 == size {
 			// e.g. a + b * c
@@ -288,13 +260,36 @@ func reduceTokensForExpression(res Token, ts []Token, exprTokensList *[][]Token)
 	}
 }
 
+// 运算符优先级比较： 小于等于(用于判断左优先)
+func priorityLE(left, right Token) bool {
+	lp, rp := operatorPriority(left, right)
+	return lp <= rp
+}
+
+// 运算符优先级比较： 大于(用于判断右优先)
+func priorityGT(left, right Token) bool {
+	lp, rp := operatorPriority(left, right)
+	return lp <= rp
+}
+
+func operatorPriority(left Token, right Token) (int, int) {
+	l, ok1 := left.(*SymbolToken)
+	r, ok2 := right.(*SymbolToken)
+	if !ok1 || !ok2 {
+		errorf("%v:%v  invalid operator: %v, %v", left.row(), right.row(), left, right)
+	}
+	lp, rp := l.priority(), r.priority()
+	if lp == -1 || rp == -1 {
+		errorf("%v:%v  invalid operator: %v, %v", left.row(), right.row(), left, right)
+	}
+	return lp, rp
+}
+
 // 根据token列表获取二元表达式
 func parseBinaryExpression(ts []Token) BinaryExpression {
-	first := ts[0]
-	mid := ts[1]
-	third := ts[2]
-	left := parsePrimaryExpression(first)
-	right := parsePrimaryExpression(third)
+	first, mid, third := ts[0], ts[1], ts[2]
+	left, right := first.toExpr(), third.toExpr()
+
 	var op OperationType
 	switch {
 	case mid.assertSymbol("+"):
@@ -348,107 +343,14 @@ func parseBinaryExpression(ts []Token) BinaryExpression {
 	return expr
 }
 
-// 解析原始表达式
-// 实际上就是一个复合Token转化成Expression的过程
-func parsePrimaryExpression(t Token) PrimaryExpression {
-
-	var res PrimaryExpression
-	if t.isChainCall() {
-		var priExprs []PrimaryExpression
-		for _, tk := range t.chainTokenList() {
-			priExpr := parsePrimaryExpression(tk)
-			priExprs = append(priExprs, priExpr)
-		}
-
-		var headExpr PrimaryExpression
-		tmp := t.typ()
-		// 排除类型 Not: 避免类型 Not, ChainCall在解析执行时发生冲突
-		// 排除类型 ChainCall: 避免无限递归
-		t.setTyp(^Not & (^ChainCall) & t.typ())
-		headExpr = parsePrimaryExpression(t)
-		t.setTyp(tmp)
-
-		res = newChainCallPrimaryExpression(headExpr, priExprs)
-
-	} else if t.isElemFunctionCallMixture() {
-		subTokens := t.getScopeOperatorTokens()
-		if t.isIdentifier() && len(subTokens) == 1 && subTokens[0].isFuncLiteral() {
-			funcToken := subTokens[0]
-			funcToken.setRaw(t.raw())
-			return parsePrimaryExpression(funcToken)
-		}
-
-		var priExprs []PrimaryExpression
-		for _, tk := range subTokens {
-			priExpr := parsePrimaryExpression(tk)
-			priExprs = append(priExprs, priExpr)
-		}
-
-		var headExpr PrimaryExpression
-		tmp := t.typ()
-		// 排除类型 Not: 避免类型 Not, ElemFunctionCallMixture在解析执行时发生冲突
-		// 排除类型 ElemFunctionCallMixture: 避免无限递归
-		t.setTyp(^Not & (^ElemFunctionCallMixture) & t.typ())
-		headExpr = parsePrimaryExpression(t)
-		t.setTyp(tmp)
-
-		res = newElemFunctionCallPrimaryExpression(headExpr, priExprs)
-
-	} else if v := tokenToValue(t); v != nil {
-		res = newConstPrimaryExpression(v)
-
-	} else if t.isObjLiteral() {
-		res = newObjectPrimaryExpression(t.tokens())
-
-	} else if t.isArrLiteral() {
-		res = newArrayPrimaryExpression(t.tokens())
-
-	} else if t.isDynamicStr() {
-		res = newDynamicStrPrimaryExpression(t.raw())
-
-	} else if t.isElement() {
-		expr := extractExpression(t.tokens())
-		res = newElementPrimaryExpression(t.raw(), expr)
-
-	} else if t.isFcall() {
-		exprs := getArgExprsFromToken(t.tokens())
-		res = newFunctionCallPrimaryExpression(exprs)
-
-	} else if t.isSubList() {
-		start := extractExpression(t.startExprTokens())
-		end := extractExpression(t.endExprTokens())
-		res = newSubListPrimaryExpression(start, end)
-
-	} else if t.isFuncLiteral() {
-		paramNames := getFuncParamNames(t.tokens())
-		res = newFunctionPrimaryExpression(t.raw(), paramNames, t.getBodyTokens())
-
-	} else if t.isExpr() {
-		expr := extractExpression(t.tokens())
-		res = newExprPrimaryExpression(expr)
-
-	} else if t.isIdentifier() {
-		res = newVarPrimaryExpression(t.raw())
-	} else {
-		runtimeExcption("parsePrimaryExpression: unknown token type ->", t.String(), t.TokenTypeName())
-	}
-	if res != nil && t.isNot() {
-		res.addType(NotPrimaryExpressionType)
-		res.setNotFlag(t.notFlag())
-	}
-
-	res.setRaw(tokenArray(t))
-	return res
-}
-
 func getFuncParamNames(tokens []Token) []string {
 	var res []string
 	if len(tokens) < 1 {
 		return res
 	}
 	for _, tk := range tokens {
-		if tk.isIdentifier() {
-			res = append(res, tk.raw())
+		if nt, ok := tk.(*NameToken); ok {
+			res = append(res, nt.name())
 		}
 	}
 	return res

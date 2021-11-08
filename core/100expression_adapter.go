@@ -1,5 +1,9 @@
 package core
 
+type ValueReceiver interface {
+    beAssigned(res Value)
+}
+
 type ExpressionAdapter struct {
     ts []Token
     ValueStack
@@ -37,25 +41,11 @@ func (ea *ExpressionAdapter) getStack() Function {
 }
 
 // 赋值
-func (ea *ExpressionAdapter) evalAssign(priExpr PrimaryExpression, res Value) {
-    if priExpr.isElemFunctionCall() {
-        subExpr := priExpr.(*ElemFunctionCallPrimaryExpression)
-        subExpr.beAssigned(res)
-
-    } else if priExpr.isChainCall() {
-        subExpr := priExpr.(*ChainCallPrimaryExpression)
-        subExpr.beAssigned(res)
-
-    } else if priExpr.isVar() {
-        varExpr := priExpr.(*VarPrimaryExpression)
-        if varExpr.nameIs("this") {
-            runtimeExcption("variable this is not allowed to be assigned!")
-        } else {
-            varExpr.beAssigned(res)
-        }
-
+func (ea *ExpressionAdapter) evalAssign(priExpr Expression, res Value) {
+    if expr, ok := priExpr.(ValueReceiver); ok {
+        expr.beAssigned(res)
     } else {
-        errorf("invalid assign expression: %v = %v", tokensString(priExpr.raw()), res.val())
+        errorf("invalid assign expression: %v[%v] = %v", priExpr, tokensString(priExpr.raw()), res.val())
     }
 }
 

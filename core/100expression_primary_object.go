@@ -29,11 +29,11 @@ func (priExpr *ObjectPrimaryExpression) doExecute() Value {
 		if i+2 >= size {
 			runtimeExcption("error jsonobject literal:", tokensString(ts))
 		} else if ts[i+2].assertSymbol("[") {
-			complexToken, endIndex := extractArrayLiteral(i+2, ts)
+			complexToken, endIndex := extractArrLiteral(ts, i+2)
 			nextCommaIndex = endIndex + 1
 			exprTokens = append(exprTokens, complexToken)
 		} else if ts[i+2].assertSymbol("{") {
-			complexToken, endIndex := extractObjectLiteral(i+2, ts)
+			complexToken, endIndex := extractObjLiteral(ts, i+2)
 			nextCommaIndex = endIndex + 1
 			exprTokens = append(exprTokens, complexToken)
 		} else {
@@ -45,7 +45,7 @@ func (priExpr *ObjectPrimaryExpression) doExecute() Value {
 		}
 
 		token := ts[i]
-		keyname := token.raw()
+		keyname := token.String()
 
 		expr := extractExpression(exprTokens)
 		expr.setStack(priExpr.getStack())

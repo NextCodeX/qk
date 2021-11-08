@@ -49,7 +49,7 @@ func printExprTokens(exprTokensList [][]Token) {
 
 func printTokensByLine(tokens []Token) {
 	for i, token := range tokens {
-		fmt.Printf("count %v-%v: [%v] -> %v \n", i, token.lineIndexString(), token.String(), token.TokenTypeName())
+		fmt.Printf("count %v-%v: [%v] -> %v \n", i, token.row(), token.String(), token.typeName())
 	}
 }
 
@@ -57,7 +57,7 @@ func printTokensByLine(tokens []Token) {
 func line(tokens []Token) string {
 	var start, end int
 	for _, tk := range tokens {
-		index := tk.getLineIndex()
+		index := tk.rowIndex()
 		if start == 0 && end == 0 {
 			start, end = index, index
 			continue

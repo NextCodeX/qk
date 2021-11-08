@@ -14,7 +14,7 @@ const tmpVarsKey = "tmpVars#"
 
 func getTmpVarToken() Token {
 	tmpname := getTmpname()
-	return varToken(tmpname)
+	return newNameToken(tmpname, -1)
 }
 
 func getTmpname() string {

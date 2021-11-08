@@ -137,11 +137,8 @@ func (lexer *Lexer) whenDynamicStringLiterial() {
 	if len(lexer.tmpBytes) < 1 {
 		if lexer.inStateDynamicStrLiteral() {
 			// 状态机当前状态是stateDynamicStrLiteral，且tmpBytes没有值，说遇到空字符串
-			lexer.ts = append(lexer.ts, &TokenImpl{
-				lineIndex: lexer.lineIndex,
-				str: "",
-				t:   DynamicStr,
-			})
+			t := newStrToken("", lexer.lineIndex, true)
+			lexer.ts = append(lexer.ts, t)
 			lexer.setState(stateNormal)
 		} else {
 			// 状态机当前状态不是字符串字面值状态， 使用状态机进入字符串字面值状态
@@ -168,11 +165,8 @@ func (lexer *Lexer) whenStringLiterial() {
 	if len(lexer.tmpBytes) < 1 {
 		if lexer.inStateStrLiteral() {
 			// 状态机当前状态是stateStrLiteral，且tmpBytes没有值，说遇到空字符串
-			lexer.ts = append(lexer.ts, &TokenImpl{
-				lineIndex: lexer.lineIndex,
-				str: "",
-				t:   Str,
-			})
+			t := newStrToken("", lexer.lineIndex, false)
+			lexer.ts = append(lexer.ts, t)
 			lexer.setState(stateNormal)
 			return
 		}
@@ -287,8 +281,8 @@ func (lexer *Lexer) pushSymbolToken() {
 		return
 	}
 
-	symbol := symbolToken(string(lexer.currentByte))
-	symbol.setLineIndex(lexer.lineIndex)
+	symbol := newSymbolToken(string(lexer.currentByte), lexer.lineIndex)
+
 	if lastExist && last.assertSymbol(";") &&
 		(lexer.currentByte == '}' || lexer.currentByte == ']') {
 		// 为JSONObject, JSONArray字面值去掉无用的";"
@@ -310,7 +304,8 @@ func (lexer *Lexer) operatorMerge(last Token) bool {
 		lexer.currentByte == '-' && last.assertSymbol("-")
 
 	if flag {
-		last.setRaw(last.raw() + string(lexer.currentByte))
+		s := last.(*SymbolToken)
+		s.set(s.get() + string(lexer.currentByte))
 	}
 
 	return flag
@@ -324,11 +319,8 @@ func (lexer *Lexer) pushBoundryToken() {
 		return
 	}
 
-	lexer.ts = append(lexer.ts, &TokenImpl{
-		lineIndex: lexer.lineIndex,
-		str: ";",
-		t:   Symbol,
-	})
+	t := newSymbolToken(";", lexer.lineIndex)
+	lexer.ts = append(lexer.ts, t)
 }
 
 // 提取多字符token, 并添加至最终token列表中
@@ -336,52 +328,71 @@ func (lexer *Lexer) pushLongToken() {
 	if len(lexer.tmpBytes) < 1 {
 		return
 	}
+	str := string(lexer.tmpBytes)
+	var res Token
 
-	var tokenType TokenType
 	if lexer.inStateFloat() {
-		tokenType = Float
-		if lexer.negativeNumberHandler(Float) {
+		if lexer.negativeNumberHandler(false) {
 			// 如果成功捕获负数，退出函数
 			return
 		}
+		res = newFloatToken(str, lexer.lineIndex)
 
 	} else if lexer.inStateInt() {
-		tokenType = Int
-		if lexer.negativeNumberHandler(Int) {
+		if lexer.negativeNumberHandler(true) {
 			// 如果成功捕获负数，退出函数
 			return
 		}
+		res = newIntToken(str, lexer.lineIndex)
 
 	} else if lexer.inStateIdentifier() {
-		tokenType = Identifier
-
+		if str == "true" {
+			res = newBoolToken(true, lexer.lineIndex)
+		} else if str == "false" {
+			res = newBoolToken(false, lexer.lineIndex)
+		} else if isKeyWord(str) {
+			res = newKeyToken(str, lexer.lineIndex)
+		} else {
+			res = newNameToken(str, lexer.lineIndex)
+		}
 	} else if lexer.inStateStrLiteral() {
-		tokenType = Str
+		res = newStrToken(str, lexer.lineIndex, false)
 
 	} else if lexer.inStateDynamicStrLiteral() {
-		tokenType = DynamicStr
+		res = newStrToken(str, lexer.lineIndex, true)
 	} else {}
 
 
-	lexer.ts = append(lexer.ts, &TokenImpl{
-		lineIndex: lexer.lineIndex,
-		str: string(lexer.tmpBytes),
-		t:   tokenType,
-	})
+	lexer.ts = append(lexer.ts, res)
 	// 重置临时变量
 	lexer.tmpBytes = nil
 }
 
+// 关键字判断
+func isKeyWord(str string) bool {
+	switch str {
+	case "if", "elif", "else", "for", "foreach", "forv", "fori", "switch", "break", "continue", "return":
+		return true
+	}
+	return false
+}
+
 // 捕获负数
-func (lexer *Lexer) negativeNumberHandler(tokenType TokenType) bool {
+func (lexer *Lexer) negativeNumberHandler(isInt bool) bool {
 	last, lastExist := lastToken(lexer.ts)
 	if lastExist && last.assertSymbol("-") {
 		lastSecond, lastSecondExist := lastSecondToken(lexer.ts)
-		if !lastSecondExist || lastSecondExist && (lastSecond.assertIdentifier("return") ||
+		if !lastSecondExist || lastSecondExist && (lastSecond.assertKey("return") ||
 			lastSecond.assertSymbols("+", "-", "*", "/", "=", ",", "(", ":", "[", "->", "{")) {
 
-			last.setRaw(last.raw() + string(lexer.tmpBytes))
-			last.setTyp(tokenType)
+			var numToken Token
+			str := string(lexer.tmpBytes)
+			if isInt {
+				numToken = newIntToken(str, lexer.lineIndex)
+			} else {
+				numToken = newFloatToken(str, lexer.lineIndex)
+			}
+			lastTokenSet(lexer.ts, numToken)
 			// 重置临时变量
 			lexer.tmpBytes = nil
 			return true
@@ -399,42 +410,41 @@ func (lexer *Lexer) isSymbol() bool {
 	}
 }
 
-
 func (lexer *Lexer) inStateIdentifier() bool {
-	return (lexer.state & stateIdentifier) == stateIdentifier
+	return lexer.state & stateIdentifier > 0
 }
 func (lexer *Lexer) inStateStrLiteral() bool {
-	return (lexer.state & stateStrLiteral) == stateStrLiteral
+	return lexer.state & stateStrLiteral > 0
 }
 func (lexer *Lexer) inStateDynamicStrLiteral() bool {
-	return (lexer.state & stateDynamicStrLiteral) == stateDynamicStrLiteral
+	return lexer.state & stateDynamicStrLiteral > 0
 }
 func (lexer *Lexer) inStateInt() bool {
-	return (lexer.state & stateInt) == stateInt
+	return lexer.state & stateInt > 0
 }
 func (lexer *Lexer) inStateDot() bool {
-	return (lexer.state & stateDot) == stateDot
+	return lexer.state & stateDot > 0
 }
 func (lexer *Lexer) inStateFloat() bool {
-	return (lexer.state & stateFloat) == stateFloat
+	return lexer.state & stateFloat > 0
 }
 func (lexer *Lexer) inStateSymbol() bool {
-	return (lexer.state & stateSymbol) == stateSymbol
+	return lexer.state & stateSymbol > 0
 }
 func (lexer *Lexer) inStateSpace() bool {
-	return (lexer.state & stateSpace) == stateSpace
+	return lexer.state & stateSpace > 0
 }
 func (lexer *Lexer) inStatePreComment() bool {
-	return (lexer.state & statePreComment) == statePreComment
+	return lexer.state & statePreComment > 0
 }
 func (lexer *Lexer) inStateSingleLineComment() bool {
-	return (lexer.state & stateSingleLineComment) == stateSingleLineComment
+	return lexer.state & stateSingleLineComment > 0
 }
 func (lexer *Lexer) inStateMultiLineComment() bool {
-	return (lexer.state & stateMutliLineComment) == stateMutliLineComment
+	return lexer.state & stateMutliLineComment > 0
 }
 func (lexer *Lexer) inStateNormal() bool {
-	return (lexer.state & stateNormal) == stateNormal
+	return lexer.state & stateNormal > 0
 }
 
 

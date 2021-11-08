@@ -1,11 +1,11 @@
 package core
 
 type ElementPrimaryExpression struct {
-    arg  Expression // 函数调用参数 / 数组索引
+    arg  Expression
     PrimaryExpressionImpl
 }
 
-func newElementPrimaryExpression(name string, arg Expression) PrimaryExpression {
+func newElementPrimaryExpression(arg Expression) PrimaryExpression {
     expr := &ElementPrimaryExpression{}
     expr.t = ElementPrimaryExpressionType
     expr.arg = arg
