@@ -1,6 +1,6 @@
 package core
 
-type ReturnStmtExtractor struct {}
+type ReturnStmtExtractor struct{}
 
 func (se *ReturnStmtExtractor) check(cur Token) bool {
 	return cur.assertKey("return")
@@ -15,16 +15,16 @@ func (se *ReturnStmtExtractor) extract(raws []Token, curIndex int) (Statement, i
 
 	var endIndex int
 	size = len(raws)
-	for i:=nextIndex; i<size; i++ {
+	for i := nextIndex; i < size; i++ {
 		t := raws[i]
 		if t.assertSymbols("}", ";") {
 			endIndex = i
 			break
 		}
 
-		stmt.rawAppend(t)
+		stmt.tokenAppend(t)
 
-		if i==size-1 {
+		if i == size-1 {
 			endIndex = i
 		}
 	}

@@ -1,6 +1,6 @@
 package core
 
-var mainFunc = newFuncWithoutTokens("main")
+var mainFunc = newMainFunction()
 
 // 脚本解析执行
 func Run(bs []byte) {
@@ -8,10 +8,10 @@ func Run(bs []byte) {
 
 	// 词法分析
 	ts := ParseTokens(bs)
-	printTokensByLine(ts)
+	//printTokensByLine(ts)
 
 	// 语法分析(解析)
-	mainFunc.setRaw(ts)
+	mainFunc.setTokenList(ts)
 	Compile(mainFunc)
 
 	// 程序执行
@@ -37,7 +37,7 @@ func evalScript(src string, stack Function) Value {
 		return NULL
 	}
 	expr := extractExpression(ts)
-	expr.setStack(stack)
+	expr.setParent(stack)
 	qkValue := expr.execute()
 	return qkValue
 }

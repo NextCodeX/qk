@@ -7,14 +7,7 @@ import (
 	"path/filepath"
 )
 
-// 添加 Quick 系统内部函数
-func addInternalFunc(name string, internalFunc func([]interface{}) interface{}) {
-	mainFunc.addFunc(name, newInternalFunc(name, internalFunc))
-}
-func addModuleFunc(name string, moduleFunc *FunctionExecutor) {
-	mainFunc.addFunc(name, newModuleFunc(name, moduleFunc))
-}
-
+// 用于加载内置变量与内置函数
 var internalVars = make(map[string]Value)
 
 func init() {
@@ -52,6 +45,13 @@ func init() {
 	mimes["form"] = newQKValue("application/x-www-form-urlencoded")
 	mimes["data"] = newQKValue("multipart/form-data")
 	internalVars["mime"] = jsonObject(mimes)
+
+	// 将内部函数注册到主函数(main)的内部栈中
+	fns := &InternalFunctionSet{}
+	fmap := collectFunctionInfo(&fns)
+	for fname, moduleFunc := range fmap {
+		internalVars[fname] = newInternalFunc(fname, moduleFunc)
+	}
 }
 
 func SetRootDir(scriptFileName string) {

@@ -1,27 +1,27 @@
 package core
 
 type ElementPrimaryExpression struct {
-    arg  Expression
-    PrimaryExpressionImpl
+	arg Expression
+	PrimaryExpressionImpl
 }
 
 func newElementPrimaryExpression(arg Expression) PrimaryExpression {
-    expr := &ElementPrimaryExpression{}
-    expr.t = ElementPrimaryExpressionType
-    expr.arg = arg
-    expr.doExec = expr.doExecute
-    return expr
+	expr := &ElementPrimaryExpression{}
+	expr.t = ElementPrimaryExpressionType
+	expr.arg = arg
+	expr.doExec = expr.doExecute
+	return expr
 }
 
-func (priExpr *ElementPrimaryExpression) setStack(stack Function) {
-    priExpr.stack = stack
+func (priExpr *ElementPrimaryExpression) setParent(p Function) {
+	priExpr.ExpressionAdapter.setParent(p)
 
-    priExpr.arg.setStack(stack)
+	priExpr.arg.setParent(p)
 }
 
 func (priExpr *ElementPrimaryExpression) doExecute() Value {
-    runtimeExcption("running ElementPrimaryExpression.doExecute is error")
-    return nil
+	runtimeExcption("running ElementPrimaryExpression.doExecute is error")
+	return nil
 }
 
 func (priExpr *ElementPrimaryExpression) getValue(obj JSONObject) Value {
@@ -29,22 +29,21 @@ func (priExpr *ElementPrimaryExpression) getValue(obj JSONObject) Value {
 }
 
 func (priExpr *ElementPrimaryExpression) getArrElem(arr JSONArray) Value {
-    return arr.getElem(toInt(priExpr.arg.execute().val()))
+	return arr.getElem(toInt(priExpr.arg.execute().val()))
 }
 
 func (priExpr *ElementPrimaryExpression) getChar(str *StringValue) Value {
-    index := priExpr.arg.execute()
-    return newQKValue(str.getChar(toInt(index.val())))
+	index := priExpr.arg.execute()
+	return newQKValue(str.getChar(toInt(index.val())))
 }
 
 func (priExpr *ElementPrimaryExpression) assignToObj(object JSONObject, res Value) {
-    index := priExpr.arg.execute()
-    object.put(goStr(index), res)
+	index := priExpr.arg.execute()
+	object.put(goStr(index), res)
 }
 
 func (priExpr *ElementPrimaryExpression) assignToArr(array JSONArray, res Value) {
-    index := priExpr.arg.execute()
-    array.set(toInt(index.val()), res)
+	index := priExpr.arg.execute()
+	array.set(toInt(index.val()), res)
 
 }
-

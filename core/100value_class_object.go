@@ -11,9 +11,9 @@ type Object interface {
 }
 
 type ClassObject struct {
-	name string
-	raw interface{}
-	show *reflect.Value
+	name    string
+	raw     interface{}
+	show    *reflect.Value
 	methods map[string]Function
 	ValueAdapter
 }
@@ -55,7 +55,7 @@ func (clazz *ClassObject) get(key string) Value {
 	mt, ok := clazz.methods[key]
 	if !ok {
 		if key == "type" {
-			return newAnonymousFunc(func() Value {
+			return callable(func() Value {
 				return newQKValue(clazz.name)
 			})
 		} else {
@@ -73,9 +73,6 @@ func (clazz *ClassObject) initMethods() {
 		if name == "string" {
 			clazz.show = &mt.obj
 		}
-		clazz.methods[name] = newModuleFunc(name, mt)
+		clazz.methods[name] = newInternalFunc(name, mt)
 	}
 }
-
-
-

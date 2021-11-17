@@ -4,12 +4,11 @@ import (
 	"reflect"
 )
 
-
 // 成员变量相关信息
 type FieldInfo struct {
-	name    string // field name
-	t reflect.Type // field go type
-	v reflect.Value // field go internal value
+	name string        // field name
+	t    reflect.Type  // field go type
+	v    reflect.Value // field go internal value
 }
 
 func (f *FieldInfo) set(val interface{}) {
@@ -31,10 +30,7 @@ func collectFieldInfo(objPtr interface{}) (res map[string]*FieldInfo) {
 			continue
 		}
 		fieldName := formatName(key.Name)
-		res[fieldName] = &FieldInfo{name: fieldName, t:val.Type(), v:val}
+		res[fieldName] = &FieldInfo{name: fieldName, t: val.Type(), v: val}
 	}
 	return res
 }
-
-
-

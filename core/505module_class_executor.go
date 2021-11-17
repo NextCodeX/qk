@@ -5,10 +5,9 @@ import (
 	"reflect"
 )
 
-
 // 类对象: 用于内置对象执行
 type ClassExecutor struct {
-	raw interface{}
+	raw     interface{}
 	name    string // class name
 	fields  map[string]*FieldInfo
 	methods map[string]*FunctionExecutor

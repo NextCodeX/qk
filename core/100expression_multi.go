@@ -1,97 +1,97 @@
 package core
 
 type MultiExpression interface {
-    execute() Value
-    recursiveEvalMultiExpression(nextExpr BinaryExpression, exprList []BinaryExpression) Value
-    calculateIfNotExist(primaryExpr PrimaryExpression, exprList []BinaryExpression)
-    getNextExprForMultiExpression(varname string, exprList []BinaryExpression) BinaryExpression
+	execute() Value
+	recursiveEvalMultiExpression(nextExpr BinaryExpression, exprList []BinaryExpression) Value
+	calculateIfNotExist(primaryExpr PrimaryExpression, exprList []BinaryExpression)
+	getNextExprForMultiExpression(varname string, exprList []BinaryExpression) BinaryExpression
 
+	getfinalExpr() BinaryExpression
+	getExprs() []BinaryExpression
 
-    getfinalExpr() BinaryExpression
-    getExprs() []BinaryExpression
-
-    Expression
+	Expression
 }
 
 type MultiExpressionImpl struct {
-    finalExpr BinaryExpression
-    list []BinaryExpression
-    ExpressionAdapter
+	finalExpr BinaryExpression
+	list      []BinaryExpression
+	ExpressionAdapter
 }
 
 func newMultiExpressionImpl() MultiExpression {
-    return &MultiExpressionImpl{}
+	return &MultiExpressionImpl{}
 }
 
-func (mulExpr *MultiExpressionImpl) setStack(stack Function) {
-    mulExpr.stack = stack
+func (mulExpr *MultiExpressionImpl) setParent(p Function) {
+	mulExpr.ExpressionAdapter.setParent(p)
 
-    for _, subExpr := range mulExpr.list {
-        subExpr.setStack(stack)
-    }
+	for _, subExpr := range mulExpr.list {
+		subExpr.setParent(p)
+	}
 
-    mulExpr.finalExpr.setStack(stack)
+	mulExpr.finalExpr.setParent(p)
 }
 
 func (mulExpr *MultiExpressionImpl) execute() Value {
-    // 每次执行多元表达式之前，初始化临时变量池
-    mulExpr.setVar(tmpVarsKey, emptyJsonObject())
-    //defer func() {mulExpr.setVar(tmpVarsKey, nil)}()
+	// 每次执行多元表达式之前，初始化临时变量池
+	mulExpr.setVar(tmpVarsKey, emptyJsonObject())
+	//defer func() {mulExpr.setVar(tmpVarsKey, nil)}()
 
-    res := mulExpr.recursiveEvalMultiExpression(mulExpr.finalExpr, mulExpr.list)
-    return res
+	res := mulExpr.recursiveEvalMultiExpression(mulExpr.finalExpr, mulExpr.list)
+	return res
 }
 
 func (mulExpr *MultiExpressionImpl) getfinalExpr() BinaryExpression {
-    return mulExpr.finalExpr
+	return mulExpr.finalExpr
 }
 func (mulExpr *MultiExpressionImpl) getExprs() []BinaryExpression {
-    return mulExpr.list
+	return mulExpr.list
 }
 
-
 func (mulExpr *MultiExpressionImpl) recursiveEvalMultiExpression(nextExpr BinaryExpression, exprList []BinaryExpression) Value {
-    left := nextExpr.leftExpr()
-    right := nextExpr.rightExpr()
-    if left.isConst() && right.isConst() {
-        return nextExpr.execute()
-    }
+	left := nextExpr.leftExpr()
+	right := nextExpr.rightExpr()
+	if left.isConst() && right.isConst() {
+		return nextExpr.execute()
+	}
 
-    mulExpr.calculateIfNotExist(left, exprList)
-    mulExpr.calculateIfNotExist(right, exprList)
+	mulExpr.calculateIfNotExist(left, exprList)
+	mulExpr.calculateIfNotExist(right, exprList)
 
-    return nextExpr.execute()
+	return nextExpr.execute()
 }
 
 // 检查相应的变量是否已计算，若未计算则进行计算
 func (mulExpr *MultiExpressionImpl) calculateIfNotExist(primaryExpr PrimaryExpression, exprList []BinaryExpression) {
-    if !primaryExpr.isVar() {
-        return
-    }
+	if !primaryExpr.isVar() {
+		return
+	}
 
-    varExpr := primaryExpr.(*VarPrimaryExpression)
-    if !varExpr.execute().isNULL() {
-        return
-    }
-    nextExpr := mulExpr.getNextExprForMultiExpression(varExpr.getName(), exprList)
-    if nextExpr != nil {
-        mulExpr.recursiveEvalMultiExpression(nextExpr, exprList)
-    }
+	varExpr := primaryExpr.(*VarPrimaryExpression)
+	if !varExpr.execute().isNULL() {
+		return
+	}
+	nextExpr := mulExpr.getNextExprForMultiExpression(varExpr.getName(), exprList)
+	if nextExpr != nil {
+		mulExpr.recursiveEvalMultiExpression(nextExpr, exprList)
+	}
 }
 
 func (mulExpr *MultiExpressionImpl) getNextExprForMultiExpression(varname string, exprList []BinaryExpression) BinaryExpression {
-    for _, subExpr := range exprList {
-        receiver := subExpr.getReceiver()
-        if receiver != nil && toName(receiver.raw()[0]) == varname {
-            return subExpr
-        }
+	for _, subExpr := range exprList {
+		receiver := subExpr.getReceiver()
+		if receiver != nil {
+			if vp, ok := receiver.(*VarPrimaryExpression); ok && vp.varname == varname {
+				return subExpr
+			}
+		}
 
-        leftExpr := subExpr.leftExpr()
-        if subExpr.isAssign() && leftExpr.isVar() && leftExpr.(*VarPrimaryExpression).getName() == varname {
-            subExpr.execute()
-            return nil
-        }
-    }
-    runtimeExcption("executeMultiExpression Exception: no expression for ", varname)
-    return nil
+		leftExpr := subExpr.leftExpr()
+		if subExpr.isAssign() && leftExpr.isVar() && leftExpr.(*VarPrimaryExpression).getName() == varname {
+			subExpr.execute()
+			return nil
+		}
+	}
+	runtimeExcption("executeMultiExpression Exception: no expression for ", varname)
+	return nil
 }

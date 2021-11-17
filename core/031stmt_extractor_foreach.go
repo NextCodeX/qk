@@ -1,50 +1,50 @@
 package core
 
-type ForeachStmtExtractor struct {}
+type ForeachStmtExtractor struct{}
 
 func (se *ForeachStmtExtractor) check(cur Token) bool {
 	return cur.assertKey("foreach")
 }
 func (se *ForeachStmtExtractor) extract(raws []Token, curIndex int) (Statement, int) {
 	headerEndIndex := nextSymbolIndex(raws, curIndex, "{")
-	headerInfo := raws[curIndex+1: headerEndIndex]
+	headerInfo := raws[curIndex+1 : headerEndIndex]
 	k, v, exprTokens := parseForeachHeader(headerInfo)
 	stmt := newForeachStatement(k, v, exprTokens)
 
 	stmtEndIndex := scopeEndIndex(raws, curIndex, "{", "}")
-	stmt.setRaw(raws[headerEndIndex+1: stmtEndIndex])
+	stmt.setTokenList(raws[headerEndIndex+1 : stmtEndIndex])
 	return stmt, stmtEndIndex
 }
 
-type ForIndexStmtExtractor struct {}
+type ForIndexStmtExtractor struct{}
 
 func (se *ForIndexStmtExtractor) check(cur Token) bool {
 	return cur.assertKey("fori")
 }
 func (se *ForIndexStmtExtractor) extract(raws []Token, curIndex int) (Statement, int) {
 	headerEndIndex := nextSymbolIndex(raws, curIndex, "{")
-	headerInfo := raws[curIndex+1: headerEndIndex]
+	headerInfo := raws[curIndex+1 : headerEndIndex]
 	_, i, exprTokens := parseForeachHeader(headerInfo)
 	stmt := newForIndexStatement(i, exprTokens)
 
 	stmtEndIndex := scopeEndIndex(raws, curIndex, "{", "}")
-	stmt.setRaw(raws[headerEndIndex+1: stmtEndIndex])
+	stmt.setTokenList(raws[headerEndIndex+1 : stmtEndIndex])
 	return stmt, stmtEndIndex
 }
 
-type ForValueStmtExtractor struct {}
+type ForValueStmtExtractor struct{}
 
 func (se *ForValueStmtExtractor) check(cur Token) bool {
 	return cur.assertKey("forv")
 }
 func (se *ForValueStmtExtractor) extract(raws []Token, curIndex int) (Statement, int) {
 	headerEndIndex := nextSymbolIndex(raws, curIndex, "{")
-	headerInfo := raws[curIndex+1: headerEndIndex]
+	headerInfo := raws[curIndex+1 : headerEndIndex]
 	_, v, exprTokens := parseForeachHeader(headerInfo)
 	stmt := newForValueStatement(v, exprTokens)
 
 	stmtEndIndex := scopeEndIndex(raws, curIndex, "{", "}")
-	stmt.setRaw(raws[headerEndIndex+1: stmtEndIndex])
+	stmt.setTokenList(raws[headerEndIndex+1 : stmtEndIndex])
 	return stmt, stmtEndIndex
 }
 

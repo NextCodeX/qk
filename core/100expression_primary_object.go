@@ -48,7 +48,7 @@ func (priExpr *ObjectPrimaryExpression) doExecute() Value {
 		keyname := token.String()
 
 		expr := extractExpression(exprTokens)
-		expr.setStack(priExpr.getStack())
+		expr.setParent(priExpr.getParant())
 		val := expr.execute()
 		object.put(keyname, val)
 

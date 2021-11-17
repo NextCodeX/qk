@@ -21,12 +21,11 @@ func (exprStmt *ExpressionStatement) parse() {
 	exprStmt.expr = expr
 
 	// 将stack从statement下传至expression
-	// 复合expression可以通过重载 setStack()方法将stack 下传至 各子expression
-	expr.setStack(exprStmt.getStack())
+	// 复合expression可以通过重载 setFrame()方法将stack 下传至 各子expression
+	expr.setParent(exprStmt.getStack())
 }
 
 func (exprStmt *ExpressionStatement) execute() StatementResult {
 	res := exprStmt.expr.execute()
 	return newStatementResult(StatementNormal, res)
 }
-

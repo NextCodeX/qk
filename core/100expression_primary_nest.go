@@ -1,6 +1,5 @@
 package core
 
-
 type NestedPrimaryExpression struct {
 	expr Expression
 	PrimaryExpressionImpl
@@ -14,10 +13,10 @@ func newNestedPrimaryExpression(raw Expression) PrimaryExpression {
 	return expr
 }
 
-func (priExpr *NestedPrimaryExpression) setStack(stack Function) {
-	priExpr.stack = stack
+func (priExpr *NestedPrimaryExpression) setParent(p Function) {
+	priExpr.ExpressionAdapter.setParent(p)
 
-	priExpr.expr.setStack(stack)
+	priExpr.expr.setParent(p)
 }
 
 func (priExpr *NestedPrimaryExpression) doExecute() Value {

@@ -5,7 +5,7 @@ type StmtExtractor interface {
 	extract(raws []Token, curIndex int) (Statement, int)
 }
 
-var stmtExtractorList = []StmtExtractor {
+var stmtExtractorList = []StmtExtractor{
 	&BreakStmtExtractor{},
 	&ContinueStmtExtractor{},
 	&ForStmtExtractor{},
@@ -17,7 +17,7 @@ var stmtExtractorList = []StmtExtractor {
 }
 
 func extractStatement(stmt Statement) {
-	ts := stmt.raw()
+	ts := stmt.tokenList()
 	for i := 0; i < len(ts); {
 		cur := ts[i]
 		var endIndex int
@@ -33,7 +33,7 @@ func extractStatement(stmt Statement) {
 		// 提取 表达式语句
 		subStmt, endIndex = extractExpressionStatement(i, ts)
 
-		loopEnd:
+	loopEnd:
 		if endIndex > 0 {
 			if subStmt != nil {
 				stmt.addStmt(subStmt)

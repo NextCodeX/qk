@@ -18,13 +18,9 @@ func newFunctionPrimaryExpression(name string, paramNames []string, bodyTokens [
 	return expr
 }
 
-func (priExpr *FunctionPrimaryExpression) setStack(stack Function) {
-	priExpr.stack = stack
-}
-
 func (priExpr *FunctionPrimaryExpression) doExecute() Value {
-	fn := newFunc(priExpr.name, priExpr.bodyTokens, priExpr.paramNames)
-	fn.setParent(priExpr.stack)
+	fn := newCustomFunction(priExpr.name, priExpr.bodyTokens, priExpr.paramNames)
+	fn.setParent(priExpr.parent)
 	Compile(fn)
 
 	funcName := priExpr.name

@@ -82,7 +82,7 @@ func (str *StringValue) Float() float64 {
 func (str *StringValue) Bool() bool {
 	res, err := strconv.ParseBool(str.goValue)
 	if err != nil {
-		return false
+		runtimeExcption(err)
 	}
 	return res
 }
@@ -107,7 +107,13 @@ func (str *StringValue) Trim() string {
 func (str *StringValue) Replace(old, newStr string) string {
 	return strings.ReplaceAll(str.goValue, old, newStr)
 }
+func (str *StringValue) Repl(old, newStr string) string {
+	return strings.ReplaceAll(str.goValue, old, newStr)
+}
 func (str *StringValue) Contain(subStr string) bool {
+	return strings.Contains(str.goValue, subStr)
+}
+func (str *StringValue) Has(subStr string) bool {
 	return strings.Contains(str.goValue, subStr)
 }
 func (str *StringValue) Lower() string {
