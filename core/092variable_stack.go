@@ -13,7 +13,6 @@ func (vs *ValueStack) getVar(name string) Value {
 	var level = vs.cur
 
 	for level != nil {
-
 		if varMap := level.varList(); varMap != nil {
 			if val := varMap.get(name); val != nil {
 				return val

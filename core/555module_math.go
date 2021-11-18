@@ -54,13 +54,7 @@ func (fns *InternalFunctionSet) Fix(raw float64, bitSize int) interface{} {
 
 // string type to number type
 func (fns *InternalFunctionSet) Number(raw string) interface{} {
-	numI, errI := strconv.Atoi(raw)
-	if errI == nil {
-		return numI
-	}
-	numF, errF := strconv.ParseFloat(raw, 64)
-	assert(errF != nil, "number(string) error!", raw)
-	return numF
+	return strToNumber(raw)
 }
 
 func toFloat(num interface{}) (float64, bool) {

@@ -47,7 +47,7 @@ func (fns *InternalFunctionSet) ParseDate(dateStr string, tmpl string) Value {
 		runtimeExcption(err)
 	}
 	dt := &Datetime{d}
-	return newClass("date", &dt)
+	return newClass("Date", &dt)
 }
 
 type Datetime struct {

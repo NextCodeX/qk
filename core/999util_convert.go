@@ -16,6 +16,19 @@ func intToRunes(raw int) []rune {
 	return res
 }
 
+// 字符串转数值类型
+func strToNumber(raw string) interface{} {
+	if numI, errI := strconv.Atoi(raw); errI == nil {
+		return numI
+	}
+
+	if numF, errF := strconv.ParseFloat(raw, 64); errF == nil {
+		return numF
+	}
+
+	return -1
+}
+
 func toInt(any interface{}) int {
 	switch v := any.(type) {
 	case int32:

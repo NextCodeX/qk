@@ -1,12 +1,4 @@
 
-echo(pwd)
-ls(pwd).pr()
 
-absDirs(path) {
-    echo(path, "---------------")
-    forv dir : ls(path) {
-        echo(path+"/"+dir)
-    }
-}
 
-absDirs(pwd)
+

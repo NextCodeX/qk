@@ -2,7 +2,6 @@ package core
 
 import (
 	"bytes"
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -66,18 +65,19 @@ func (str *StringValue) sub(start, end int) string {
 func (str *StringValue) Int() int {
 	res, err := strconv.Atoi(str.goValue)
 	if err != nil {
-		fmt.Println(err)
-		return 0
+		return -1
 	}
 	return res
 }
 func (str *StringValue) Float() float64 {
 	res, err := strconv.ParseFloat(str.goValue, 64)
 	if err != nil {
-		fmt.Println(err)
-		return 0
+		return -1
 	}
 	return res
+}
+func (str *StringValue) Number() interface{} {
+	return strToNumber(str.goValue)
 }
 func (str *StringValue) Bool() bool {
 	res, err := strconv.ParseBool(str.goValue)

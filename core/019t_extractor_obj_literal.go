@@ -1,8 +1,6 @@
 package core
 
-
-type ObjLiteralTokenExtractor struct {}
-
+type ObjLiteralTokenExtractor struct{}
 
 func (ol *ObjLiteralTokenExtractor) check(pre Token, cur Token, next Token, res []Token, raws []Token, curIndex int) bool {
 	// 判断是否遇到了json对象字面值
@@ -14,10 +12,10 @@ func (ol *ObjLiteralTokenExtractor) check(pre Token, cur Token, next Token, res 
 	}
 	if curIndex > 0 {
 		last := last(res)
-		if last.assertSymbols("return") {
+		if last.assertKey("return") {
 			return true
 		}
-		if last.isSymbol() && !last.assertSymbols(")", "++", "--") {
+		if last.isSymbol() && !last.assertSymbol(")") {
 			return true
 		}
 	}
@@ -43,6 +41,3 @@ func extractObjLiteral(raws []Token, curIndex int) (Token, int) {
 	t := newObjLiteralToken(elems)
 	return t, endIndex
 }
-
-
-

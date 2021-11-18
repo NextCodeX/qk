@@ -17,8 +17,7 @@ package core
 // xxx[][]。。。  --> 这种情况说明运算符 "[]"可以同类叠加
 // 运算符 "[]"后面可以叠加 "[]", "()"
 // 只要前一个表达式返回的是jsonObject或jsonArray, 运算符 "[]"皆能处理
-type ElemFCallTokenExtractor struct {}
-
+type ElemFCallTokenExtractor struct{}
 
 func (extractor *ElemFCallTokenExtractor) check(pre Token, cur Token, next Token, res []Token, raws []Token, curIndex int) bool {
 	size := len(res)
@@ -41,8 +40,6 @@ func (extractor *ElemFCallTokenExtractor) check(pre Token, cur Token, next Token
 
 	return false
 }
-
-
 
 func (extractor *ElemFCallTokenExtractor) extract(pre Token, cur Token, next Token, res *[]Token, raws []Token, curIndex int) int {
 	lastSecond, lastSecondExist := lastSecondToken(*res)
@@ -77,10 +74,10 @@ func (extractor *ElemFCallTokenExtractor) extract(pre Token, cur Token, next Tok
 			curIndex = endIndex + 1
 
 			// 排除 if chk() {}； elif chk() {}； for chk() {};
-			// forv v : list() {};
+			// forv v : list() {}; if true && chk() {};  if false || chk() {};
 			if (!lastSecondExist ||
 				!lastSecond.assertKeys("if", "elif", "for") &&
-				!lastSecond.assertSymbol(":")) &&
+					!lastSecond.assertSymbols(":", "||", "&&")) &&
 				curIndex < len(raws) && raws[curIndex].assertSymbol("{") {
 				// 捕获函数字面值
 				endIndex = scopeEndIndex(raws, curIndex, "{", "}")
