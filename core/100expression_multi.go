@@ -48,30 +48,39 @@ func (mulExpr *MultiExpressionImpl) getExprs() []BinaryExpression {
 	return mulExpr.list
 }
 
-func (mulExpr *MultiExpressionImpl) recursiveEvalMultiExpression(nextExpr BinaryExpression, exprList []BinaryExpression) Value {
-	left := nextExpr.leftExpr()
-	right := nextExpr.rightExpr()
+func (mulExpr *MultiExpressionImpl) recursiveEvalMultiExpression(curExpr BinaryExpression, exprList []BinaryExpression) Value {
+	left := curExpr.leftExpr()
+	right := curExpr.rightExpr()
 	if left.isConst() && right.isConst() {
-		return nextExpr.execute()
+		return curExpr.execute()
 	}
 
 	mulExpr.calculateIfNotExist(left, exprList)
+	if curExpr.isOr() {
+		if leftVal := left.execute(); toBoolean(leftVal) {
+			curExpr.resultCache(leftVal)
+			return leftVal
+		}
+	}
+	if curExpr.isAnd() {
+		if leftVal := left.execute(); !toBoolean(leftVal) {
+			curExpr.resultCache(leftVal)
+			return leftVal
+		}
+	}
+
 	mulExpr.calculateIfNotExist(right, exprList)
 
-	return nextExpr.execute()
+	return curExpr.execute()
 }
 
 // 检查相应的变量是否已计算，若未计算则进行计算
 func (mulExpr *MultiExpressionImpl) calculateIfNotExist(primaryExpr PrimaryExpression, exprList []BinaryExpression) {
-	if !primaryExpr.isVar() {
+	varExpr, ok := primaryExpr.(*VarPrimaryExpression)
+	if !ok || !isTmpVar(varExpr.name()) || mulExpr.getVar(varExpr.name()) != NULL {
 		return
 	}
-
-	varExpr := primaryExpr.(*VarPrimaryExpression)
-	if !varExpr.execute().isNULL() {
-		return
-	}
-	nextExpr := mulExpr.getNextExprForMultiExpression(varExpr.getName(), exprList)
+	nextExpr := mulExpr.getNextExprForMultiExpression(varExpr.name(), exprList)
 	if nextExpr != nil {
 		mulExpr.recursiveEvalMultiExpression(nextExpr, exprList)
 	}
@@ -81,13 +90,13 @@ func (mulExpr *MultiExpressionImpl) getNextExprForMultiExpression(varname string
 	for _, subExpr := range exprList {
 		receiver := subExpr.getReceiver()
 		if receiver != nil {
-			if vp, ok := receiver.(*VarPrimaryExpression); ok && vp.varname == varname {
+			if vp, ok := receiver.(*VarPrimaryExpression); ok && vp.name() == varname {
 				return subExpr
 			}
 		}
 
 		leftExpr := subExpr.leftExpr()
-		if subExpr.isAssign() && leftExpr.isVar() && leftExpr.(*VarPrimaryExpression).getName() == varname {
+		if subExpr.isAssign() && leftExpr.isVar() && leftExpr.(*VarPrimaryExpression).name() == varname {
 			subExpr.execute()
 			return nil
 		}

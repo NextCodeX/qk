@@ -1,24 +1,25 @@
 package core
 
 type VarPrimaryExpression struct {
-    varname string
-    PrimaryExpressionImpl
+	varname string
+	PrimaryExpressionImpl
 }
 
 func newVarPrimaryExpression(varname string) PrimaryExpression {
-    expr := &VarPrimaryExpression{}
-    expr.t = VarPrimaryExpressionType
-    expr.varname = varname
-    expr.doExec = expr.doExecute
-    return expr
+	expr := &VarPrimaryExpression{}
+	expr.t = VarPrimaryExpressionType
+	expr.varname = varname
+	expr.doExec = expr.doExecute
+	return expr
 }
 
-func (priExpr *VarPrimaryExpression) getName() string {
-    return priExpr.varname
+// 获取变量名
+func (priExpr *VarPrimaryExpression) name() string {
+	return priExpr.varname
 }
 
 func (priExpr *VarPrimaryExpression) doExecute() Value {
-    return priExpr.getVar(priExpr.varname)
+	return priExpr.getVar(priExpr.varname)
 }
 
 func (priExpr *VarPrimaryExpression) getField(obj Object) Value {
@@ -30,10 +31,9 @@ func (priExpr *VarPrimaryExpression) beAssigned(res Value) {
 }
 
 func (priExpr *VarPrimaryExpression) assign(object JSONObject, res Value) {
-    object.put(priExpr.varname, res)
+	object.put(priExpr.varname, res)
 }
 
 func (priExpr *VarPrimaryExpression) nameIs(s string) bool {
 	return priExpr.varname == s
 }
-

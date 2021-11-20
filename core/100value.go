@@ -2,8 +2,11 @@ package core
 
 import "fmt"
 
-// 空值
-var NULL = newNULLValue()
+var (
+	NULL  = newNULLValue() // 空值
+	TRUE  = newQKValue(true)
+	FALSE = newQKValue(false)
+)
 
 type Value interface {
 	String() string
@@ -23,7 +26,7 @@ type Value interface {
 }
 
 func newQKValue(rawVal interface{}) Value {
-	if rawVal == nil {
+	if rawVal == nil || rawVal == NULL {
 		return NULL
 	}
 	switch v := rawVal.(type) {

@@ -21,7 +21,7 @@ type IntToken struct {
 func newIntToken(raw string, row int) Token {
 	i, err := strconv.ParseInt(raw, 10, 64)
 	if err != nil {
-		panic(i)
+		panic(err)
 	}
 
 	t := &IntToken{}
@@ -38,7 +38,7 @@ type FloatToken struct {
 func newFloatToken(raw string, row int) Token {
 	f, err := strconv.ParseFloat(raw, 64)
 	if err != nil {
-		panic(f)
+		panic(err)
 	}
 
 	t := &FloatToken{}
@@ -55,7 +55,11 @@ type BoolToken struct {
 func newBoolToken(raw bool, row int) Token {
 	t := &BoolToken{}
 	t.lineIndex = row
-	t.val = raw
+	if raw {
+		t.val = TRUE
+	} else {
+		t.val = FALSE
+	}
 	t.typName = "Boolean"
 	return t
 }

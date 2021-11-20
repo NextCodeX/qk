@@ -33,7 +33,8 @@ const (
 )
 
 type BinaryExpression interface {
-	execute() Value // 执行二元表达式
+	execute() Value        // 执行二元表达式
+	resultCache(res Value) // 表达式结果赋值于receiver
 
 	evalAndBinaryExpression() Value
 	evalOrBinaryExpression() Value
@@ -161,19 +162,24 @@ func (binExpr *BinaryExpressionImpl) execute() Value {
 		res = binExpr.evalOrBinaryExpression()
 	case binExpr.isAnd():
 		res = binExpr.evalAndBinaryExpression()
-
 	}
 	if res == nil {
 		res = NULL
 	}
-	if binExpr.receiver != nil {
-		binExpr.evalAssign(binExpr.receiver, res)
-	}
+	binExpr.resultCache(res)
 	// 常量折叠
 	if left.isConst() && right.isConst() {
 		binExpr.res = res
 	}
 	return res
+}
+
+// 表达式结果赋值于receiver
+func (binExpr *BinaryExpressionImpl) resultCache(res Value) {
+	if binExpr.receiver == nil {
+		return
+	}
+	binExpr.evalAssign(binExpr.receiver, res)
 }
 
 func (binExpr *BinaryExpressionImpl) setReceiver(name PrimaryExpression) {
@@ -200,7 +206,7 @@ func (binExpr *BinaryExpressionImpl) leftExpr() PrimaryExpression {
 func (binExpr *BinaryExpressionImpl) evalAndBinaryExpression() Value {
 	left := binExpr.leftVal()
 	if !toBoolean(left) {
-		return newQKValue(false)
+		return left
 	} else {
 		return binExpr.rightVal()
 	}
