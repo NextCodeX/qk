@@ -27,6 +27,8 @@ func newQKValue(rawVal interface{}) Value {
 		return NULL
 	}
 	switch v := rawVal.(type) {
+	case Value:
+		return v
 	case []byte:
 		return newByteArrayValue(v)
 	case [][]byte:
@@ -56,8 +58,7 @@ func newQKValue(rawVal interface{}) Value {
 		return v
 	case Function:
 		return v
-	case Value:
-		return v
+
 	case []Value:
 		return array(v)
 	case map[string]Value:

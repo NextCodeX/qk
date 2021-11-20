@@ -81,6 +81,10 @@ func (resp *HttpResponse) Code() int {
 	return resp.StatusCode()
 }
 
+func (resp *HttpResponse) Ok() bool {
+	return resp.StatusCode() == 200
+}
+
 func (resp *HttpResponse) Save(path string) {
 	err := ioutil.WriteFile(path, resp.body, 0666)
 	if err != nil {

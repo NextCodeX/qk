@@ -313,14 +313,13 @@ func (lexer *Lexer) operatorMerge(last Token) bool {
 
 // 添加语句分隔符';'token, 并避免多余的';'
 func (lexer *Lexer) pushBoundryToken() {
-	size := len(lexer.ts)
-	if size > 0 && lexer.ts[size-1].assertSymbols("{", ",", "?", ":", "[", ";") {
+	if last, exist := lastToken(lexer.ts); exist && last.assertSymbols("{", ",", "?", ":", "[", ";", "||", "&&", "(") {
 		// 防止添加无用的";"
 		return
 	}
 
-	t := newSymbolToken(";", lexer.lineIndex)
-	lexer.ts = append(lexer.ts, t)
+	seperator := newSymbolToken(";", lexer.lineIndex)
+	lexer.ts = append(lexer.ts, seperator)
 }
 
 // 提取多字符token, 并添加至最终token列表中
@@ -350,6 +349,8 @@ func (lexer *Lexer) pushLongToken() {
 			res = newBoolToken(true, lexer.lineIndex)
 		} else if str == "false" {
 			res = newBoolToken(false, lexer.lineIndex)
+		} else if str == "null" {
+			res = newNullToken(lexer.lineIndex)
 		} else if isKeyWord(str) {
 			res = newKeyToken(str, lexer.lineIndex)
 		} else {

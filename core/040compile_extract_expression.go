@@ -269,7 +269,7 @@ func priorityLE(left, right Token) bool {
 // 运算符优先级比较： 大于(用于判断右优先)
 func priorityGT(left, right Token) bool {
 	lp, rp := operatorPriority(left, right)
-	return lp <= rp
+	return lp > rp
 }
 
 func operatorPriority(left Token, right Token) (int, int) {

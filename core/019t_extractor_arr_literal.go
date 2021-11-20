@@ -1,8 +1,6 @@
 package core
 
-
-type ArrLiteralTokenExtractor struct {}
-
+type ArrLiteralTokenExtractor struct{}
 
 func (al *ArrLiteralTokenExtractor) check(pre Token, cur Token, next Token, res []Token, raws []Token, curIndex int) bool {
 	// 判断是否遇到了json数组字面值
@@ -21,7 +19,7 @@ func (al *ArrLiteralTokenExtractor) check(pre Token, cur Token, next Token, res 
 			return true
 		}
 	}
-	return true
+	return false
 }
 func (al *ArrLiteralTokenExtractor) extract(pre Token, cur Token, next Token, res *[]Token, raws []Token, curIndex int) int {
 	t, endIndex := extractArrLiteral(raws, curIndex)
@@ -44,5 +42,3 @@ func extractArrLiteral(raws []Token, curIndex int) (Token, int) {
 	t := newArrLiteralToken(elems)
 	return t, endIndex
 }
-
-
