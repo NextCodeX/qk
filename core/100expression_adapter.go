@@ -5,8 +5,8 @@ type ValueReceiver interface {
 }
 
 type ExpressionAdapter struct {
-	ts     []Token
 	parent Function
+	SourceCodeImpl
 	ValueStack
 }
 
@@ -27,13 +27,6 @@ func (ea *ExpressionAdapter) setVar(name string, value Value) {
 	}
 }
 
-func (ea *ExpressionAdapter) raw() []Token {
-	return ea.ts
-}
-func (ea *ExpressionAdapter) setRaw(ts []Token) {
-	ea.ts = ts
-}
-
 func (ea *ExpressionAdapter) setParent(p Function) {
 	ea.ValueStack.cur = p
 	ea.parent = p
@@ -47,7 +40,7 @@ func (ea *ExpressionAdapter) evalAssign(priExpr Expression, res Value) {
 	if expr, ok := priExpr.(ValueReceiver); ok {
 		expr.beAssigned(res)
 	} else {
-		errorf("invalid assign expression: %v[%v] = %v", priExpr, tokensString(priExpr.raw()), res.val())
+		errorf("invalid assign expression: %v[%v] = %v", priExpr, tokensString(priExpr.tokenList()), res.val())
 	}
 }
 

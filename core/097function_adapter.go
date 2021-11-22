@@ -12,20 +12,15 @@ func (f *FunctionAdapter) init(name string, obj Function) {
 	f.instance = obj
 	f.StatementAdapter.initStatement(obj)
 }
-func (f *FunctionAdapter) setArgs(args interface{}) {
-	if f1, ok := f.instance.(*InternalFunction); ok {
-		f1.setGoArgs(args.([]interface{}))
-	} else if f2, ok := f.instance.(*CustomFunction); ok {
-		f2.setQkArgs(args.([]Value))
-	}
+func (f *FunctionAdapter) setArgs([]Value) {}
+
+func (f *FunctionAdapter) varList() Variables {
+	return nil
 }
 func (f *FunctionAdapter) parentFrame() Frame {
 	return f.instance.getParent()
 }
 
-func (f *FunctionAdapter) varList() Variables {
-	return nil
-}
 func (f *FunctionAdapter) val() interface{} {
 	return f.instance
 }

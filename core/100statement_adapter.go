@@ -3,8 +3,9 @@ package core
 type StatementAdapter struct {
 	owner  Statement   // 具体Statement的引用
 	parent Function    // 父引用
-	ts     []Token     // 原始Token列表
 	block  []Statement // 执行语句列表
+
+	SourceCodeImpl
 	StatementExecutor
 	ValueStack
 }
@@ -33,27 +34,18 @@ func (stmtAdapter *StatementAdapter) getStack() Function {
 func (stmtAdapter *StatementAdapter) parse() {
 }
 
-func (stmtAdapter *StatementAdapter) tokenList() []Token {
-	return stmtAdapter.ts
-}
-
-func (stmtAdapter *StatementAdapter) setTokenList(ts []Token) {
-	stmtAdapter.ts = ts
-}
-
 func (stmtAdapter *StatementAdapter) tokenAppend(t Token) {
-	stmtAdapter.ts = append(stmtAdapter.ts, t)
+	stmtAdapter.tokens = append(stmtAdapter.tokens, t)
 }
 
 func (stmtAdapter *StatementAdapter) stmts() []Statement {
 	return stmtAdapter.block
 }
+func (stmtAdapter *StatementAdapter) setStatements(stmts []Statement) {
+	stmtAdapter.block = stmts
+}
 
 func (stmtAdapter *StatementAdapter) addStmt(stmt Statement) {
-	// 将stack逐级往下传递
-	stack := stmtAdapter.getStack()
-	stmt.setParent(stack)
-
 	// 将子statement添加至当前statement列表
 	stmtAdapter.block = append(stmtAdapter.block, stmt)
 }

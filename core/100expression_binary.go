@@ -427,7 +427,7 @@ func (binExpr *BinaryExpressionImpl) evalAddBinaryExpression() (res Value) {
 		tmpVal = fmt.Sprintf("%v%v", left.val(), right.val())
 
 	default:
-		runtimeExcption("invalid binary expression:", left.val(), "+", right.val(), " -> ", tokensString(binExpr.raw()))
+		runtimeExcption("invalid binary expression:", left.val(), "+", right.val(), " -> ", tokensString(binExpr.tokenList()))
 	}
 
 	res = newQKValue(tmpVal)

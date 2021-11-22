@@ -1,5 +1,7 @@
 package core
 
+import "fmt"
+
 type CustomFunction struct {
 	paramNames []string // 形参名列表
 	args       []Value  // 实参列表
@@ -15,22 +17,21 @@ func newMainFunction() *CustomFunction {
 func newCustomFunction(name string, ts []Token, paramNames []string) *CustomFunction {
 	f := &CustomFunction{}
 	f.init(name, f)
-	f.StatementAdapter.ts = ts
+	f.setTokenList(ts)
 	f.paramNames = paramNames
+	f.localVars = newVariables()
 	return f
 }
 
 // 初始化内置变量
 func (fn *CustomFunction) setInternalVars(vars map[string]Value) {
-	// 初始化main函数本地变量池
-	fn.localVars = newVariables()
 	for name, val := range vars {
 		fn.localVars.add(name, val)
 	}
 }
 
 // 调用自定义函数前， 初始化函数本地变量池
-func (fn *CustomFunction) setQkArgs(args []Value) {
+func (fn *CustomFunction) setArgs(args []Value) {
 	// 每次执行自定义函数前，初始化本地变量池
 	fn.localVars = newVariables()
 	fn.args = args
@@ -48,7 +49,8 @@ func (fn *CustomFunction) setQkArgs(args []Value) {
 }
 
 func (fn *CustomFunction) execute() StatementResult {
-	if fn.localVars == nil || (fn.name != "main" && len(fn.paramNames) < 1) {
+	if fn.name != "main" && len(fn.paramNames) < 1 {
+		// 每次匿名函数调用时，重新初始化局部变量表
 		fn.localVars = newVariables()
 	}
 
@@ -57,4 +59,8 @@ func (fn *CustomFunction) execute() StatementResult {
 
 func (fn *CustomFunction) varList() Variables {
 	return fn.localVars
+}
+
+func (fn *CustomFunction) ptr() string {
+	return fmt.Sprintf("%p", fn)
 }

@@ -46,14 +46,14 @@ func (priExpr *ChainCallPrimaryExpression) exprExec(chainExprs []PrimaryExpressi
 				intermediateResult = nextExpr.getField(obj)
 
 			} else {
-				errorf("%v.%v is error", caller.val(), tokensString(pri.raw()))
+				errorf("%v.%v is error", caller.val(), tokensString(pri.tokenList()))
 			}
 		} else {
-			runtimeExcption("invalid chain call expression:", tokensString(priExpr.raw()))
+			runtimeExcption("invalid chain call expression:", tokensString(priExpr.tokenList()))
 		}
 
 		if intermediateResult == nil {
-			runtimeExcption("invalid chain call expression:", tokensString(priExpr.raw()))
+			runtimeExcption("invalid chain call expression:", tokensString(priExpr.tokenList()))
 		} else {
 			caller = intermediateResult
 		}
@@ -78,6 +78,6 @@ func (priExpr *ChainCallPrimaryExpression) beAssigned(res Value) {
 		subExpr.beAssignedAfterChainCall(clazz, res)
 
 	} else {
-		errorf("(in ChainCall)invalid assign expression: %v = %v", tokensString(priExpr.raw()), res.val())
+		errorf("(in ChainCall)invalid assign expression: %v = %v", tokensString(priExpr.tokenList()), res.val())
 	}
 }

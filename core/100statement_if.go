@@ -18,7 +18,7 @@ func newMultiIfStatement(condStmts []Statement, defStmt Statement) Statement {
 func newSingleIfStatement(condTokens, bodyTokens []Token) Statement {
 	stmt := &IfStatement{}
 	stmt.condExpr = extractExpression(condTokens)
-	stmt.ts = bodyTokens
+	stmt.setTokenList(bodyTokens)
 	stmt.initStatement(stmt)
 	return stmt
 }

@@ -1,41 +1,10 @@
 package core
 
 import (
-	"runtime"
-	"time"
+	"sync"
 )
 
-//var goroutineWaiter = &sync.WaitGroup{}
-
-var goroutineManager = newGoroutineManager()
-var void = struct{}{}
-
-type GoroutineManager struct {
-	count chan struct{}
-}
-
-func newGoroutineManager() *GoroutineManager {
-	count := make(chan struct{}, runtime.NumCPU()*4)
-	return &GoroutineManager{count: count}
-}
-
-func (gm *GoroutineManager) incr() {
-	gm.count <- void
-}
-
-func (gm *GoroutineManager) decr() {
-	<-gm.count
-}
-
-func (gm *GoroutineManager) wait() {
-	duration := time.Duration(2) * time.Millisecond
-	ticker := time.NewTicker(duration)
-	for range ticker.C {
-		if len(gm.count) < 1 {
-			return
-		}
-	}
-}
+var goroutineWaiter = &sync.WaitGroup{}
 
 func (fns *InternalFunctionSet) Async(args []interface{}) Function {
 	if len(args) < 1 {
@@ -55,13 +24,12 @@ func (fns *InternalFunctionSet) Async(args []interface{}) Function {
 
 	res := make(chan Value, 1)
 
+	goroutineWaiter.Add(1)
 	go func(action Function) {
 		defer catch()
-		goroutineManager.incr()
-		defer goroutineManager.decr()
+		defer goroutineWaiter.Done()
 
 		val := action.execute()
-		//fmt.Printf("cur=%p \n", fn.getCurrentStack())
 		if val == nil {
 			res <- nil
 		} else {

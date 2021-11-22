@@ -28,15 +28,10 @@ func (priExpr *FunctionCallPrimaryExpression) doExecute() Value {
 
 func (priExpr *FunctionCallPrimaryExpression) callFunc(fn Function) Value {
 	if f1, ok := fn.(*InternalFunction); ok {
-		f1.setArgs(evalGoValues(priExpr.args))
+		f1.setGoArgs(evalGoValues(priExpr.args))
 	} else if f2, ok := fn.(*CustomFunction); ok {
 		f2.setArgs(evalQKValues(priExpr.args))
 	}
 
-	r := fn.execute()
-	if r != nil {
-		return r.value()
-	} else {
-		return NULL
-	}
+	return fn.execute().value()
 }

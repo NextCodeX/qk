@@ -21,7 +21,7 @@ func (priExpr *SelfDecrPrimaryExpression) doExecute() Value {
 	} else if f, ok := origin.(*FloatValue); ok {
 		tmp = f.goValue - 1
 	} else {
-		runtimeExcption("invalid SelfDecr Operation: ", tokensString(priExpr.raw()), origin)
+		runtimeExcption("invalid SelfDecr Operation: ", tokensString(priExpr.tokenList()), origin)
 	}
 	res := newQKValue(tmp)
 	priExpr.evalAssign(priExpr.expr, res)

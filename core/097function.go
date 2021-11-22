@@ -9,5 +9,5 @@ type Function interface {
 	Frame
 	Statement
 	Value
-	setArgs(args interface{})
+	setArgs([]Value)
 }

@@ -3,13 +3,14 @@ package core
 type Statement interface {
 	addStmt(stmt Statement) // 添加子statement, 并将stack传递给 子statement
 	stmts() []Statement
-	tokenList() []Token
-	setTokenList(ts []Token)
+	setStatements(stmts []Statement)
+
+	SourceCode
 	tokenAppend(t Token)
+
+	getStack() Function   //函数返回自己，语句返回父函数
 	setParent(p Function) // 等同于setStack()
 	getParent() Function
-
-	setVar(name string, value Value)
 
 	parse() // 解析 各子statement, expression; 并将stack传递给 它们
 	execute() StatementResult

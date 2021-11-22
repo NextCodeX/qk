@@ -8,7 +8,7 @@ func Run(bs []byte) {
 
 	// 词法分析
 	ts := ParseTokens(bs)
-	printTokensByLine(ts)
+	//printTokensByLine(ts)
 
 	// 语法分析(解析)
 	mainFunc.setTokenList(ts)
@@ -19,8 +19,7 @@ func Run(bs []byte) {
 	mainFunc.execute()
 
 	// 等待所有协程执行完，再结束程序
-	//goroutineWaiter.Wait()
-	goroutineManager.wait()
+	goroutineWaiter.Wait()
 }
 
 // 指定变量𣏾, 执行qk代码片段.

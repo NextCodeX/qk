@@ -27,10 +27,9 @@ func cronStart() {
 	}
 
 	cronRunning = true
-	//goroutineWaiter.Add(1)
+	goroutineWaiter.Add(1)
 	go func() {
-		goroutineManager.incr()
-		defer goroutineManager.decr()
+		defer goroutineWaiter.Done()
 
 		qkcron.Run()
 	}()

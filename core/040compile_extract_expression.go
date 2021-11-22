@@ -34,7 +34,7 @@ func extractExpression(ts []Token) Expression {
 	if expr == nil {
 		runtimeExcption("failed to extract expression from token list: ", len(ts), tokensString(ts))
 	} else {
-		expr.setRaw(ts)
+		expr.setTokenList(ts)
 	}
 	return expr
 }
@@ -86,7 +86,6 @@ func parseMultivariateExpression(ts []Token) Expression {
 	}
 
 	expr = &MultiExpressionImpl{list: exprs, finalExpr: finalExpr}
-	expr.setRaw(ts)
 	return expr
 }
 
@@ -140,7 +139,7 @@ func generateBinaryExpr(ts []Token) BinaryExpression {
 		expr = parseBinaryExpression(ts)
 	}
 
-	expr.setRaw(ts)
+	expr.setTokenList(ts)
 	return expr
 }
 
@@ -339,7 +338,7 @@ func parseBinaryExpression(ts []Token) BinaryExpression {
 	}
 
 	expr := &BinaryExpressionImpl{t: op, left: left, right: right}
-	expr.setRaw(ts)
+	expr.setTokenList(ts)
 	return expr
 }
 

@@ -1,6 +1,5 @@
 package core
 
-
 type SelfIncrPrimaryExpression struct {
 	NestedPrimaryExpression
 	PrimaryExpressionImpl
@@ -22,7 +21,7 @@ func (priExpr *SelfIncrPrimaryExpression) doExecute() Value {
 	} else if f, ok := origin.(*FloatValue); ok {
 		tmp = f.goValue + 1
 	} else {
-		runtimeExcption("invalid SelfIncr operation: ", tokensString(priExpr.raw()), origin)
+		runtimeExcption("invalid SelfIncr operation: ", tokensString(priExpr.tokenList()), origin)
 	}
 	res := newQKValue(tmp)
 	priExpr.evalAssign(priExpr.expr, res)

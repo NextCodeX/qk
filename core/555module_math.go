@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// return absolute value of raw
+// return absolute value of tokenList
 func (fns *InternalFunctionSet) Abs(raw interface{}) (res interface{}) {
 	switch num := raw.(type) {
 	case int:

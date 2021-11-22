@@ -1,20 +1,20 @@
 package core
 
 type MultiStatement struct {
-    StatementAdapter
+	StatementAdapter
 }
 
 func newMultiStatement(ts []Token) Statement {
-    stmt := &MultiStatement{}
-    stmt.ts = ts
-    stmt.initStatement(stmt)
-    return stmt
+	stmt := &MultiStatement{}
+	stmt.setTokenList(ts)
+	stmt.initStatement(stmt)
+	return stmt
 }
 
 func (stmt *MultiStatement) parse() {
-    Compile(stmt)
+	Compile(stmt)
 }
 
 func (stmt *MultiStatement) execute() StatementResult {
-    return stmt.executeStatementList(stmt.block, StmtListTypeNormal)
+	return stmt.executeStatementList(stmt.block, StmtListTypeNormal)
 }

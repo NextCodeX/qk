@@ -54,7 +54,7 @@ func (priExpr *ElemFunctionCallPrimaryExpression) exprExec(chainExprs []PrimaryE
 		if currentObj.isNULL() {
 			if _, ok := chain[0].(*FunctionCallPrimaryExpression); ok {
 				headExpr := priExpr.head.(*VarPrimaryExpression)
-				errorf("%v %v() is undefined", line(headExpr.raw()), headExpr.varname)
+				errorf("%v %v() is undefined", line(headExpr.tokenList()), headExpr.varname)
 			}
 		}
 	}
@@ -66,7 +66,7 @@ func (priExpr *ElemFunctionCallPrimaryExpression) runScopeChain(currentObj Value
 	for _, subExpr := range chain {
 
 		if currentObj == nil {
-			errorf("invalid expression: null%v", tokensString(subExpr.raw()))
+			errorf("invalid expression: null%v", tokensString(subExpr.tokenList()))
 			break
 		}
 
@@ -120,7 +120,7 @@ func (priExpr *ElemFunctionCallPrimaryExpression) runScopeChain(currentObj Value
 		if intermediateVal != nil {
 			currentObj = intermediateVal
 		} else {
-			runtimeExcption("failed to run Element and Function Call Mixture: %v%v", currentObj.val(), tokensString(priExpr.raw()))
+			runtimeExcption("failed to run Element and Function Call Mixture: %v%v", currentObj.val(), tokensString(priExpr.tokenList()))
 		}
 	}
 
@@ -131,11 +131,11 @@ func (priExpr *ElemFunctionCallPrimaryExpression) runScopeChain(currentObj Value
 func (priExpr *ElemFunctionCallPrimaryExpression) runWith(obj Object) Value {
 	varExpr, ok := priExpr.head.(*VarPrimaryExpression)
 	if !ok {
-		errorf("%v.%v is error", obj.typeName(), tokensString(priExpr.raw()))
+		errorf("%v.%v is error", obj.typeName(), tokensString(priExpr.tokenList()))
 	}
 	currentObj := varExpr.getField(obj)
 	if currentObj == nil || currentObj.isNULL() {
-		errorf("%v %v(%v).%v is undefined", line(varExpr.raw()), obj, obj.typeName(), varExpr.varname)
+		errorf("%v %v(%v).%v is undefined", line(varExpr.tokenList()), obj, obj.typeName(), varExpr.varname)
 	}
 	return priExpr.runScopeChain(currentObj, priExpr.chain)
 }
@@ -144,7 +144,7 @@ func (priExpr *ElemFunctionCallPrimaryExpression) runWith(obj Object) Value {
 func (priExpr *ElemFunctionCallPrimaryExpression) beAssignedAfterChainCall(obj Object, res Value) {
 	varExpr, ok := priExpr.head.(*VarPrimaryExpression)
 	if !ok {
-		errorf("object.%v is error", tokensString(priExpr.raw()))
+		errorf("object.%v is error", tokensString(priExpr.tokenList()))
 	}
 	currentObj := varExpr.getField(obj)
 	chainExprs := priExpr.chain
@@ -176,6 +176,6 @@ func (priExpr *ElemFunctionCallPrimaryExpression) set(obj Value, tailExpr Primar
 		elemExpr.assignToArr(jsonArray, res)
 
 	} else {
-		errorf("(in elem&fn call v1)invalid assign expression: %v = %v", tokensString(priExpr.raw()), res.val())
+		errorf("(in elem&fn call v1)invalid assign expression: %v = %v", tokensString(priExpr.tokenList()), res.val())
 	}
 }

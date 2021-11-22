@@ -36,6 +36,9 @@ func extractStatement(stmt Statement) {
 	loopEnd:
 		if endIndex > 0 {
 			if subStmt != nil {
+				// 将stack逐级往下传递
+				stack := stmt.getStack()
+				subStmt.setParent(stack)
 				stmt.addStmt(subStmt)
 			}
 			i = endIndex

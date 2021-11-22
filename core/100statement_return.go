@@ -12,8 +12,8 @@ func newReturnStatement() Statement {
 }
 
 func (stmt *ReturnStatement) parse() {
-	if len(stmt.ts) > 0 {
-		stmt.expr = extractExpression(stmt.ts)
+	if len(stmt.tokenList()) > 0 {
+		stmt.expr = extractExpression(stmt.tokenList())
 	}
 	if stmt.expr != nil {
 		stmt.expr.setParent(stmt.getStack())
