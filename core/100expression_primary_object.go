@@ -45,7 +45,7 @@ func (priExpr *ObjectPrimaryExpression) doExecute() Value {
 		}
 
 		token := ts[i]
-		keyname := token.(*TokenAdapter).String()
+		keyname := token.String()
 
 		expr := extractExpression(exprTokens)
 		expr.setParent(priExpr.getParant())

@@ -17,15 +17,17 @@ type HttpResponse struct {
 }
 
 func newHttpResponse(resp *http.Response) Value {
-	body, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		runtimeExcption(err)
-	}
-	defer resp.Body.Close()
-	obj := &HttpResponse{body: body, cookies: resp.Cookies()}
+	obj := &HttpResponse{cookies: resp.Cookies()}
 	obj.status = resp.Status
 	obj.statusCode = resp.StatusCode
 	obj.headers = resp.Header
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println(resp.StatusCode, err)
+		obj.statusCode = 504
+	}
+	obj.body = body
+	defer resp.Body.Close()
 	return newClass("HttpResponse", &obj)
 }
 
@@ -95,13 +97,15 @@ func (resp *HttpResponse) Save(path string) {
 func (resp *HttpResponse) String() string {
 	return string(resp.body)
 }
-
 func (resp *HttpResponse) Str() string {
 	return resp.String()
 }
 
 func (resp *HttpResponse) Bytes() []byte {
 	return resp.body
+}
+func (resp *HttpResponse) Bs() []byte {
+	return resp.Bytes()
 }
 
 func (resp *HttpResponse) Pretty() {
@@ -111,6 +115,9 @@ func (resp *HttpResponse) Pretty() {
 		fmt.Println("response action is not json type")
 	}
 	fmt.Println(out.String())
+}
+func (resp *HttpResponse) Pr() {
+	resp.Pretty()
 }
 
 func (resp *HttpResponse) Json() interface{} {

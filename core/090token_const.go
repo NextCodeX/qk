@@ -2,7 +2,6 @@ package core
 
 import (
 	"bytes"
-	"fmt"
 	"strconv"
 )
 
@@ -85,12 +84,6 @@ func (t *StrToken) toExpr() PrimaryExpression {
 		return newDynamicStrPrimaryExpression(t.val.(string))
 	}
 	return newConstPrimaryExpression(newQKValue(t.val))
-}
-func (t *StrToken) String() string {
-	if t.dynamic {
-		return fmt.Sprintf("`%v`", t.val)
-	}
-	return fmt.Sprintf("%q", t.val)
 }
 func (t *StrToken) strEscape(raw string) string {
 	var buf bytes.Buffer

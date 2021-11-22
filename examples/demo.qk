@@ -1,4 +1,8 @@
+obj = {
+name:"changlie",
+"age":98,
+233:980,
+false:false
+}
 
-
-
-
+obj.pr()
