@@ -1,8 +1,10 @@
-obj = {
-name:"changlie",
-"age":98,
-233:980,
-false:false
-}
+dir = "/home/xp/Pictures/wallpaper/"
 
-obj.pr()
+fs = fscan(dir)
+count = 1
+forv abspath : fs {
+    name = abspath[abspath.lastIndex("/")+1:]
+    suffix = name[name.index("."):]
+    cmd(`mv ${abspath} ${dir}/${count}${suffix}`)
+    count++
+}
