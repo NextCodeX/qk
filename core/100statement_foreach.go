@@ -56,11 +56,11 @@ func (stmt *ForeachStatement) execute() StatementResult {
 
 		if stmt.t != ForeachValue {
 			i := newQKValue(index)
-			stmt.setVar(stmt.indexName, i)
+			stmt.setLocalVar(stmt.indexName, i)
 		}
 		if stmt.t != ForeachIndex {
 			item := itr.getItem(index)
-			stmt.setVar(stmt.valueName, item)
+			stmt.setLocalVar(stmt.valueName, item)
 		}
 
 		res = stmt.executeStatementList(stmt.block, StmtListTypeFor)

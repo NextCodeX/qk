@@ -42,3 +42,7 @@ func (vs *ValueStack) setVar(name string, value Value) {
 		vs.cur.varList().add(name, value)
 	}
 }
+
+func (vs *ValueStack) setLocalVar(name string, value Value) {
+	vs.cur.varList().add(name, value)
+}

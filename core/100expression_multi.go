@@ -34,7 +34,7 @@ func (mulExpr *MultiExpressionImpl) setParent(p Function) {
 
 func (mulExpr *MultiExpressionImpl) execute() Value {
 	// 每次执行多元表达式之前，初始化临时变量池
-	mulExpr.setVar(tmpVarsKey, emptyJsonObject())
+	mulExpr.setLocalVar(tmpVarsKey, emptyJsonObject())
 	//defer func() {mulExpr.setVar(tmpVarsKey, nil)}()
 
 	res := mulExpr.recursiveEvalMultiExpression(mulExpr.finalExpr, mulExpr.list)

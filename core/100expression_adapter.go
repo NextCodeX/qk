@@ -5,9 +5,15 @@ type ValueReceiver interface {
 }
 
 type ExpressionAdapter struct {
-	parent Function
+	parent     Function
+	localScope bool
+
 	SourceCodeImpl
 	ValueStack
+}
+
+func (ea *ExpressionAdapter) setLocalScope() {
+	ea.localScope = true
 }
 
 func (ea *ExpressionAdapter) getVar(name string) Value {
@@ -23,6 +29,10 @@ func (ea *ExpressionAdapter) setVar(name string, value Value) {
 		tmpVars := ea.ValueStack.getVar(tmpVarsKey)
 		goObj(tmpVars).put(name, value)
 	} else {
+		if ea.localScope {
+			ea.ValueStack.setLocalVar(name, value)
+			return
+		}
 		ea.ValueStack.setVar(name, value)
 	}
 }

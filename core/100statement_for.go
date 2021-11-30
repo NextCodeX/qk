@@ -19,6 +19,7 @@ func newForStatement(pre, cond, post []Token) Statement {
 func (stmt *ForStatement) parse() {
 	if stmt.preExprTokens != nil {
 		stmt.preExpr = extractExpression(stmt.preExprTokens)
+		stmt.preExpr.setLocalScope()
 		stmt.preExpr.setParent(stmt.getStack())
 	}
 	if stmt.condExprTokens != nil {
