@@ -105,8 +105,15 @@ func (binExpr *BinaryExpressionImpl) setParent(p Function) {
 	binExpr.ExpressionAdapter.setParent(p)
 
 	binExpr.left.setParent(p)
+	if binExpr.localScope {
+		binExpr.left.setLocalScope()
+	}
+
 	binExpr.right.setParent(p)
 	if binExpr.receiver != nil {
+		if binExpr.localScope {
+			binExpr.receiver.setLocalScope()
+		}
 		binExpr.receiver.setParent(p)
 	}
 }

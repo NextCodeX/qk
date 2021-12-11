@@ -27,6 +27,10 @@ func (priExpr *VarPrimaryExpression) getField(obj Object) Value {
 }
 
 func (priExpr *VarPrimaryExpression) beAssigned(res Value) {
+	if priExpr.localScope {
+		priExpr.setLocalVar(priExpr.varname, res)
+		return
+	}
 	priExpr.setVar(priExpr.varname, res)
 }
 

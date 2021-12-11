@@ -372,7 +372,7 @@ func (lexer *Lexer) pushLongToken() {
 // 关键字判断
 func isKeyWord(str string) bool {
 	switch str {
-	case "if", "elif", "else", "for", "foreach", "forv", "fori", "switch", "break", "continue", "return":
+	case "var", "if", "elif", "else", "for", "foreach", "forv", "fori", "switch", "break", "continue", "return":
 		return true
 	}
 	return false

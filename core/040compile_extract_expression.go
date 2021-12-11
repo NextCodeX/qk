@@ -5,17 +5,32 @@ func extractExpression(ts []Token) Expression {
 
 	// 去括号
 	ts = clearParentheses(ts)
+	var localFlag bool
+	if ts[0].assertKey("var") {
+		localFlag = true
+		ts = ts[1:]
+	}
+
 	tlen := len(ts)
 	if tlen < 1 {
 		return expr
 	}
 	if tlen%2 == 0 {
-		errorf("failed to extract expression from token list: %v[%v]", tokensString(ts), len(ts))
+		errorf("invalid expression: %v[%v]", tokensString(ts), len(ts))
 	}
 
 	if hasSymbol(ts, "?") {
 		// 解析三目运算符 ?:
-		return parseTernaryOperator(ts)
+		expr = parseTernaryOperator(ts)
+	} else if hasSymbol(ts, ",") {
+		// 多项赋值
+		expr = parseMultiAssigned(ts)
+	}
+	if expr != nil {
+		if localFlag {
+			expr.setLocalScope()
+		}
+		return expr
 	}
 
 	switch {
@@ -34,9 +49,50 @@ func extractExpression(ts []Token) Expression {
 	if expr == nil {
 		runtimeExcption("failed to extract expression from token list: ", len(ts), tokensString(ts))
 	} else {
+		if localFlag {
+			expr.setLocalScope()
+		}
 		expr.setTokenList(ts)
 	}
 	return expr
+}
+
+// e.g. a, b, c = arr[0], arr[1], arr[2]
+func parseMultiAssigned(ts []Token) Expression {
+	var res Expression
+	var receivers, list []Expression
+
+	if !hasSymbol(ts, "=") {
+		receivers = parseMultiItem(ts)
+		res = newMultiAssignedPrimaryExpression(receivers, list)
+		return res
+	}
+
+	midIndex := nextSymbolIndex(ts, 0, "=")
+	receivers = parseMultiItem(ts[:midIndex])
+	list = parseMultiItem(ts[midIndex+1:])
+
+	if len(receivers) != len(list) {
+		runtimeExcption("invalid expression: ", tokensString(ts))
+	}
+	res = newMultiAssignedPrimaryExpression(receivers, list)
+	return res
+}
+
+func parseMultiItem(ts []Token) []Expression {
+	var res []Expression
+	curIndex := 0
+	endIndex := nextSymbolIndex(ts, curIndex, ",")
+	for endIndex > -1 {
+		item := extractExpression(ts[curIndex:endIndex])
+		res = append(res, item)
+
+		curIndex = endIndex + 1
+		endIndex = nextSymbolIndex(ts, curIndex, ",")
+	}
+	item := extractExpression(ts[curIndex:])
+	res = append(res, item)
+	return res
 }
 
 // 解析三目运算符 ?:

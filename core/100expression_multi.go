@@ -26,6 +26,9 @@ func (mulExpr *MultiExpressionImpl) setParent(p Function) {
 	mulExpr.ExpressionAdapter.setParent(p)
 
 	for _, subExpr := range mulExpr.list {
+		if mulExpr.localScope {
+			subExpr.setLocalScope()
+		}
 		subExpr.setParent(p)
 	}
 
