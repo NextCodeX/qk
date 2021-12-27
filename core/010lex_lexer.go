@@ -77,7 +77,7 @@ func (lexer *Lexer) run() []Token {
 		case b == '`':
 			lexer.whenDynamicStringLiterial()
 		default:
-			errorf("line%v: unexpected character %v", lexer.lineIndex, b)
+			errorf("line%v: unexpected character %v", lexer.lineIndex, string(b))
 		}
 	}
 	lexer.pushLongToken()

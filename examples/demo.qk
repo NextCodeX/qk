@@ -1,33 +1,4 @@
 
-a, b = 998, "tom"
 
-echo(a, b, "start")
-
-demo() {
-    var a, b = true, now()
-    echo(a, b)
-}
-demo2() {
-    echo("-----------------")
-    echo(a, b, "20")
-    var a, b
-    echo(a, b, "21")
-    a = 999
-    b = 111
-    echo(a, b, "29")
-    echo("-----------------")
-}
-demo3() {
-    echo("-----------------")
-    echo(a, b, "demo3")
-    var a = "xxx"
-    var b = "AAA"
-    echo(a, b, "demo3")
-    echo("-----------------")
-}
-
-demo()
-demo2()
-demo3()
-echo(a, b, "finally")
-
+s = "hello world"
+echo(s)

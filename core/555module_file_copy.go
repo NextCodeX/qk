@@ -34,11 +34,17 @@ func (fns *InternalFunctionSet) Cp(src, dst string) {
 		return
 	}
 
+
 	srcStat, err := os.Stat(src)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
+	if !srcStat.IsDir() && !fileExist(dst) {
+		copyFile(src, dst)
+		return
+	}
+
 	dstStat, err := os.Stat(dst)
 	if err != nil {
 		fmt.Println(err)
@@ -47,6 +53,7 @@ func (fns *InternalFunctionSet) Cp(src, dst string) {
 	if srcStat.IsDir() && !dstStat.IsDir() {
 		runtimeExcption("error: src is directory, dst is file")
 	}
+
 }
 
 func copyFile(src string, dst string) {
