@@ -1,6 +1,31 @@
 package core
 
+import (
+	"fmt"
+	"io/ioutil"
+	"time"
+)
+
 var mainFunc = newMainFunction()
+
+// 启动Quick解释器
+func Start() {
+	startupTime := time.Now().UnixNano()
+	//qkfile := "examples/demo.qk"
+	qkfile := findScriptFile()
+
+	bs, err := ioutil.ReadFile(qkfile)
+	if err != nil {
+		errorf("failed to read %v;\n error info: %v", qkfile, err)
+	}
+	setRootDir(qkfile)
+	Run(bs)
+
+	if IsCost {
+		duration := time.Now().UnixNano() - startupTime
+		fmt.Printf("\n\nspend: %vns, %.3fms, %.3fs  \n", duration, float64(duration)/1e6, float64(duration)/1e9)
+	}
+}
 
 // 脚本解析执行
 func Run(bs []byte) {
@@ -15,6 +40,7 @@ func Run(bs []byte) {
 	Compile(mainFunc)
 
 	// 程序执行
+	initInternalVars()
 	mainFunc.setInternalVars(internalVars)
 	mainFunc.execute()
 

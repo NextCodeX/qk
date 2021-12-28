@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 )
 
@@ -98,4 +99,31 @@ func (f *QKFile) Flush() {
 	if err != nil {
 		fmt.Println(err)
 	}
+}
+
+// 文件信息对象
+type FileInfo struct {
+	absolutePath string
+	info         fs.FileInfo
+}
+
+func newFileInfo(absPath string, info fs.FileInfo) *FileInfo {
+	return &FileInfo{absolutePath: absPath, info: info}
+}
+
+func (fi *FileInfo) IsDir() bool {
+	fi.info.Size()
+	return fi.info.IsDir()
+}
+
+func (fi *FileInfo) Name() string {
+	return fi.info.Name()
+}
+
+func (fi *FileInfo) Path() string {
+	return fi.absolutePath
+}
+
+func (fi *FileInfo) Size() int64 {
+	return fi.info.Size()
 }

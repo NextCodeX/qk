@@ -23,11 +23,13 @@ func newCustomFunction(name string, ts []Token, paramNames []string) *CustomFunc
 	return f
 }
 
-// 初始化内置变量
+// 初始化内置变量/函数
 func (fn *CustomFunction) setInternalVars(vars map[string]Value) {
 	for name, val := range vars {
 		fn.localVars.add(name, val)
 	}
+	// 防止内置变量函数被覆盖无法使用，多提供一种方法以供调用
+	fn.localVars.add("_qk", jsonObject(vars))
 }
 
 // 调用自定义函数前， 初始化函数本地变量池

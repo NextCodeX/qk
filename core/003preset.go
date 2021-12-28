@@ -3,14 +3,13 @@ package core
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 )
 
-// 用于加载内置变量与内置函数
 var internalVars = make(map[string]Value)
 
-func init() {
+// 用于加载内置变量与内置函数
+func initInternalVars() {
 	// 添加命令行参数
 	rawCmdArgs := os.Args
 	if len(rawCmdArgs) > 2 {
@@ -25,7 +24,7 @@ func init() {
 
 	// 提供qk执行文件所在的目录
 	if executable, err := os.Executable(); err == nil {
-		rootDir := path.Dir(executable)
+		rootDir := filepath.Dir(executable)
 		internalVars["qkDir"] = newQKValue(rootDir)
 	} else {
 		fmt.Println(err)
@@ -54,7 +53,7 @@ func init() {
 	}
 }
 
-func SetRootDir(scriptFileName string) {
+func setRootDir(scriptFileName string) {
 	// 提供当前脚本文件所在的目录
 	if dir, err := filepath.Abs(filepath.Dir(scriptFileName)); err == nil {
 		internalVars["root"] = newQKValue(dir)

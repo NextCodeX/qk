@@ -14,14 +14,6 @@ import (
 
 var regBlankChar = regexp.MustCompile(`\s+`)
 
-// 创建目录
-func (fns *InternalFunctionSet) Mkdir(dir string) {
-	err := os.MkdirAll(dir, os.ModePerm)
-	if err != nil {
-		fmt.Println("mkdir()", err)
-	}
-}
-
 // 读取文件所有内容，返回字节数组
 func (fns *InternalFunctionSet) Fbytes(filename string) []byte {
 	bs, err := ioutil.ReadFile(filename)
@@ -134,41 +126,6 @@ func (fns *InternalFunctionSet) Fargs(filename string) []interface{} {
 	return res
 }
 
-func (fns *InternalFunctionSet) Ls(dir string) []interface{} {
-	fs, err := ioutil.ReadDir(dir)
-	if err != nil {
-		fmt.Printf("failed to read path: %v, %v\n", dir, err.Error())
-		return nil
-	}
-	var res []interface{}
-	for _, f := range fs {
-		res = append(res, f.Name())
-	}
-	return res
-}
-
-func (fns *InternalFunctionSet) Mv(raw, target string) {
-	err := os.Rename(raw, target)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-}
-
-// 获取当前路径下的所有子文件路径，不包含子目录
-func (fns *InternalFunctionSet) Fscan(path string) []string {
-	var res []string
-	doScan(path, false, &res)
-	return res
-}
-
-// 获取当前路径下的所有子文件路径，包含子目录
-func (fns *InternalFunctionSet) FscanAll(path string) []string {
-	var res []string
-	doScan(path, true, &res)
-	return res
-}
-
 // 保存一个字符串或字节数组至指定文件（文件若已存在，清空其内容再保存）
 func (fns *InternalFunctionSet) Fsave(path string, content interface{}) {
 	var data []byte
@@ -211,4 +168,18 @@ func (fns *InternalFunctionSet) Fappend(path string, content interface{}) {
 	if err1 := fobj.Close(); err == nil && err1 != nil {
 		log.Fatal(fmt.Sprintf("failed to close file: %v, %v", path, err1.Error()))
 	}
+}
+
+// 获取当前路径下的所有子文件路径，不包含子目录
+func (fns *InternalFunctionSet) Fscan(path string) []string {
+	var res []string
+	doScan(path, false, &res)
+	return res
+}
+
+// 获取当前路径下的所有子文件/目录路径
+func (fns *InternalFunctionSet) FscanAll(path string) []string {
+	var res []string
+	doScan(path, true, &res)
+	return res
 }

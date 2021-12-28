@@ -3,10 +3,51 @@ package core
 import (
 	"fmt"
 	"io"
-	"io/fs"
+	"io/ioutil"
 	"os"
 	"strings"
 )
+
+// 与Linux命令：mkdir, ls, rm, mv, cp提供相似的功能
+// 创建目录
+func (fns *InternalFunctionSet) Mkdir(dir string) {
+	err := os.MkdirAll(dir, os.ModePerm)
+	if err != nil {
+		fmt.Println("mkdir()", err)
+	}
+}
+
+// 当前目录文件查看
+func (fns *InternalFunctionSet) Ls(dir string) []interface{} {
+	fs, err := ioutil.ReadDir(dir)
+	if err != nil {
+		fmt.Printf("failed to read path: %v, %v\n", dir, err.Error())
+		return nil
+	}
+	var res []interface{}
+	for _, f := range fs {
+		res = append(res, f.Name())
+	}
+	return res
+}
+
+// 删除文件或目录
+func (fns *InternalFunctionSet) Rm(path string) {
+	err := os.RemoveAll(path)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+}
+
+// 移动目录，文件； 或重命名目录，文件
+func (fns *InternalFunctionSet) Mv(raw, target string) {
+	err := os.Rename(raw, target)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+}
 
 // 功能与linux命令 cp 基本一致
 func (fns *InternalFunctionSet) Cp(src, dst string) {
@@ -33,7 +74,6 @@ func (fns *InternalFunctionSet) Cp(src, dst string) {
 		}
 		return
 	}
-
 
 	srcStat, err := os.Stat(src)
 	if err != nil {
@@ -69,25 +109,4 @@ func copyFile(src string, dst string) {
 	if err != nil {
 		panic(err)
 	}
-}
-
-type FileInfo struct {
-	absolutePath string
-	info         fs.FileInfo
-}
-
-func newFileInfo(absPath string, info fs.FileInfo) *FileInfo {
-	return &FileInfo{absolutePath: absPath, info: info}
-}
-
-func (fi *FileInfo) IsDir() bool {
-	return fi.info.IsDir()
-}
-
-func (fi *FileInfo) Name() string {
-	return fi.info.Name()
-}
-
-func (fi *FileInfo) AbsolutePath() string {
-	return fi.absolutePath
 }
