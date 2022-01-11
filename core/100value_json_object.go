@@ -110,16 +110,7 @@ func (obj *JSONObjectImpl) toJSONObjectString() string {
 	var i int
 	for k, v := range obj.valMap {
 		kstr := fmt.Sprintf("%q", k)
-		var rawVal interface{}
-		if v.isString() {
-			rawVal = fmt.Sprintf("%q", goStr(v))
-		} else if v.isJsonObject() {
-			rawVal = goObj(v).toJSONObjectString()
-		} else if v.isJsonArray() {
-			rawVal = goArr(v).toJSONArrayString()
-		} else {
-			rawVal = v.val()
-		}
+		rawVal := toJsonStrVal(v)
 		if i < 1 {
 			i++
 			res.WriteString(fmt.Sprintf("%v:%v", kstr, rawVal))
@@ -130,6 +121,23 @@ func (obj *JSONObjectImpl) toJSONObjectString() string {
 	res.WriteString("}")
 
 	return res.String()
+}
+
+func toJsonStrVal(v Value) interface{} {
+	var res interface{}
+	switch {
+	case v.isString():
+		res = fmt.Sprintf("%q", goStr(v))
+	case v.isJsonObject():
+		res = goObj(v).toJSONObjectString()
+	case v.isJsonArray():
+		res = goArr(v).toJSONArrayString()
+	case v.isInt() || v.isFloat() || v.isBoolean():
+		res = v.val()
+	default:
+		res = fmt.Sprintf("%q", fmt.Sprint(v))
+	}
+	return res
 }
 
 func (obj *JSONObjectImpl) indexs() []interface{} {

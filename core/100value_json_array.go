@@ -86,16 +86,7 @@ func (arr *JSONArrayImpl) toJSONArrayString() string {
 	var res bytes.Buffer
 	res.WriteString("[")
 	for i, item := range arr.valList {
-		var rawVal interface{}
-		if item.isString() {
-			rawVal = fmt.Sprintf("%q", goStr(item))
-		} else if item.isJsonObject() {
-			rawVal = goObj(item).toJSONObjectString()
-		} else if item.isJsonArray() {
-			rawVal = goArr(item).toJSONArrayString()
-		} else {
-			rawVal = item.val()
-		}
+		rawVal := toJsonStrVal(item)
 		if i < 1 {
 			res.WriteString(fmt.Sprintf("%v", rawVal))
 		} else {

@@ -104,11 +104,11 @@ func (hfs *HttpFileServer) initFileInfos() {
 	hfs.dirInitSize = fileSize(hfs.staticResourceDir)
 
 	hfs.fileModTimes = make(map[string]int64)
-	var fpaths []string
-	doScan(hfs.staticResourceDir, false, &fpaths)
-	for _, fpath := range fpaths {
-		if strings.HasSuffix(fpath, ".html") {
-			hfs.fileModTimes[fpath] = fileModTime(fpath)
+	var finfos []*FileInfo
+	doScanForInfo(hfs.staticResourceDir, &finfos)
+	for _, finfo := range finfos {
+		if strings.HasSuffix(finfo.Name(), ".html") {
+			hfs.fileModTimes[finfo.Path()] = finfo.Modtime()
 		}
 	}
 }

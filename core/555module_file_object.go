@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
+	"path/filepath"
 )
 
 // 打开文件，返回一个文件对象
@@ -103,17 +104,21 @@ func (f *QKFile) Flush() {
 
 // 文件信息对象
 type FileInfo struct {
-	absolutePath string
-	info         fs.FileInfo
+	parent string
+	info   fs.FileInfo
 }
 
-func newFileInfo(absPath string, info fs.FileInfo) *FileInfo {
-	return &FileInfo{absolutePath: absPath, info: info}
+func newFileInfo(parent string, info fs.FileInfo) *FileInfo {
+	return &FileInfo{parent: parent, info: info}
 }
 
 func (fi *FileInfo) IsDir() bool {
-	fi.info.Size()
 	return fi.info.IsDir()
+}
+
+// 文件/目录所在的当前目录
+func (fi *FileInfo) Dir() string {
+	return fi.parent
 }
 
 func (fi *FileInfo) Name() string {
@@ -121,9 +126,18 @@ func (fi *FileInfo) Name() string {
 }
 
 func (fi *FileInfo) Path() string {
-	return fi.absolutePath
+	return filepath.Join(fi.parent, fi.info.Name())
 }
 
 func (fi *FileInfo) Size() int64 {
 	return fi.info.Size()
+}
+
+// 毫秒时间戳
+func (fi *FileInfo) Modtime() int64 {
+	return fi.info.ModTime().Unix()
+}
+
+func (fi *FileInfo) String() string {
+	return filepath.Join(fi.parent, fi.info.Name())
 }

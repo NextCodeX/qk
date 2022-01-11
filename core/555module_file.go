@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -170,16 +171,19 @@ func (fns *InternalFunctionSet) Fappend(path string, content interface{}) {
 	}
 }
 
-// 获取当前路径下的所有子文件路径，不包含子目录
-func (fns *InternalFunctionSet) Fscan(path string) []string {
-	var res []string
-	doScan(path, false, &res)
-	return res
+// 指定路径的当前目录
+func (fns *InternalFunctionSet) Fdir(path string) string {
+	return filepath.Dir(path)
 }
 
-// 获取当前路径下的所有子文件/目录路径
-func (fns *InternalFunctionSet) FscanAll(path string) []string {
-	var res []string
-	doScan(path, true, &res)
-	return res
+// 获取当前路径下的所有子文件路径，不包含子目录
+func (fns *InternalFunctionSet) Fscan(path string) Value {
+	var tmp []*FileInfo
+	doScanForInfo(path, &tmp)
+	var res []Value
+	for _, item := range tmp {
+		fi := item
+		res = append(res, newClass("FileInfo", &fi))
+	}
+	return array(res)
 }
