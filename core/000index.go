@@ -18,6 +18,7 @@ func Start() {
 	if err != nil {
 		errorf("failed to read %v;\n error info: %v", qkfile, err)
 	}
+	bs = ignoreFirstLine(bs)
 	setRootDir(qkfile)
 	Run(bs)
 
@@ -25,6 +26,20 @@ func Start() {
 		duration := time.Now().UnixNano() - startupTime
 		fmt.Printf("\n\nspend: %vns, %.3fms, %.3fs  \n", duration, float64(duration)/1e6, float64(duration)/1e9)
 	}
+}
+
+func ignoreFirstLine(bs []byte) []byte {
+	if len(bs) < 1 {
+		return bs
+	}
+	if bs[0] == '#' {
+		for i, ch := range bs {
+			if ch == '\n' {
+				return bs[i+1:]
+			}
+		}
+	}
+	return bs
 }
 
 // 脚本解析执行
