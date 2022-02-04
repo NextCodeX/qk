@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -13,7 +14,15 @@ import (
 func findScriptFile() string {
 	cmdDir := getCmdDir()
 	if len(os.Args) > 1 {
-		arg := os.Args[1]
+		arg, err := filepath.Abs(os.Args[1])
+		if err != nil {
+			fmt.Println(err)
+			return ""
+		}
+		if fileExist(arg) {
+			return arg
+		}
+
 		// 允许运行脚本文件时，不指定脚本文件名。
 		if !strings.HasSuffix(arg, ".qk") {
 			arg = arg + ".qk"
