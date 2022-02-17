@@ -61,3 +61,14 @@ func setRootDir(scriptFileName string) {
 		fmt.Println(err)
 	}
 }
+
+// 返回所有内置函数及变量名称
+func (fns *InternalFunctionSet) Allfns() []string {
+	res := make([]string, len(internalVars))
+	i := 0
+	for k := range internalVars {
+		res[i] = k
+		i++
+	}
+	return res
+}

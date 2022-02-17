@@ -16,7 +16,6 @@ type JSONObject interface {
 	values() []Value
 	mapVal() map[string]Value
 	String() string
-	Pretty()
 	toJSONObjectString() string
 	Iterator
 	Value
@@ -87,17 +86,17 @@ func (obj *JSONObjectImpl) mapVal() map[string]Value {
 	return obj.valMap
 }
 
-func (obj *JSONObjectImpl) Pretty() {
+func (obj *JSONObjectImpl) Pretty() string {
 	uglyBody := obj.toJSONObjectString()
 	var out bytes.Buffer
 	err := json.Indent(&out, []byte(uglyBody), "", "  ")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(out.String())
+	return out.String()
 }
 func (obj *JSONObjectImpl) Pr() {
-	obj.Pretty()
+	fmt.Println(obj.Pretty())
 }
 
 func (obj *JSONObjectImpl) String() string {

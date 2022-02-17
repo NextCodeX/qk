@@ -15,7 +15,6 @@ type JSONArray interface {
 	checkOutofIndex(index int) bool
 	values() []Value
 	String() string
-	Pretty()
 	toJSONArrayString() string
 	Iterator
 	Value
@@ -69,17 +68,17 @@ func (arr *JSONArrayImpl) String() string {
 	return arr.toJSONArrayString()
 }
 
-func (arr *JSONArrayImpl) Pretty() {
+func (arr *JSONArrayImpl) Pretty() string {
 	uglyBody := arr.toJSONArrayString()
 	var out bytes.Buffer
 	err := json.Indent(&out, []byte(uglyBody), "", "  ")
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(out.String())
+	return out.String()
 }
 func (arr *JSONArrayImpl) Pr() {
-	arr.Pretty()
+	fmt.Println(arr.Pretty())
 }
 
 func (arr *JSONArrayImpl) toJSONArrayString() string {
@@ -95,6 +94,50 @@ func (arr *JSONArrayImpl) toJSONArrayString() string {
 	}
 	res.WriteString("]")
 	return res.String()
+}
+func (arr *JSONArrayImpl) Sort() Value {
+	size := len(arr.valList)
+	tmpMap := make(map[string]Value)
+	tmpArr := make([]string, 0, size)
+	for _, v := range arr.valList {
+		vStr := v.String()
+		tmpMap[vStr] = v
+		tmpArr = append(tmpArr, vStr)
+	}
+	quickSort(tmpArr, 0, size-1)
+	res := make([]Value, 0, size)
+	for _, str := range tmpArr {
+		res = append(res, tmpMap[str])
+	}
+	return array(res)
+}
+
+func quickSort(arr []string, lower, upper int) {
+	if upper <= lower {
+		return
+	}
+
+	i := lower - 1
+	pivot := arr[upper]
+	for j := lower; j < upper; j++ {
+		if arr[j] <= pivot {
+			i++
+			arr[i], arr[j] = arr[j], arr[i]
+		}
+	}
+	arr[i+1], arr[upper] = arr[upper], arr[i+1]
+	partitionIndex := i + 1
+
+	quickSort(arr, lower, partitionIndex-1)
+	quickSort(arr, partitionIndex+1, upper)
+}
+func (arr *JSONArrayImpl) Reverse() Value {
+	size := len(arr.valList)
+	tmpArr := make([]interface{}, 0, size)
+	for i := size - 1; i >= 0; i-- {
+		tmpArr = append(tmpArr, arr.valList[i])
+	}
+	return newQKValue(tmpArr)
 }
 
 func (arr *JSONArrayImpl) indexs() []interface{} {

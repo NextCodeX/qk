@@ -1,6 +1,9 @@
 package core
 
-import "reflect"
+import (
+	"fmt"
+	"reflect"
+)
 
 type InternalFunction struct {
 	rawArgs    []interface{}     // 实参
@@ -17,9 +20,17 @@ func newInternalFunc(name string, f *FunctionExecutor) Function {
 func extractModuleFuncArgs(f *FunctionExecutor, args []interface{}) []reflect.Value {
 	var res []reflect.Value
 	var bs []byte
+	var ss []string
 	if len(f.ins) == 1 && f.ins[0].Kind() == reflect.Slice {
 		if f.ins[0] == reflect.TypeOf(bs) {
+			// []byte, []string
 			res = append(res, reflect.ValueOf(args[0]))
+		} else if f.ins[0] == reflect.TypeOf(ss) {
+			strArr := make([]string, 0, len(args))
+			for _, v := range args {
+				strArr = append(strArr, fmt.Sprint(v))
+			}
+			res = append(res, reflect.ValueOf(strArr))
 		} else {
 			res = append(res, reflect.ValueOf(args))
 		}

@@ -12,8 +12,8 @@ import (
 // return absolute value of tokenList
 func (fns *InternalFunctionSet) Abs(raw interface{}) (res interface{}) {
 	switch num := raw.(type) {
-	case int:
-		res = int(math.Abs(float64(num)))
+	case int64:
+		res = int64(math.Abs(float64(num)))
 	case float64:
 		res = math.Abs(num)
 	default:
@@ -58,7 +58,7 @@ func (fns *InternalFunctionSet) Number(raw string) interface{} {
 }
 
 func toFloat(num interface{}) (float64, bool) {
-	if tmp, ok := num.(int); ok {
+	if tmp, ok := num.(int64); ok {
 		return float64(tmp), ok
 	}
 	if tmp, ok := num.(float64); ok {

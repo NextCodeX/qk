@@ -3,6 +3,7 @@ package core
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 )
 
 // 新建ByteArray
@@ -75,10 +76,26 @@ func (bs *ByteArrayValue) Str() string {
 func (bs *ByteArrayValue) Int() int64 {
 	return bytesToInt(bs.goValue)
 }
+func (bs *ByteArrayValue) I() int64 {
+	res, err := strconv.Atoi(string(bs.goValue))
+	if err != nil {
+		fmt.Println(err)
+		return 0
+	}
+	return int64(res)
+}
 
 // 转Float
 func (bs *ByteArrayValue) Float() float64 {
 	return bytesToFloat(bs.goValue)
+}
+func (bs *ByteArrayValue) F() float64 {
+	res, err := strconv.ParseFloat(string(bs.goValue), 64)
+	if err != nil {
+		fmt.Println(err)
+		return 0
+	}
+	return res
 }
 
 // 是否包含指定ByteArray或String

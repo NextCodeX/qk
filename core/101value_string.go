@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 type StringValue struct {
@@ -13,9 +14,11 @@ type StringValue struct {
 }
 
 func newStringValue(raw string) Value {
-	var chs []rune
+	chs := make([]rune, utf8.RuneCountInString(raw))
+	var i uint32 = 0
 	for _, ch := range raw {
-		chs = append(chs, ch)
+		chs[i] = ch
+		i++
 	}
 	str := &StringValue{goValue: raw, chars: chs}
 	str.initAsClass("String", &str)
@@ -34,10 +37,11 @@ func (str *StringValue) String() string {
 }
 
 func (str *StringValue) indexs() []interface{} {
-	var indexs []interface{}
+	size := len(str.chars)
+	indexs := make([]interface{}, size)
 
-	for i := 0; i < len(str.chars); i++ {
-		indexs = append(indexs, i)
+	for i := 0; i < size; i++ {
+		indexs[i] = i
 	}
 	return indexs
 }

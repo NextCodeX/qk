@@ -31,7 +31,7 @@ func (fns *InternalFunctionSet) NewDate(ms int64) Value {
 	return newClass("date", &dt)
 }
 
-func (fns *InternalFunctionSet) NewDate1(ns int64) Value {
+func (fns *InternalFunctionSet) NewDateByNano(ns int64) Value {
 	dt := &Datetime{time.Unix(0, ns)}
 	return newClass("date", &dt)
 }

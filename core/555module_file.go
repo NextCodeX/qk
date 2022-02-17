@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
 )
@@ -169,11 +168,6 @@ func (fns *InternalFunctionSet) Fappend(path string, content interface{}) {
 	if err1 := fobj.Close(); err == nil && err1 != nil {
 		log.Fatal(fmt.Sprintf("failed to close file: %v, %v", path, err1.Error()))
 	}
-}
-
-// 指定路径的当前目录
-func (fns *InternalFunctionSet) Fdir(path string) string {
-	return filepath.Dir(path)
 }
 
 // 获取当前路径下的所有子文件路径，不包含子目录

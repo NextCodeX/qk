@@ -1,6 +1,8 @@
 package core
 
-import "fmt"
+import (
+	"fmt"
+)
 
 type IntValue struct {
 	goValue int64
@@ -19,6 +21,9 @@ func (ival *IntValue) val() interface{} {
 
 func (ival *IntValue) isInt() bool {
 	return true
+}
+func (ival *IntValue) Itoa() string {
+	return string(rune(ival.goValue))
 }
 
 func (ival *IntValue) Bytes() []byte {

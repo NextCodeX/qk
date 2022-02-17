@@ -360,6 +360,9 @@ func (lexer *Lexer) pushLongToken() {
 		res = newStrToken(str, lexer.lineIndex, false)
 
 	} else if lexer.inStateDynamicStrLiteral() {
+		if str[0] == '\n' {
+			str = str[1:]
+		}
 		res = newStrToken(str, lexer.lineIndex, true)
 	} else {
 	}

@@ -8,7 +8,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"time"
 )
 
@@ -29,16 +28,14 @@ func (fns *InternalFunctionSet) RoutineNum() int {
 
 // 设置工作路径
 func (fns *InternalFunctionSet) Setpwd(pwd string) {
-	if !strings.HasPrefix(pwd, "/") {
-		wd, err := os.Getwd()
-		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		pwd = filepath.Join(wd, pwd)
+	var err error
+	pwd, err = filepath.Abs(pwd)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
 
-	err := os.Chdir(pwd)
+	err = os.Chdir(pwd)
 	if err != nil {
 		fmt.Println(err)
 	} else {

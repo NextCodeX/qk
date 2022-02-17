@@ -110,6 +110,7 @@ func toBytes(arg interface{}) []byte {
 	}
 }
 
+// 对称加密
 func (fns *InternalFunctionSet) AesEncrypt(orig string, key string) string {
 	// 转成字节数组
 	origData := []byte(orig)
@@ -132,9 +133,13 @@ func (fns *InternalFunctionSet) AesEncrypt(orig string, key string) string {
 	blockMode.CryptBlocks(cryted, origData)
 	return base64.StdEncoding.EncodeToString(cryted)
 }
+
+// 对称加密
 func (fns *InternalFunctionSet) Aes(orig string, key string) string {
 	return fns.AesEncrypt(orig, key)
 }
+
+// 对称解密
 func (fns *InternalFunctionSet) AesDecrypt(cryted string, key string) string {
 	// 转成字节数组
 	crytedByte, err := base64.StdEncoding.DecodeString(cryted)
