@@ -50,7 +50,7 @@ func Run(bs []byte) {
 	ts := ParseTokens(bs)
 	//printTokensByLine(ts)
 
-	// 语法分析(解析)
+	// 语法分析
 	mainFunc.setTokenList(ts)
 	Compile(mainFunc)
 

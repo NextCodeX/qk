@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -34,6 +35,12 @@ func (str *StringValue) isString() bool {
 
 func (str *StringValue) String() string {
 	return str.goValue
+}
+func (str *StringValue) Atoi() string {
+	if len(str.chars) == 1 {
+		return fmt.Sprint(str.chars[0])
+	}
+	return fmt.Sprint(str.chars)
 }
 
 func (str *StringValue) indexs() []interface{} {

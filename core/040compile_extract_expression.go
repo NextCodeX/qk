@@ -2,6 +2,10 @@ package core
 
 func extractExpression(ts []Token) Expression {
 	var expr Expression
+	tlen := len(ts)
+	if tlen < 1 {
+		return expr
+	}
 
 	// 去括号
 	ts = clearParentheses(ts)
@@ -11,10 +15,6 @@ func extractExpression(ts []Token) Expression {
 		ts = ts[1:]
 	}
 
-	tlen := len(ts)
-	if tlen < 1 {
-		return expr
-	}
 	if tlen%2 == 0 {
 		errorf("invalid expression: %v[%v]", tokensString(ts), len(ts))
 	}
