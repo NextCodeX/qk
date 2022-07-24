@@ -8,6 +8,8 @@ import (
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -79,17 +81,19 @@ func (fns *InternalFunctionSet) HttpPost(args []interface{}) Value {
 		config = args[1].(JSONObject)
 	}
 	if config == nil {
-		runtimeExcption("HttpPost() config is required and must be string type")
+		runtimeExcption("HttpPost() config is required and must be JSONObject type")
 	}
 	contentType := config.get("type").String()
-	content, contentType := parseBody(contentType, config.get("action"))
+	content, contentType, contentLen := parseBody(contentType, config.get("body"))
 
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", url, content)
 	if err != nil {
 		runtimeExcption(err)
 	}
+
 	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("Content-Length", strconv.Itoa(contentLen))
 	headersRaw := config.get("headers")
 	if !headersRaw.isNULL() {
 		headers := headersRaw.(JSONObject)
@@ -119,7 +123,7 @@ func (fns *InternalFunctionSet) HttpHead(url string) Value {
 	return newHttpResponse(resp)
 }
 
-func parseBody(contentType string, val Value) (io.Reader, string) {
+func parseBody(contentType string, val Value) (io.Reader, string, int) {
 	if contentType == "application/x-www-form-urlencoded" {
 		obj := val.(JSONObject)
 		var res string
@@ -130,7 +134,12 @@ func parseBody(contentType string, val Value) (io.Reader, string) {
 				res += fmt.Sprintf("&%v=%v", key, value.String())
 			}
 		}
-		return strings.NewReader(res), contentType
+		return strings.NewReader(res), contentType, len(res)
+	}
+	if contentType == "application/json" {
+		obj := val.(JSONObject)
+		res := obj.toJSONObjectString()
+		return strings.NewReader(res), contentType, len(res)
 	}
 	if contentType == "multipart/form-data" {
 		obj := val.(JSONObject)
@@ -153,11 +162,7 @@ func parseBody(contentType string, val Value) (io.Reader, string) {
 					} else {
 						fieldName = "files"
 					}
-					if !fileNameVal.isNULL() {
-						fileName = fileNameVal.String()
-					} else {
-						runtimeExcption("fileName is be required")
-					}
+
 					if !dataVal.isNULL() {
 						data = goBytes(dataVal)
 					}
@@ -172,6 +177,17 @@ func parseBody(contentType string, val Value) (io.Reader, string) {
 					if data == nil {
 						runtimeExcption("file data or path is be required")
 					}
+					if !fileNameVal.isNULL() {
+						fileName = fileNameVal.String()
+					} else {
+						if path != "" {
+							fileName = filepath.Base(fileName);
+						}
+						if fileName == "" {
+							runtimeExcption("fileName is be required")
+						}
+					}
+
 					fileWriter, _ := bodyWriter.CreateFormFile(fieldName, fileName)
 					_, _ = io.Copy(fileWriter, bytes.NewReader(data))
 				}
@@ -180,8 +196,9 @@ func parseBody(contentType string, val Value) (io.Reader, string) {
 			_ = bodyWriter.WriteField(key, value.String())
 		}
 
-		return bodyBuffer, bodyWriter.FormDataContentType()
+		return bodyBuffer, bodyWriter.FormDataContentType(), bodyBuffer.Len()
 	}
 
-	return strings.NewReader(val.String()), contentType
+	res := val.String()
+	return strings.NewReader(res), contentType, len(res)
 }

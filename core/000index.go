@@ -11,8 +11,8 @@ var mainFunc = newMainFunction()
 // 启动Quick解释器
 func Start() {
 	startupTime := time.Now().UnixNano()
-	//qkfile := "examples/demo.qk"
-	qkfile := findScriptFile()
+	qkfile := "examples/demo.qk"
+	//qkfile := findScriptFile()
 
 	bs, err := ioutil.ReadFile(qkfile)
 	if err != nil {

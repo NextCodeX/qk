@@ -112,9 +112,10 @@ func (resp *HttpResponse) Pretty() {
 	var out bytes.Buffer
 	err := json.Indent(&out, resp.body, "", "  ")
 	if err != nil {
-		fmt.Println("response action is not json type")
+		fmt.Printf("%s \n", resp.body)
+	} else {
+		fmt.Println(out.String())
 	}
-	fmt.Println(out.String())
 }
 func (resp *HttpResponse) Pr() {
 	resp.Pretty()

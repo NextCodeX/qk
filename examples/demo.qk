@@ -1,4 +1,18 @@
 
 
-s = "hello world"
-echo(s)
+httpPost("http://localhost:8080/dto", {type:mime.json,
+body:{
+     "changlie":"go love!",
+     "tom": true
+     }
+}).pr()
+
+httpGet("http://localhost:8080/get").pr()
+
+httpPost("http://localhost:8080/up", {type:mime.data,
+body:{
+    files:[
+    {field:"file", path:"/home/xp/number"}
+    ]
+}
+}).pr()
