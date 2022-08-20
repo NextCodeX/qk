@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"golang.org/x/text/encoding/simplifiedchinese"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -142,4 +143,24 @@ func (this *InternalFunctionSet) OpenBrowser(url string) {
 }
 func (this *InternalFunctionSet) Ob(url string) {
 	this.OpenBrowser(url)
+}
+
+func (this *InternalFunctionSet) Localhost() string {
+	return getClientIp()
+}
+// 获取本地ip
+func getClientIp() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+	for _, address := range addrs {
+		// 检查ip地址判断是否回环地址
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
+			}
+		}
+	}
+	return ""
 }
