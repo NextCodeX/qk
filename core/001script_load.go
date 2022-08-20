@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -52,7 +51,7 @@ func findScriptFile() string {
 	}
 
 	// 当前目录只有一个qk文件可以忽略文件名，没有或有多个时程序报错退出
-	fs, err := ioutil.ReadDir(cmdDir)
+	fs, err := os.ReadDir(cmdDir)
 	if err != nil {
 		errorf("failed to get script file: %v", err.Error())
 	}

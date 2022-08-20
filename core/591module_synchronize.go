@@ -5,7 +5,7 @@ import "sync"
 var globalLock = &sync.Mutex{}
 
 // 执行同步操作
-func (fns *InternalFunctionSet) Sync(fn Function) {
+func (this *InternalFunctionSet) Sync(fn Function) {
 	globalLock.Lock()
 	defer globalLock.Unlock()
 
@@ -13,7 +13,7 @@ func (fns *InternalFunctionSet) Sync(fn Function) {
 }
 
 // 新建一个锁对象
-func (fns *InternalFunctionSet) NewLock() Value {
+func (this *InternalFunctionSet) NewLock() Value {
 	obj := &QKLock{&sync.Mutex{}}
 	return newClass("QKLock", &obj)
 }

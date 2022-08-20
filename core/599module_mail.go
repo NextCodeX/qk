@@ -7,7 +7,7 @@ import (
 )
 
 // 邮件发送
-func (fns *InternalFunctionSet) Mailer() Value {
+func (this *InternalFunctionSet) Mailer() Value {
 	msg := gomail.NewMessage()
 	obj := &Mailer{msg: msg}
 	return newClass("Mailer", &obj)

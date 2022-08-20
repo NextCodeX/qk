@@ -35,7 +35,7 @@ func regFind(tmpl, source string) []interface{} {
 }
 
 // 新建一个正则对象
-func (fns *InternalFunctionSet) Regexp(tmpl string) Value {
+func (this *InternalFunctionSet) Regexp(tmpl string) Value {
 	matcher := regexp.MustCompile(tmpl)
 	obj := &QKRegexp{matcher}
 	return newClass("QKRegexp", &obj)

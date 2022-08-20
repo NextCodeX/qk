@@ -27,19 +27,8 @@ func (clazz *ClassExecutor) setField(name string, rawVal interface{}) {
 	field.set(rawVal)
 }
 
-//func (clazz *ClassExecutor) callMethod(name string, vals []interface{}) Value {
-//	mt, Contain := clazz.methods[name]
-//	assert(!Contain, fmt.Sprintf("method %v.%v is undefined!", clazz.name, name))
-//	return callFunctionExecutor(mt, vals)
-//}
-
-//func evalClassMethod(any interface{}, name string, vals []interface{}) Value {
-//	clazz := any.(*ClassExecutor)
-//	return clazz.callMethod(name, vals)
-//}
-
-func evalClassField(any interface{}, attrname string) Value {
-	clazz := any.(*ClassExecutor)
+func evalClassField(obj any, attrname string) Value {
+	clazz := obj.(*ClassExecutor)
 	return newQKValue(clazz.fieldValue(attrname))
 }
 

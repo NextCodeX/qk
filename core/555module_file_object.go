@@ -8,7 +8,7 @@ import (
 )
 
 // 打开文件，返回一个文件对象
-func (fns *InternalFunctionSet) Fopen(dir string) Value {
+func (this *InternalFunctionSet) Fopen(dir string) Value {
 	file, err := os.OpenFile(dir, os.O_CREATE|os.O_RDWR, 0666)
 	if err != nil {
 		fmt.Println(err)

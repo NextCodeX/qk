@@ -11,32 +11,32 @@ const (
 )
 
 // current timestamp (Microsecond)
-func (fns *InternalFunctionSet) Timestamp() interface{} {
+func (this *InternalFunctionSet) Timestamp() interface{} {
 	return time.Now().UnixNano() / 1e6
 }
 
 // current timestamp （Nanosecond）
-func (fns *InternalFunctionSet) Nanosecond() interface{} {
+func (this *InternalFunctionSet) Nanosecond() interface{} {
 	return time.Now().UnixNano()
 }
 
 // current datetime qk object
-func (fns *InternalFunctionSet) Now() Value {
+func (this *InternalFunctionSet) Now() Value {
 	dt := &Datetime{time.Now()}
 	return newClass("date", &dt)
 }
 
-func (fns *InternalFunctionSet) NewDate(ms int64) Value {
+func (this *InternalFunctionSet) NewDate(ms int64) Value {
 	dt := &Datetime{time.Unix(0, ms*1e6)}
 	return newClass("date", &dt)
 }
 
-func (fns *InternalFunctionSet) NewDateByNano(ns int64) Value {
+func (this *InternalFunctionSet) NewDateByNano(ns int64) Value {
 	dt := &Datetime{time.Unix(0, ns)}
 	return newClass("date", &dt)
 }
 
-func (fns *InternalFunctionSet) ParseDate(dateStr string, tmpl string) Value {
+func (this *InternalFunctionSet) ParseDate(dateStr string, tmpl string) Value {
 	loc, err := time.LoadLocation("Asia/Shanghai")
 	if err != nil {
 		runtimeExcption(err)

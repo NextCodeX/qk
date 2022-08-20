@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func (fns *InternalFunctionSet) HtmlParser(raw interface{}) Value {
+func (this *InternalFunctionSet) HtmlParser(raw interface{}) Value {
 	var docReader io.Reader
 	if bs, ok := raw.([]byte); ok {
 		docReader = bytes.NewReader(bs)

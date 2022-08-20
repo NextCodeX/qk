@@ -10,20 +10,18 @@ type AnyValue struct {
 }
 
 func newAnyValue(raw interface{}) Value {
-	any := &AnyValue{goValue: raw}
-	any.initAsClass("Anything", &any)
-	return any
+	obj := &AnyValue{goValue: raw}
+	obj.initAsClass("Anything", &obj)
+	return obj
 }
 
-
-func (any *AnyValue) val() interface{} {
-	return any.goValue
+func (this *AnyValue) val() interface{} {
+	return this.goValue
 }
-func (any *AnyValue) isAny() bool {
+func (this *AnyValue) isAny() bool {
 	return true
 }
 
-func (any *AnyValue) String() string {
-	return fmt.Sprint(any.goValue)
+func (this *AnyValue) String() string {
+	return fmt.Sprint(this.goValue)
 }
-

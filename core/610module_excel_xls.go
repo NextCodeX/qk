@@ -5,7 +5,7 @@ import (
 	"github.com/shakinm/xlsReader/xls/structure"
 )
 
-func (fns *InternalFunctionSet) Xls(fileName string) Value {
+func (this *InternalFunctionSet) Xls(fileName string) Value {
 	workbook, err := xls.OpenFile(fileName)
 	if err != nil {
 		runtimeExcption(err)

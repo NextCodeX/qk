@@ -8,7 +8,7 @@ import (
 var qkcron *cron.Cron
 var cronRunning = false
 
-func (fns *InternalFunctionSet) Cron(expr string, fn Function) {
+func (this *InternalFunctionSet) Cron(expr string, fn Function) {
 	if qkcron == nil {
 		qkcron = cron.New()
 	}

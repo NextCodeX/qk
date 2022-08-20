@@ -11,7 +11,7 @@ import (
 
 // 与Linux命令：mkdir, ls, rm, mv, cp提供相似的功能
 // 创建目录
-func (fns *InternalFunctionSet) Mkdir(dir string) {
+func (this *InternalFunctionSet) Mkdir(dir string) {
 	err := os.MkdirAll(dir, os.ModePerm)
 	if err != nil {
 		fmt.Println("mkdir() exception!", err)
@@ -19,7 +19,7 @@ func (fns *InternalFunctionSet) Mkdir(dir string) {
 }
 
 // 当前目录文件查看
-func (fns *InternalFunctionSet) Ls(dir string) Value {
+func (this *InternalFunctionSet) Ls(dir string) Value {
 	fs, err := ioutil.ReadDir(dir)
 	if err != nil {
 		fmt.Printf("failed to read path: %v, %v\n", dir, err.Error())
@@ -34,7 +34,7 @@ func (fns *InternalFunctionSet) Ls(dir string) Value {
 }
 
 // 删除文件或目录
-func (fns *InternalFunctionSet) Rm(path string) {
+func (this *InternalFunctionSet) Rm(path string) {
 	err := os.RemoveAll(path)
 	if err != nil {
 		fmt.Println(err)
@@ -46,7 +46,7 @@ func (fns *InternalFunctionSet) Rm(path string) {
 // 文件 -> 文件(重命名或移动)
 // 目录 -> 目录
 // 文件/目录列表 -> 目录
-func (fns *InternalFunctionSet) Mv(src, dst string) {
+func (this *InternalFunctionSet) Mv(src, dst string) {
 	srcFiles := findSrcFilesForMove(src)
 	qty := len(srcFiles)
 	if qty < 1 {
@@ -153,7 +153,7 @@ func calcMoveTargetFile(srcFile string, dst string) string {
 }
 
 // 功能与linux命令 cp 基本一致
-func (fns *InternalFunctionSet) Cp(src, dst string) {
+func (this *InternalFunctionSet) Cp(src, dst string) {
 	srcFiles := findSrcFiles(src)
 	qty := len(srcFiles)
 	if qty < 1 {

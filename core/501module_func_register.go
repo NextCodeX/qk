@@ -7,7 +7,34 @@ import (
 )
 
 // 通过这个类型将所有内部函数串在一起
-type InternalFunctionSet struct{}
+type InternalFunctionSet struct {
+	owner            *Interpreter
+	internalFuntions map[string]Value // 包含所有内部函数的一个集合
+}
+
+func newInternalFunctionSet(parent *Interpreter) *InternalFunctionSet {
+	// 通过反射收集内部函数信息
+	fns := &InternalFunctionSet{
+		owner:            parent,
+		internalFuntions: make(map[string]Value),
+	}
+	fmap := collectFunctionInfo(&fns)
+	for fname, moduleFunc := range fmap {
+		fns.internalFuntions[fname] = newInternalFunc(fname, moduleFunc)
+	}
+	return fns
+}
+
+// 返回所有内置函数及变量名称
+func (this *InternalFunctionSet) Allfns() []string {
+	res := make([]string, len(this.internalFuntions))
+	i := 0
+	for k := range this.internalFuntions {
+		res[i] = k
+		i++
+	}
+	return res
+}
 
 // 通过反射收集函数信息
 func collectFunctionInfo(objDoublePtr interface{}) (res map[string]*FunctionExecutor) {

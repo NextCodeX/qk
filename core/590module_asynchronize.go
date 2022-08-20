@@ -6,7 +6,7 @@ import (
 
 var goroutineWaiter = &sync.WaitGroup{}
 
-func (fns *InternalFunctionSet) Async(args []interface{}) Function {
+func (this *InternalFunctionSet) Async(args []interface{}) Function {
 	if len(args) < 1 {
 		runtimeExcption("async(): the first parameter is required.")
 	}

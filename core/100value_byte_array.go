@@ -7,10 +7,10 @@ import (
 )
 
 // 新建ByteArray
-func (fns *InternalFunctionSet) NewBytes() Value {
+func (this *InternalFunctionSet) NewBytes() Value {
 	return newByteArrayValue(nil)
 }
-func (fns *InternalFunctionSet) Newbs() Value {
+func (this *InternalFunctionSet) Newbs() Value {
 	return newByteArrayValue(nil)
 }
 

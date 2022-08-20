@@ -2,11 +2,11 @@ package core
 
 import "fmt"
 
-func (fns *InternalFunctionSet) Print(args []interface{}) {
+func (this *InternalFunctionSet) Print(args []interface{}) {
 	fmt.Print(args...)
 }
 
-func (fns *InternalFunctionSet) Printf(args []interface{}) {
+func (this *InternalFunctionSet) Printf(args []interface{}) {
 	argCount := len(args)
 	if argCount < 1 {
 		runtimeExcption("printf argument is too less")
@@ -24,14 +24,14 @@ func (fns *InternalFunctionSet) Printf(args []interface{}) {
 	fmt.Printf(format, args[1:]...)
 }
 
-func (fns *InternalFunctionSet) Println(args []interface{}) {
+func (this *InternalFunctionSet) Println(args []interface{}) {
 	fmt.Println(args...)
 }
 
-func (fns *InternalFunctionSet) Echo(args []interface{}) {
+func (this *InternalFunctionSet) Echo(args []interface{}) {
 	fmt.Println(args...)
 }
-func (fns *InternalFunctionSet) Echof(args []interface{}) {
+func (this *InternalFunctionSet) Echof(args []interface{}) {
 	argCount := len(args)
 	if argCount < 1 {
 		runtimeExcption("echof() argument is too less")

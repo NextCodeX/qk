@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-func (fns *InternalFunctionSet) UuidRaw() string {
+func (this *InternalFunctionSet) UuidRaw() string {
 	bs := make([]byte, 16)
 	_, err := rand.Read(bs)
 	if err != nil {
@@ -17,7 +17,7 @@ func (fns *InternalFunctionSet) UuidRaw() string {
 	return rawuuid
 }
 
-func (fns *InternalFunctionSet) Uuid() string {
+func (this *InternalFunctionSet) Uuid() string {
 	bs := make([]byte, 16)
 	_, err := rand.Read(bs)
 	if err != nil {
@@ -27,7 +27,7 @@ func (fns *InternalFunctionSet) Uuid() string {
 	return uuid
 }
 
-func (fns *InternalFunctionSet) Key16() string {
+func (this *InternalFunctionSet) Key16() string {
 	bs := make([]byte, 16)
 	_, err := rand.Read(bs)
 	if err != nil {
@@ -35,7 +35,7 @@ func (fns *InternalFunctionSet) Key16() string {
 	}
 	return base64.StdEncoding.EncodeToString(bs)
 }
-func (fns *InternalFunctionSet) Key24() string {
+func (this *InternalFunctionSet) Key24() string {
 	bs := make([]byte, 24)
 	_, err := rand.Read(bs)
 	if err != nil {
@@ -43,7 +43,7 @@ func (fns *InternalFunctionSet) Key24() string {
 	}
 	return base64.StdEncoding.EncodeToString(bs)
 }
-func (fns *InternalFunctionSet) Key32() string {
+func (this *InternalFunctionSet) Key32() string {
 	bs := make([]byte, 32)
 	_, err := rand.Read(bs)
 	if err != nil {
@@ -52,7 +52,7 @@ func (fns *InternalFunctionSet) Key32() string {
 	return base64.StdEncoding.EncodeToString(bs)
 }
 
-func (fns *InternalFunctionSet) Fmt(args []interface{}) string {
+func (this *InternalFunctionSet) Fmt(args []interface{}) string {
 	assert(len(args) < 2, "function str_format(format, any...) must has two parameters.")
 	format, ok := args[0].(string)
 	assert(!ok, "function str_format(format, any...), parameter format must be string type.")

@@ -13,6 +13,7 @@ func extractExpression(ts []Token) Expression {
 	if ts[0].assertKey("var") {
 		localFlag = true
 		ts = ts[1:]
+		tlen = len(ts)
 	}
 
 	if tlen%2 == 0 {

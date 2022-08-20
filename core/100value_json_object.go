@@ -26,8 +26,14 @@ type JSONObjectImpl struct {
 	ClassObject
 }
 
-func jsonObject(v map[string]Value) JSONObject {
-	obj := &JSONObjectImpl{valMap: v}
+func jsonObject[K comparable, T any](rawVal map[K]T) JSONObject {
+	tmp := make(map[string]Value)
+	for k, v := range rawVal {
+		kk := fmt.Sprint(k)
+		vv := newQKValue(v)
+		tmp[kk] = vv
+	}
+	obj := &JSONObjectImpl{valMap: tmp}
 	obj.ClassObject.initAsClass("JSONObject", &obj)
 	return obj
 }

@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func (fns *InternalFunctionSet) HttpServer(port int) Value {
+func (this *InternalFunctionSet) HttpServer(port int) Value {
 	obj := &HttpServer{port: port}
 	obj.services = make(map[string]Function)
 	obj.serviceMethods = make(map[string]string)

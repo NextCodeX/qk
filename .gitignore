@@ -2,6 +2,5 @@
 .vscode
 bin
 pkg
-*_test.go
 *.db
 dist

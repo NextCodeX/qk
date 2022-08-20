@@ -25,8 +25,12 @@ type JSONArrayImpl struct {
 	ClassObject
 }
 
-func array(v []Value) JSONArray {
-	arr := &JSONArrayImpl{valList: v}
+func array[T any](v []T) JSONArray {
+	var arrRes []Value
+	for _, item := range v {
+		arrRes = append(arrRes, newQKValue(item))
+	}
+	arr := &JSONArrayImpl{valList: arrRes}
 	arr.ClassObject.initAsClass("JSONArray", &arr)
 	return arr
 }

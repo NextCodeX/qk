@@ -2,25 +2,18 @@ package core
 
 import (
 	"fmt"
-	"io/ioutil"
 	"time"
 )
 
-var mainFunc = newMainFunction()
+var DEBUG = false
+var TestFlag = false
 
 // 启动Quick解释器
 func Start() {
 	startupTime := time.Now().UnixNano()
-	qkfile := "examples/demo.qk"
-	//qkfile := findScriptFile()
+	qkfile := findScriptFile()
 
-	bs, err := ioutil.ReadFile(qkfile)
-	if err != nil {
-		errorf("failed to read %v;\n error info: %v", qkfile, err)
-	}
-	bs = ignoreFirstLine(bs)
-	setRootDir(qkfile)
-	Run(bs)
+	ExecScriptFile(qkfile)
 
 	if IsCost {
 		duration := time.Now().UnixNano() - startupTime
@@ -28,39 +21,11 @@ func Start() {
 	}
 }
 
-func ignoreFirstLine(bs []byte) []byte {
-	if len(bs) < 1 {
-		return bs
+func ExecScriptFile(qkfile string) {
+	if !TestFlag {
+		defer catch()
 	}
-	if bs[0] == '#' {
-		for i, ch := range bs {
-			if ch == '\n' {
-				return bs[i+1:]
-			}
-		}
-	}
-	return bs
-}
-
-// 脚本解析执行
-func Run(bs []byte) {
-	defer catch()
-
-	// 词法分析
-	ts := ParseTokens(bs)
-	//printTokensByLine(ts)
-
-	// 语法分析
-	mainFunc.setTokenList(ts)
-	Compile(mainFunc)
-
-	// 程序执行
-	initInternalVars()
-	mainFunc.setInternalVars(internalVars)
-	mainFunc.execute()
-
-	// 等待所有协程执行完，再结束程序
-	goroutineWaiter.Wait()
+	newInterpreter(qkfile).run()
 }
 
 // 指定变量𣏾, 执行qk代码片段.

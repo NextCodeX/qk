@@ -15,7 +15,7 @@ import (
 var regBlankChar = regexp.MustCompile(`\s+`)
 
 // 读取文件所有内容，返回字节数组
-func (fns *InternalFunctionSet) Fbytes(filename string) []byte {
+func (this *InternalFunctionSet) Fbytes(filename string) []byte {
 	bs, err := ioutil.ReadFile(filename)
 	if err == nil {
 		return bs
@@ -25,12 +25,12 @@ func (fns *InternalFunctionSet) Fbytes(filename string) []byte {
 }
 
 // 读取文件所有内容，返回字节数组
-func (fns *InternalFunctionSet) Fbs(filename string) []byte {
-	return fns.Fbytes(filename)
+func (this *InternalFunctionSet) Fbs(filename string) []byte {
+	return this.Fbytes(filename)
 }
 
 // 读取文件所有内容，返回字符串
-func (fns *InternalFunctionSet) Fstr(filename string) string {
+func (this *InternalFunctionSet) Fstr(filename string) string {
 	bs, err := ioutil.ReadFile(filename)
 	if err == nil {
 		return string(bs)
@@ -40,7 +40,7 @@ func (fns *InternalFunctionSet) Fstr(filename string) string {
 }
 
 // 逐行读取文件，返回一个字符串数组
-func (fns *InternalFunctionSet) Flines(filename string) []interface{} {
+func (this *InternalFunctionSet) Flines(filename string) []interface{} {
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to read %v file: %v", filename, err.Error()))
@@ -55,7 +55,7 @@ func (fns *InternalFunctionSet) Flines(filename string) []interface{} {
 }
 
 // 读取文件内容，返回一个JSONObject
-func (fns *InternalFunctionSet) Fjson(filename string) map[string]interface{} {
+func (this *InternalFunctionSet) Fjson(filename string) map[string]interface{} {
 	bs, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to read %v file: %v", filename, err.Error()))
@@ -72,7 +72,7 @@ func (fns *InternalFunctionSet) Fjson(filename string) map[string]interface{} {
 }
 
 // 读取*.properties文件，返回一个JSONObject
-func (fns *InternalFunctionSet) Fprops(filename string) map[string]interface{} {
+func (this *InternalFunctionSet) Fprops(filename string) map[string]interface{} {
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to read %v file: %v", filename, err.Error()))
@@ -96,7 +96,7 @@ func (fns *InternalFunctionSet) Fprops(filename string) map[string]interface{} {
 }
 
 // 读取一个参数文件，返回二维数组
-func (fns *InternalFunctionSet) Fargs(filename string) []interface{} {
+func (this *InternalFunctionSet) Fargs(filename string) []interface{} {
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to read %v file: %v", filename, err.Error()))
@@ -127,7 +127,7 @@ func (fns *InternalFunctionSet) Fargs(filename string) []interface{} {
 }
 
 // 保存一个字符串或字节数组至指定文件（文件若已存在，清空其内容再保存）
-func (fns *InternalFunctionSet) Fsave(path string, content interface{}) {
+func (this *InternalFunctionSet) Fsave(path string, content interface{}) {
 	var data []byte
 	if bs, ok := content.([]byte); ok {
 		data = bs
@@ -142,12 +142,12 @@ func (fns *InternalFunctionSet) Fsave(path string, content interface{}) {
 		log.Fatal(fmt.Sprintf("failed to write content to file: %v, %v", path, err.Error()))
 	}
 }
-func (fns *InternalFunctionSet) Fsv(path string, content interface{}) {
-	fns.Fsave(path, content)
+func (this *InternalFunctionSet) Fsv(path string, content interface{}) {
+	this.Fsave(path, content)
 }
 
 // 文件内容追加
-func (fns *InternalFunctionSet) Fappend(path string, content interface{}) {
+func (this *InternalFunctionSet) Fappend(path string, content interface{}) {
 	var data []byte
 	if bs, ok := content.([]byte); ok {
 		data = bs
@@ -171,7 +171,7 @@ func (fns *InternalFunctionSet) Fappend(path string, content interface{}) {
 }
 
 // 获取当前路径下的所有子文件路径，不包含子目录
-func (fns *InternalFunctionSet) Fscan(path string) Value {
+func (this *InternalFunctionSet) Fscan(path string) Value {
 	var tmp []*FileInfo
 	doScanForInfo(path, &tmp)
 	var res []Value

@@ -1,6 +1,8 @@
 package core
 
-import "fmt"
+import (
+	"fmt"
+)
 
 var (
 	NULL  = newNULLValue() // 空值
@@ -25,22 +27,22 @@ type Value interface {
 	isAny() bool
 }
 
-func newQKValue(rawVal interface{}) Value {
+func newQKValue(rawVal any) Value {
 	if rawVal == nil || rawVal == NULL {
 		return NULL
 	}
 	switch v := rawVal.(type) {
 	case Value:
 		return v
+	case JSONArray:
+		return v
+	case JSONObject:
+		return v
+	case Function:
+		return v
+
 	case []byte:
 		return newByteArrayValue(v)
-	case [][]byte:
-		var arr []Value
-		for _, bs := range v {
-			arr = append(arr, newByteArrayValue(bs))
-		}
-		return array(arr)
-
 	case int:
 		return newIntValue(int64(v))
 	case int64:
@@ -55,44 +57,22 @@ func newQKValue(rawVal interface{}) Value {
 		return newBooleanValue(v)
 	case string:
 		return newStringValue(v)
-	case JSONArray:
-		return v
-	case JSONObject:
-		return v
-	case Function:
-		return v
 
-	case []Value:
-		return array(v)
 	case map[string]Value:
 		return jsonObject(v)
 	case map[string]string:
-		mapRes := make(map[string]Value)
-		for key, value := range v {
-			mapRes[key] = newQKValue(value)
-		}
-		return jsonObject(mapRes)
-
+		return jsonObject(v)
 	case map[string]interface{}:
-		mapRes := make(map[string]Value)
-		for key, value := range v {
-			mapRes[key] = newQKValue(value)
-		}
-		return jsonObject(mapRes)
+		return jsonObject(v)
 
+	case []Value:
+		return array(v)
 	case []string:
-		var arrRes []Value
-		for _, item := range v {
-			arrRes = append(arrRes, newQKValue(item))
-		}
-		return array(arrRes)
-
+		return array(v)
+	case [][]byte:
+		return array(v)
 	case []interface{}:
-		var arrRes []Value
-		for _, item := range v {
-			arrRes = append(arrRes, newQKValue(item))
-		}
-		return array(arrRes)
+		return array(v)
 
 	default:
 		return newAnyValue(v)

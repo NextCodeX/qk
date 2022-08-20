@@ -5,7 +5,7 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-func (fns *InternalFunctionSet) Xlsx(fileName string) Value {
+func (this *InternalFunctionSet) Xlsx(fileName string) Value {
 	f, err := excelize.OpenFile(fileName)
 	if err != nil {
 		runtimeExcption(f)
@@ -14,7 +14,7 @@ func (fns *InternalFunctionSet) Xlsx(fileName string) Value {
 	return newClass("Xlsx", &obj)
 }
 
-func (fns *InternalFunctionSet) NewXlsx() Value {
+func (this *InternalFunctionSet) NewXlsx() Value {
 	f := excelize.NewFile()
 	obj := &Xlsx{f}
 	return newClass("Xlsx", &obj)

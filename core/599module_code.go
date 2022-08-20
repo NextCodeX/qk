@@ -15,7 +15,7 @@ import (
 // 这里包含一些常用的编码函数
 
 // base64 编码
-func (fns *InternalFunctionSet) Base64Encode(arg interface{}) string {
+func (this *InternalFunctionSet) Base64Encode(arg interface{}) string {
 	if raw, ok := arg.([]byte); ok {
 		return base64.StdEncoding.EncodeToString(raw)
 	} else if raw, ok := arg.(string); ok {
@@ -25,24 +25,24 @@ func (fns *InternalFunctionSet) Base64Encode(arg interface{}) string {
 	}
 	return ""
 }
-func (fns *InternalFunctionSet) Base64(arg interface{}) string {
-	return fns.Base64Encode(arg)
+func (this *InternalFunctionSet) Base64(arg interface{}) string {
+	return this.Base64Encode(arg)
 }
 
 // base64 解码
-func (fns *InternalFunctionSet) Base64Decode(raw string) []byte {
+func (this *InternalFunctionSet) Base64Decode(raw string) []byte {
 	data, err := base64.StdEncoding.DecodeString(raw)
 	if err != nil {
 		runtimeExcption(err)
 	}
 	return data
 }
-func (fns *InternalFunctionSet) Debase64(raw string) []byte {
-	return fns.Base64Decode(raw)
+func (this *InternalFunctionSet) Debase64(raw string) []byte {
+	return this.Base64Decode(raw)
 }
 
 // gzip 编码 （压缩）
-func (fns *InternalFunctionSet) GzipEncode(src interface{}) []byte {
+func (this *InternalFunctionSet) GzipEncode(src interface{}) []byte {
 	var raw []byte
 	if bs, ok := src.([]byte); ok {
 		raw = bs
@@ -66,12 +66,12 @@ func (fns *InternalFunctionSet) GzipEncode(src interface{}) []byte {
 	}
 	return buf.Bytes()
 }
-func (fns *InternalFunctionSet) Gzip(src interface{}) []byte {
-	return fns.GzipEncode(src)
+func (this *InternalFunctionSet) Gzip(src interface{}) []byte {
+	return this.GzipEncode(src)
 }
 
 // gzip 解码 （解压缩）
-func (fns *InternalFunctionSet) GzipDecode(data []byte) []byte {
+func (this *InternalFunctionSet) GzipDecode(data []byte) []byte {
 	bytesReader := bytes.NewReader(data)
 	gzipReader, err := gzip.NewReader(bytesReader)
 	if err != nil {
@@ -83,12 +83,12 @@ func (fns *InternalFunctionSet) GzipDecode(data []byte) []byte {
 	}
 	return res
 }
-func (fns *InternalFunctionSet) Degzip(data []byte) []byte {
-	return fns.GzipDecode(data)
+func (this *InternalFunctionSet) Degzip(data []byte) []byte {
+	return this.GzipDecode(data)
 }
 
 // md5 编码
-func (fns *InternalFunctionSet) Md5(raw interface{}) string {
+func (this *InternalFunctionSet) Md5(raw interface{}) string {
 	bs := toBytes(raw)
 	m := md5.New()
 	m.Write(bs)
@@ -111,7 +111,7 @@ func toBytes(arg interface{}) []byte {
 }
 
 // 对称加密
-func (fns *InternalFunctionSet) AesEncrypt(orig string, key string) string {
+func (this *InternalFunctionSet) AesEncrypt(orig string, key string) string {
 	// 转成字节数组
 	origData := []byte(orig)
 	k, err := base64.StdEncoding.DecodeString(key)
@@ -135,12 +135,12 @@ func (fns *InternalFunctionSet) AesEncrypt(orig string, key string) string {
 }
 
 // 对称加密
-func (fns *InternalFunctionSet) Aes(orig string, key string) string {
-	return fns.AesEncrypt(orig, key)
+func (this *InternalFunctionSet) Aes(orig string, key string) string {
+	return this.AesEncrypt(orig, key)
 }
 
 // 对称解密
-func (fns *InternalFunctionSet) AesDecrypt(cryted string, key string) string {
+func (this *InternalFunctionSet) AesDecrypt(cryted string, key string) string {
 	// 转成字节数组
 	crytedByte, err := base64.StdEncoding.DecodeString(cryted)
 	if err != nil {
@@ -164,19 +164,19 @@ func (fns *InternalFunctionSet) AesDecrypt(cryted string, key string) string {
 	orig = PKCS7UnPadding(orig)
 	return string(orig)
 }
-func (fns *InternalFunctionSet) Deaes(cryted string, key string) string {
-	return fns.AesDecrypt(cryted, key)
+func (this *InternalFunctionSet) Deaes(cryted string, key string) string {
+	return this.AesDecrypt(cryted, key)
 }
 
-//补码
-//AES加密数据块分组长度必须为128bit(byte[16])，密钥长度可以是128bit(byte[16])、192bit(byte[24])、256bit(byte[32])中的任意一个。
+// 补码
+// AES加密数据块分组长度必须为128bit(byte[16])，密钥长度可以是128bit(byte[16])、192bit(byte[24])、256bit(byte[32])中的任意一个。
 func PKCS7Padding(ciphertext []byte, blocksize int) []byte {
 	padding := blocksize - len(ciphertext)%blocksize
 	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
 	return append(ciphertext, padtext...)
 }
 
-//去码
+// 去码
 func PKCS7UnPadding(origData []byte) []byte {
 	length := len(origData)
 	unpadding := int(origData[length-1])

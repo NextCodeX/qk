@@ -1,7 +1,7 @@
 package core
 
 // 阻塞队列
-func (fns *InternalFunctionSet) BlockList(args []interface{}) Value {
+func (this *InternalFunctionSet) BlockList(args []interface{}) Value {
 	queueLen := 128
 	if len(args) > 0 {
 		if arg, ok := args[0].(int); ok && arg > 0 {

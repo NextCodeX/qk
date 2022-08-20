@@ -36,7 +36,7 @@ multipart/form-data ： 需要在表单中进行文件上传时，就需要使�
 */
 // cookie, set-cookie
 
-func (fns *InternalFunctionSet) HttpGet(args []interface{}) Value {
+func (this *InternalFunctionSet) HttpGet(args []interface{}) Value {
 	if len(args) < 1 {
 		runtimeExcption("HttpGet() url is required")
 	}
@@ -68,7 +68,7 @@ func (fns *InternalFunctionSet) HttpGet(args []interface{}) Value {
 	return newHttpResponse(resp)
 }
 
-func (fns *InternalFunctionSet) HttpPost(args []interface{}) Value {
+func (this *InternalFunctionSet) HttpPost(args []interface{}) Value {
 	if len(args) < 1 {
 		runtimeExcption("HttpPost() url is required")
 	}
@@ -109,7 +109,7 @@ func (fns *InternalFunctionSet) HttpPost(args []interface{}) Value {
 	return newHttpResponse(resp)
 }
 
-func (fns *InternalFunctionSet) HttpHead(url string) Value {
+func (this *InternalFunctionSet) HttpHead(url string) Value {
 	client := &http.Client{}
 	req, err := http.NewRequest("HEAD", url, nil)
 	if err != nil {
@@ -181,7 +181,7 @@ func parseBody(contentType string, val Value) (io.Reader, string, int) {
 						fileName = fileNameVal.String()
 					} else {
 						if path != "" {
-							fileName = filepath.Base(fileName);
+							fileName = filepath.Base(fileName)
 						}
 						if fileName == "" {
 							runtimeExcption("fileName is be required")

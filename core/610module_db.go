@@ -20,13 +20,13 @@ const (
 	dbPostgres  = "postgres"
 )
 
-func (fns *InternalFunctionSet) Pg(username, password, url string) Value {
+func (this *InternalFunctionSet) Pg(username, password, url string) Value {
 	// e.g. postgres://postgres:12345678@192.168.8.200:5432/douyin?sslmode=disable
 	source := fmt.Sprintf("postgres://%v:%v@%v", username, password, url)
 	return connDB(dbPostgres, source)
 }
 
-func (fns *InternalFunctionSet) Sqlserver(username, password, url string) Value {
+func (this *InternalFunctionSet) Sqlserver(username, password, url string) Value {
 	seperatorIndex := strings.Index(url, "/")
 	var host, port, dbName string
 	if seperatorIndex < 0 || seperatorIndex == len(url)-1 {
@@ -47,7 +47,7 @@ func (fns *InternalFunctionSet) Sqlserver(username, password, url string) Value 
 	return connDB(dbSqlServer, sourceName)
 }
 
-func (fns *InternalFunctionSet) Oracle(username, password, url string) Value {
+func (this *InternalFunctionSet) Oracle(username, password, url string) Value {
 	seperatorIndex := strings.Index(url, "/")
 	var netAddress, uri string
 	if seperatorIndex < 0 {
@@ -62,7 +62,7 @@ func (fns *InternalFunctionSet) Oracle(username, password, url string) Value {
 	return connDB(dbOracle, sourceName)
 }
 
-func (fns *InternalFunctionSet) Mysql(username, password, url string) Value {
+func (this *InternalFunctionSet) Mysql(username, password, url string) Value {
 	seperatorIndex := strings.Index(url, "/")
 	var netAddress, uri string
 	if seperatorIndex < 0 {
@@ -77,7 +77,7 @@ func (fns *InternalFunctionSet) Mysql(username, password, url string) Value {
 	return connDB(dbMysql, sourceName)
 }
 
-func (fns *InternalFunctionSet) Sqlite(dbName string) Value {
+func (this *InternalFunctionSet) Sqlite(dbName string) Value {
 	return connDB(dbSqlite, dbName)
 }
 

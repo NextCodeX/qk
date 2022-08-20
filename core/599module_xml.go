@@ -5,7 +5,7 @@ import (
 	"github.com/beevik/etree"
 )
 
-func (fns *InternalFunctionSet) Xml() Value {
+func (this *InternalFunctionSet) Xml() Value {
 	doc := etree.NewDocument()
 	obj := &XmlDocument{}
 	obj.raw = doc

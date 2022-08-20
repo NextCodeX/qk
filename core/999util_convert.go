@@ -29,8 +29,8 @@ func strToNumber(raw string) interface{} {
 	return -1
 }
 
-func toInt(any interface{}) int {
-	switch v := any.(type) {
+func toInt(raw any) int {
+	switch v := raw.(type) {
 	case int32:
 		return int(v)
 	case int64:
@@ -43,12 +43,12 @@ func toInt(any interface{}) int {
 		return int(v)
 	case string:
 		i, err := strconv.Atoi(v)
-		assert(err != nil, err, "Value:", any)
+		assert(err != nil, err, "Value:", raw)
 		return i
 	case Value:
 		return toInt(v.val())
 	default:
-		runtimeExcption("failed to int value", any)
+		runtimeExcption("failed to int value", raw)
 	}
 	return -1
 }

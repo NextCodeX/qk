@@ -10,7 +10,7 @@ import (
 )
 
 // 获取文件/目录的内容大小
-func (fns *InternalFunctionSet) Fsize(args []interface{}) int64 {
+func (this *InternalFunctionSet) Fsize(args []interface{}) int64 {
 	size := len(args)
 	if size < 1 {
 		log.Println("fsize(path[, excludes]) parameter path is required")
