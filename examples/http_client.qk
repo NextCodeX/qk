@@ -1,0 +1,152 @@
+
+host = "http://localhost:8080"
+
+resp = httpGet(`$host/get?name=dfx11`)
+assert(resp.json().param == "dfx11")
+assert(resp.json().action == "get")
+
+resp = httpGet(`$host/get1?name=dfx11`)
+assert(resp.json().param == "nothing")
+assert(resp.json().action == "get1")
+
+resp = httpGet(`$host/get2?name=dfx11&id=1111&nnnn&kkkk`)
+assert(resp.json().param.name == "dfx11")
+assert(resp.json().action == "get2")
+assert(resp.json().type == "params to map container!")
+
+resp = httpGet(`$host/get3?name=dfx11&id=1111&nnnn&kkkk&age=max`)
+assert(resp.json().param.name == "dfx11")
+assert(resp.json().action == "get3")
+assert(resp.json().type == "params mapping to entity bean")
+
+
+resp = httpPost(`$host/post1`)
+assert(resp.json().action == "post1")
+
+resp = httpPost(`$host/post2?name=changlie`)
+assert(resp.json().action == "post2")
+assert(resp.json().param == "changlie")
+
+resp = httpPostUrlencoded(`$host/post3?name=changlie&tt=998`, {
+        id: 119,
+        name: "克什米尔",
+        age: "23333333"
+    })
+assert(resp.json().action == "post3")
+assert(resp.json().param.name == "changlie,克什米尔")
+assert(resp.json().param.age == "23333333")
+assert(resp.json().type == "application/x-www-form-urlencoded")
+
+resp = httpPostJson(`$host/post4?name=changlie&tt=998`, {
+        id: 3,
+        name: "舂米",
+        age: "fx"
+    })
+assert(resp.json().action == "post4")
+assert(resp.json().param.name == "舂米")
+assert(resp.json().param.age == "fx")
+assert(resp.json().type == "application/json")
+
+resp = httpPostData(`$host/post5?name=changlie`, {
+id: 1024,
+age: "female"
+})
+// resp.pr()
+assert(resp.json().action == "post5")
+assert(resp.json().type == "multipart/form-data")
+assert(resp.json().param.age == "female")
+
+resp = httpPostData(`$host/post6?name=changlie`, {
+id: 1024,
+age: "female"
+})
+// resp.pr()
+assert(resp.json().error == "Bad Request")
+
+demoFileBytes = fbs(`$root/demo.qk`)
+resp = httpPostData(`$host/post7?name=chx`, {
+id: 1024,
+age: "female",
+"#annex": demoFileBytes
+})
+// resp.pr()
+assert(resp.json().action == "post7")
+assert(resp.json().param.name == "chx")
+assert(resp.json().type == "multipart/form-data;file")
+assert(resp.json().annex.has("file;application"))
+
+resp = httpPostData(`$host/post8?name=chx`, {
+id: 1024,
+age: "female",
+"@files": [`$root/demo.qk`,`$root/http_client.qk`,`$root/type_byte_array.qk`]
+})
+// resp.pr()
+assert(resp.json().action == "post8")
+assert(resp.json().param.name == "chx")
+assert(resp.json().type == "multipart/form-data;multi file")
+assert(resp.json().files.size() == 3)
+
+resp = httpPostData(`$host/post8?name=groovy`, {
+id: 1024,
+age: "female",
+"@files": `$root/demo.qk`
+})
+// resp.pr()
+assert(resp.json().action == "post8")
+assert(resp.json().param.name == "groovy")
+assert(resp.json().type == "multipart/form-data;multi file")
+assert(resp.json().files.size() == 1)
+
+resp = httpPostJson(`$host/post9?name=chx`, {
+id: 1024,
+name: "龚",
+age: "female"
+})
+// resp.pr()
+assert(resp.json().action == "post9")
+assert(resp.json().param.name == "龚")
+assert(resp.json().type == "application/json")
+
+
+
+resp = httpPut(`$host/put?qk=光速检`, {
+id: 1024,
+name: "龚",
+age: "female"
+})
+// resp.pr()
+assert(resp.json().action == "put")
+assert(resp.json().queryParam == "光速检")
+
+
+resp = httpPatch(`$host/patch?qk=夏`, {
+id: 1024,
+name: "龚",
+age: "female"
+})
+assert(resp.json().action == "patch")
+assert(resp.json().queryParam == "夏")
+
+resp = httpDelete(`$host/delete?qk=秋`, {
+id: 1024,
+name: "龚",
+age: "female"
+})
+assert(resp.json().action == "delete")
+assert(resp.json().queryParam == "秋")
+
+
+echo("http client test successfully!")
+
+
+
+
+
+
+
+
+
+
+
+
+

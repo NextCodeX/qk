@@ -49,6 +49,10 @@ func singleFileTest(f string) (res bool) {
 	return
 }
 
-func errorLog(format string, args ...any) {
+func errorLog(args ...any) {
+	fmt.Printf("%v%v%v\n", COLOR_RED, fmt.Sprint(args...), COLOR_NORMAL)
+}
+
+func errorLog1(format string, args ...any) {
 	fmt.Printf("%v%v%v\n", COLOR_RED, fmt.Sprintf(format, args...), COLOR_NORMAL)
 }

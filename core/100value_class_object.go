@@ -53,17 +53,17 @@ func (clazz *ClassObject) isObject() bool {
 
 func (clazz *ClassObject) get(key string) Value {
 	mt, ok := clazz.methods[key]
-	if !ok {
-		if key == "type" {
-			return callable(func() Value {
-				return newQKValue(clazz.name)
-			})
-		} else {
-			return NULL
-		}
-	} else {
+	if ok {
 		return mt
 	}
+
+	if key != "type" {
+		return NULL
+	}
+
+	return callable(func() Value {
+		return newQKValue(clazz.name)
+	})
 }
 
 func (clazz *ClassObject) initMethods() {

@@ -17,6 +17,8 @@ type HttpResponse struct {
 }
 
 func newHttpResponse(resp *http.Response) Value {
+	defer resp.Body.Close()
+
 	obj := &HttpResponse{cookies: resp.Cookies()}
 	obj.status = resp.Status
 	obj.statusCode = resp.StatusCode
@@ -27,7 +29,7 @@ func newHttpResponse(resp *http.Response) Value {
 		obj.statusCode = 504
 	}
 	obj.body = body
-	defer resp.Body.Close()
+
 	return newClass("HttpResponse", &obj)
 }
 

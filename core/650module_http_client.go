@@ -5,9 +5,10 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"mime/multipart"
 	"net/http"
+	"net/url"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -35,6 +36,14 @@ application/x-www-form-urlencoded ： <form encType="">中默认的encType，for
 multipart/form-data ： 需要在表单中进行文件上传时，就需要使用该格式
 */
 // cookie, set-cookie
+var httpClients *http.Client
+
+func getHttpClient() *http.Client {
+	if httpClients == nil {
+		httpClients = &http.Client{}
+	}
+	return httpClients
+}
 
 func (this *InternalFunctionSet) HttpGet(args []interface{}) Value {
 	if len(args) < 1 {
@@ -48,19 +57,19 @@ func (this *InternalFunctionSet) HttpGet(args []interface{}) Value {
 	if len(args) > 1 {
 		headers = args[1].(JSONObject)
 	}
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest(http.MethodGet, urlencoded(url), nil)
 	if err != nil {
 		runtimeExcption(err)
 	}
-	ctx, _ := context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
 	req.WithContext(ctx)
 	if headers != nil {
 		for key, val := range headers.mapVal() {
 			req.Header.Set(key, val.String())
 		}
 	}
-	resp, err := client.Do(req)
+	resp, err := getHttpClient().Do(req)
 	if err != nil {
 		runtimeExcption(err)
 	}
@@ -68,54 +77,162 @@ func (this *InternalFunctionSet) HttpGet(args []interface{}) Value {
 	return newHttpResponse(resp)
 }
 
-func (this *InternalFunctionSet) HttpPost(args []interface{}) Value {
-	if len(args) < 1 {
-		runtimeExcption("HttpPost() url is required")
-	}
-	url, ok := args[0].(string)
-	if !ok {
-		runtimeExcption("HttpPost() url must be string type")
-	}
-	var config JSONObject
-	if len(args) > 1 {
-		config = args[1].(JSONObject)
-	}
-	if config == nil {
-		runtimeExcption("HttpPost() config is required and must be JSONObject type")
-	}
-	contentType := config.get("type").String()
-	content, contentType, contentLen := parseBody(contentType, config.get("body"))
-
-	client := &http.Client{}
-	req, err := http.NewRequest("POST", url, content)
+func (this *InternalFunctionSet) HttpPost(url string) Value {
+	req, err := http.NewRequest(http.MethodPost, urlencoded(url), nil)
 	if err != nil {
 		runtimeExcption(err)
 	}
-
-	req.Header.Set("Content-Type", contentType)
-	req.Header.Set("Content-Length", strconv.Itoa(contentLen))
-	headersRaw := config.get("headers")
-	if !headersRaw.isNULL() {
-		headers := headersRaw.(JSONObject)
-		for key, val := range headers.mapVal() {
-			req.Header.Set(key, val.String())
-		}
-	}
-	resp, err := client.Do(req)
+	resp, err := getHttpClient().Do(req)
 	if err != nil {
 		runtimeExcption(err)
 	}
 
 	return newHttpResponse(resp)
+}
+
+func (this *InternalFunctionSet) HttpPostUrlencoded(url string, body JSONObject) Value {
+	var content string
+	for key, value := range body.mapVal() {
+		if content == "" {
+			content += fmt.Sprintf("%v=%v", key, value.String())
+		} else {
+			content += fmt.Sprintf("&%v=%v", key, value.String())
+		}
+	}
+	req, err := http.NewRequest(http.MethodPost, urlencoded(url), strings.NewReader(content))
+	if err != nil {
+		runtimeExcption(err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Content-Length", strconv.Itoa(len(content)))
+	resp, err := getHttpClient().Do(req)
+	if err != nil {
+		runtimeExcption(err)
+	}
+	return newHttpResponse(resp)
+}
+
+func simpleRequestWithJson(method string, url string, body JSONObject) Value {
+	content := body.toJSONObjectString()
+	req, err := http.NewRequest(method, urlencoded(url), strings.NewReader(content))
+	if err != nil {
+		runtimeExcption(err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Length", strconv.Itoa(len(content)))
+	resp, err := getHttpClient().Do(req)
+	if err != nil {
+		runtimeExcption(err)
+	}
+	return newHttpResponse(resp)
+}
+
+func (this *InternalFunctionSet) HttpPostJson(url string, body JSONObject) Value {
+	return simpleRequestWithJson(http.MethodPost, url, body)
+}
+
+func readFileData(path string) []byte {
+	bs, err := os.ReadFile(path)
+	if err != nil {
+		runtimeExcption(err)
+	}
+	return bs
+}
+
+func (this *InternalFunctionSet) HttpPostData(url string, body JSONObject) Value {
+	bodyBuffer := &bytes.Buffer{}
+	bodyWriter := multipart.NewWriter(bodyBuffer)
+	for key, value := range body.mapVal() {
+		if !toBoolean(value) {
+			continue
+		}
+		if strings.HasPrefix(key, "@") { // file url
+			fieldName := ifElse(key[1:] == "", "file", key[1:])
+			fAttrs := parsePostFileAttrs(value)
+			for _, fAttr := range fAttrs {
+				fileName := fAttr.name
+				fileData := readFileData(fAttr.path)
+				fileWriter, _ := bodyWriter.CreateFormFile(fieldName, fileName)
+				_, _ = io.Copy(fileWriter, bytes.NewReader(fileData))
+			}
+		} else if strings.HasPrefix(key, "#") { // file data
+			fieldName := ifElse(key[1:] == "", "file", key[1:])
+			fileName, fileData := "file", goBytes(value)
+			fileWriter, _ := bodyWriter.CreateFormFile(fieldName, fileName)
+			_, _ = io.Copy(fileWriter, bytes.NewReader(fileData))
+		} else {
+			_ = bodyWriter.WriteField(key, value.String())
+		}
+	}
+	content, contentType, contentLen := bodyBuffer, bodyWriter.FormDataContentType(), bodyBuffer.Len()
+	err := bodyWriter.Close()
+	assert(err != nil, "failed to populate post args", err)
+
+	req, err := http.NewRequest(http.MethodPost, urlencoded(url), content)
+	if err != nil {
+		runtimeExcption(err)
+	}
+	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("Content-Length", strconv.Itoa(contentLen))
+	resp, err := getHttpClient().Do(req)
+	if err != nil {
+		runtimeExcption(err)
+	}
+	return newHttpResponse(resp)
+}
+func parsePostFileAttrs(raw Value) []PostFileAttr {
+	var res []PostFileAttr
+	if raw.isString() {
+		v := raw.String()
+		if strings.TrimSpace(v) == "" {
+			return res
+		}
+		attr := PostFileAttr{
+			name: filepath.Base(v),
+			path: v,
+		}
+		res = append(res, attr)
+	} else if raw.isJsonArray() {
+		for _, item := range goArr(raw).values() {
+			v := item.String()
+			if strings.TrimSpace(v) == "" {
+				continue
+			}
+			attr := PostFileAttr{
+				name: filepath.Base(v),
+				path: v,
+			}
+			res = append(res, attr)
+		}
+	} else {
+	}
+	return res
+}
+
+type PostFileAttr struct {
+	name string
+	path string
+}
+
+func (this *InternalFunctionSet) HttpPut(url string, body JSONObject) Value {
+	return simpleRequestWithJson(http.MethodPut, url, body)
+}
+
+func (this *InternalFunctionSet) HttpPatch(url string, body JSONObject) Value {
+	return simpleRequestWithJson(http.MethodPatch, url, body)
+}
+
+func (this *InternalFunctionSet) HttpDelete(url string, body JSONObject) Value {
+	return simpleRequestWithJson(http.MethodDelete, url, body)
 }
 
 func (this *InternalFunctionSet) HttpHead(url string) Value {
-	client := &http.Client{}
-	req, err := http.NewRequest("HEAD", url, nil)
+	req, err := http.NewRequest(http.MethodHead, urlencoded(url), nil)
 	if err != nil {
 		runtimeExcption(err)
 	}
-	resp, err := client.Do(req)
+	resp, err := getHttpClient().Do(req)
 	if err != nil {
 		runtimeExcption(err)
 	}
@@ -123,82 +240,17 @@ func (this *InternalFunctionSet) HttpHead(url string) Value {
 	return newHttpResponse(resp)
 }
 
-func parseBody(contentType string, val Value) (io.Reader, string, int) {
-	if contentType == "application/x-www-form-urlencoded" {
-		obj := val.(JSONObject)
-		var res string
-		for key, value := range obj.mapVal() {
-			if res == "" {
-				res += fmt.Sprintf("%v=%v", key, value.String())
-			} else {
-				res += fmt.Sprintf("&%v=%v", key, value.String())
-			}
-		}
-		return strings.NewReader(res), contentType, len(res)
+func urlencoded(raw string) string {
+	if !strings.Contains(raw, "?") {
+		return raw
 	}
-	if contentType == "application/json" {
-		obj := val.(JSONObject)
-		res := obj.toJSONObjectString()
-		return strings.NewReader(res), contentType, len(res)
+	urlObj, err := url.Parse(raw)
+	if err != nil {
+		runtimeExcption(err)
 	}
-	if contentType == "multipart/form-data" {
-		obj := val.(JSONObject)
-		bodyBuffer := &bytes.Buffer{}
-		bodyWriter := multipart.NewWriter(bodyBuffer)
-
-		for key, value := range obj.mapVal() {
-			if key == "files" {
-				arr := value.(JSONArray)
-				for _, elem := range arr.values() {
-					info := elem.(JSONObject)
-					fileNameVal := info.get("name")
-					fieldNameVal := info.get("field")
-					pathVal := info.get("path")
-					dataVal := info.get("data")
-					var fileName, fieldName, path string
-					var data []byte
-					if !fieldNameVal.isNULL() {
-						fieldName = fieldNameVal.String()
-					} else {
-						fieldName = "files"
-					}
-
-					if !dataVal.isNULL() {
-						data = goBytes(dataVal)
-					}
-					if data == nil && !pathVal.isNULL() {
-						path = pathVal.String()
-						bs, err := ioutil.ReadFile(path)
-						if err != nil {
-							runtimeExcption(err)
-						}
-						data = bs
-					}
-					if data == nil {
-						runtimeExcption("file data or path is be required")
-					}
-					if !fileNameVal.isNULL() {
-						fileName = fileNameVal.String()
-					} else {
-						if path != "" {
-							fileName = filepath.Base(fileName)
-						}
-						if fileName == "" {
-							runtimeExcption("fileName is be required")
-						}
-					}
-
-					fileWriter, _ := bodyWriter.CreateFormFile(fieldName, fileName)
-					_, _ = io.Copy(fileWriter, bytes.NewReader(data))
-				}
-				continue
-			}
-			_ = bodyWriter.WriteField(key, value.String())
-		}
-
-		return bodyBuffer, bodyWriter.FormDataContentType(), bodyBuffer.Len()
+	queryVals, err := url.ParseQuery(urlObj.RawQuery)
+	if err != nil {
+		runtimeExcption(err)
 	}
-
-	res := val.String()
-	return strings.NewReader(res), contentType, len(res)
+	return fmt.Sprintf(`%v://%v%v?%v`, urlObj.Scheme, urlObj.Host, urlObj.Path, queryVals.Encode())
 }

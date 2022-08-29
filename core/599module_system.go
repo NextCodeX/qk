@@ -86,9 +86,10 @@ func (this *InternalFunctionSet) Cost() {
 func (this *InternalFunctionSet) Assert(flag bool) {
 	if !flag {
 		//获取的是 CallerA函数的调用者的调用栈
-		pc, file, lineNo, ok := runtime.Caller(1)
-		funcName := runtime.FuncForPC(pc).Name()
-		panic(fmt.Sprintf("%v; %v; %v; %v; %v\n", pc, file, lineNo, ok, funcName))
+		// pc, file, lineNo, ok := runtime.Caller(1)
+		// funcName := runtime.FuncForPC(pc).Name()
+		// panic(fmt.Sprintf("%v; %v; %v; %v; %v\n", pc, file, lineNo, ok, funcName))
+		panic("assert failed!")
 	}
 }
 
