@@ -19,6 +19,10 @@ type ByteArrayValue struct {
 	ClassObject
 }
 
+func emptyByteArray() Value {
+	return newByteArrayValue(nil)
+}
+
 func newByteArrayValue(raw []byte) Value {
 	bs := &ByteArrayValue{goValue: raw}
 	bs.ClassObject.initAsClass("ByteArray", &bs)

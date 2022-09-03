@@ -162,6 +162,19 @@ func (arr *JSONArrayImpl) Add(args []interface{}) {
 		arr.add(newQKValue(arg))
 	}
 }
+
+func (arr *JSONArrayImpl) Dedup() []any {
+	map4Set := make(map[any]Void)
+	for _, v := range arr.valList {
+		map4Set[v.val()] = DEFAULT_VOID
+	}
+	var res []any
+	for k := range map4Set {
+		res = append(res, k)
+	}
+	return res
+}
+
 func (arr *JSONArrayImpl) Remove(index int) {
 	assert(arr.checkOutofIndex(index), "array out of index")
 	newList := make([]Value, 0, arr.Size())

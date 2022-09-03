@@ -4,7 +4,9 @@ import (
 	"fmt"
 )
 
+type Void struct{}
 var (
+	DEFAULT_VOID Void
 	NULL  = newNULLValue() // 空值
 	TRUE  = newQKValue(true)
 	FALSE = newQKValue(false)

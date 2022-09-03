@@ -151,8 +151,15 @@ func (str *StringValue) HasPrefix(prefix string) bool {
 func (str *StringValue) HasSuffix(suffix string) bool {
 	return strings.HasSuffix(str.goValue, suffix)
 }
-func (str *StringValue) Split(seperator string) []string {
-	return strings.Split(str.goValue, seperator)
+func (str *StringValue) Split(seperator string, rawFlag bool) []string {
+	ss := strings.Split(str.goValue, seperator)
+	if rawFlag {
+		return ss
+	}
+	for i, s := range ss {
+		ss[i] = strings.TrimSpace(s)
+	}
+	return ss
 }
 func (str *StringValue) Is(target string) bool {
 	return str.goValue == target || strings.ToLower(str.goValue) == strings.ToLower(target)

@@ -1,0 +1,6 @@
+
+
+arr = [1, 0, 1, true, false, true, "a", "b", "a", "a"]
+
+arr.dedup().pr()
+

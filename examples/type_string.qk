@@ -1,0 +1,8 @@
+
+
+str = "  a, b, c    "
+str.split(",").pr()
+str.split(",", true).pr()
+
+
+

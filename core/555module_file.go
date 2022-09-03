@@ -10,6 +10,9 @@ import (
 	"os"
 	"regexp"
 	"strings"
+
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/transform"
 )
 
 var regBlankChar = regexp.MustCompile(`\s+`)
@@ -40,18 +43,57 @@ func (this *InternalFunctionSet) Fstr(filename string) string {
 }
 
 // 逐行读取文件，返回一个字符串数组
-func (this *InternalFunctionSet) Flines(filename string) []interface{} {
+func (this *InternalFunctionSet) Flines(filename string, readGBK bool) []string {
+	if readGBK {
+		return readGBKByLine(filename)
+	}
+	
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to read %v file: %v", filename, err.Error()))
 		return nil
 	}
-	var res []interface{}
+	var res []string
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		res = append(res, scanner.Text())
 	}
+	defer func ()  {
+		if err = scanner.Err(); err != nil {
+			runtimeExcption(err)
+		}
+		if err = file.Close(); err != nil {
+			runtimeExcption(err)
+		}
+	}()
 	return res
+}
+
+func readGBKByLine(filename string) []string {
+	var enc = simplifiedchinese.GBK
+    // Read UTF-8 from a GBK encoded file.
+    f, err := os.Open(filename)
+    if err != nil {
+        runtimeExcption(err)
+    }
+    r := transform.NewReader(f, enc.NewDecoder())
+    // Read converted UTF-8 from `r` as needed.
+    // As an example we'll read line-by-line showing what was read:
+    var res []string
+	sc := bufio.NewScanner(r)
+	for sc.Scan() {
+		res = append(res, sc.Text())
+	}
+	defer func ()  {
+		if err = sc.Err(); err != nil {
+			runtimeExcption(err)
+		}
+	
+		if err = f.Close(); err != nil {
+			runtimeExcption(err)
+		}
+	}()
+    return res
 }
 
 // 读取文件内容，返回一个JSONObject
