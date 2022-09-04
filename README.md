@@ -1,14 +1,28 @@
 # Quick
 It's a script language made by Golang.
 
-### The reference documentation
-[https://www.chenlh.cn/qk-doc/](https://www.chenlh.cn/qk-doc/)
+### Documentation
+The complete documentation can be found [here](https://www.chenlh.cn/qk-doc/).
 
-### Download
-[download and use just now](https://gitee.com/qk-x/qk-bin)
+Examples can be found under the [examples](./examples) directory.
 
+### Compile from source  
+If you wish to build raft you'll need Go version 1.19+ installed.
 
-## 鸣谢
+Please check your installation with:
+
+```
+go version
+```
+
+1. Download the source code `git clone https://github.com/NextCodeX/qk.git`
+2. Go to the `Quick` directory and execute `go build`
+
+### License
+
+Apache License 2.0 - see [`LICENSE`](https://github.com/NextCodeX/qk/blob/master/LICENSE) for more details
+
+### 鸣谢
 
 > [GoLand](https://www.jetbrains.com/zh-cn/go/) 是一个在各个方面都最大程度地提高Go开发人员生产力的 IDE。
 
