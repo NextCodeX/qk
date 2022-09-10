@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"strconv"
 )
@@ -154,6 +155,26 @@ func (this *ByteArrayValue) Add(arg interface{}) {
 	} else {
 		fmt.Println("ByteArray.add() parameter type must be one of ByteArray/String/Number")
 	}
+}
+
+func (this *ByteArrayValue) Save(path string) {
+	fileSave(path, this.goValue)
+}
+func (this *ByteArrayValue) Base64() string {
+	return base64.StdEncoding.EncodeToString(this.goValue)
+}
+func (this *ByteArrayValue) Debase64() []byte {
+	data, err := base64.StdEncoding.DecodeString(string(this.goValue))
+	if err != nil {
+		return nil
+	}
+	return data
+}
+func (this *ByteArrayValue) Gzip() []byte {
+	return gzipEncode(this.goValue)
+}
+func (this *ByteArrayValue) DeGzip() []byte {
+	return gzipDecode(this.goValue)
 }
 
 // 字节数组大小

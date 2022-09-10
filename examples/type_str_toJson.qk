@@ -1,0 +1,16 @@
+s=`{
+     "name" : "covid-11",
+     "country" : "China",
+     "city" : "Wuhan",
+     "reason" : "Non vedge Food"
+}`
+tmp = s.clear("\n").clear(" ")
+tmp.toJson().pr()
+
+echo(tmp.toJson().name)
+
+
+arrStr = `[110, 997, true, "耦合", "喔"]`
+arrStr.toJson().pr()
+
+echo(arrStr.toJson()[3])

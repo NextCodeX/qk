@@ -100,6 +100,9 @@ func (this *InternalFunctionSet) Sleep(t int64) {
 
 // 命令行调用
 func (this *InternalFunctionSet) Cmd(command string) string {
+	return doCmd(command)
+}
+func doCmd(command string) string {
 	var cmder *exec.Cmd
 	if runtime.GOOS == "windows" {
 		cmder = exec.Command("cmd", "/C", command)
@@ -149,6 +152,7 @@ func (this *InternalFunctionSet) Ob(url string) {
 func (this *InternalFunctionSet) Localhost() string {
 	return getClientIp()
 }
+
 // 获取本地ip
 func getClientIp() string {
 	addrs, err := net.InterfaceAddrs()

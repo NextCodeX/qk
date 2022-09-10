@@ -1,0 +1,15 @@
+"cd /home/xp
+ls -lh".exec().pr()
+
+
+"cd ../
+tree".exec().save("/home/xp/d.txt")
+
+echo("gzip test: ")
+dt = fbs(`$root/data`)
+rawSize = dt.size()
+rawSize.pr()
+afterGzipSize = dt.gzip().size()
+afterGzipSize.pr()
+echo(rawSize/afterGzipSize)
+dt.gzip().deGzip().save(`$root/afterData`)

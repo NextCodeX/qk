@@ -47,7 +47,7 @@ func (this *InternalFunctionSet) Flines(filename string, readGBK bool) []string 
 	if readGBK {
 		return readGBKByLine(filename)
 	}
-	
+
 	file, err := os.Open(filename)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to read %v file: %v", filename, err.Error()))
@@ -58,7 +58,7 @@ func (this *InternalFunctionSet) Flines(filename string, readGBK bool) []string 
 	for scanner.Scan() {
 		res = append(res, scanner.Text())
 	}
-	defer func ()  {
+	defer func() {
 		if err = scanner.Err(); err != nil {
 			runtimeExcption(err)
 		}
@@ -71,34 +71,34 @@ func (this *InternalFunctionSet) Flines(filename string, readGBK bool) []string 
 
 func readGBKByLine(filename string) []string {
 	var enc = simplifiedchinese.GBK
-    // Read UTF-8 from a GBK encoded file.
-    f, err := os.Open(filename)
-    if err != nil {
-        runtimeExcption(err)
-    }
-    r := transform.NewReader(f, enc.NewDecoder())
-    // Read converted UTF-8 from `r` as needed.
-    // As an example we'll read line-by-line showing what was read:
-    var res []string
+	// Read UTF-8 from a GBK encoded file.
+	f, err := os.Open(filename)
+	if err != nil {
+		runtimeExcption(err)
+	}
+	r := transform.NewReader(f, enc.NewDecoder())
+	// Read converted UTF-8 from `r` as needed.
+	// As an example we'll read line-by-line showing what was read:
+	var res []string
 	sc := bufio.NewScanner(r)
 	for sc.Scan() {
 		res = append(res, sc.Text())
 	}
-	defer func ()  {
+	defer func() {
 		if err = sc.Err(); err != nil {
 			runtimeExcption(err)
 		}
-	
+
 		if err = f.Close(); err != nil {
 			runtimeExcption(err)
 		}
 	}()
-    return res
+	return res
 }
 
 // 读取文件内容，返回一个JSONObject
 func (this *InternalFunctionSet) Fjson(filename string) map[string]interface{} {
-	bs, err := ioutil.ReadFile(filename)
+	bs, err := os.ReadFile(filename)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to read %v file: %v", filename, err.Error()))
 		return nil
@@ -179,13 +179,16 @@ func (this *InternalFunctionSet) Fsave(path string, content interface{}) {
 		runtimeExcption("function fsave(path, content): the parameter content must be type String/ByteArray")
 	}
 
-	err := ioutil.WriteFile(path, data, 0666)
-	if err != nil {
-		log.Fatal(fmt.Sprintf("failed to write content to file: %v, %v", path, err.Error()))
-	}
+	fileSave(path, data)
 }
 func (this *InternalFunctionSet) Fsv(path string, content interface{}) {
 	this.Fsave(path, content)
+}
+func fileSave(path string, data []byte) {
+	err := os.WriteFile(path, data, 0666)
+	if err != nil {
+		log.Fatal(fmt.Sprintf("failed to write content to file: %v, %v", path, err.Error()))
+	}
 }
 
 // 文件内容追加

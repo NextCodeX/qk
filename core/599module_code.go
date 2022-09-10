@@ -53,6 +53,12 @@ func (this *InternalFunctionSet) GzipEncode(src interface{}) []byte {
 		return nil
 	}
 
+	return gzipEncode(raw)
+}
+func (this *InternalFunctionSet) Gzip(src interface{}) []byte {
+	return this.GzipEncode(src)
+}
+func gzipEncode(raw []byte) []byte {
 	var buf bytes.Buffer
 	gz := gzip.NewWriter(&buf)
 	if _, err := gz.Write(raw); err != nil {
@@ -66,12 +72,15 @@ func (this *InternalFunctionSet) GzipEncode(src interface{}) []byte {
 	}
 	return buf.Bytes()
 }
-func (this *InternalFunctionSet) Gzip(src interface{}) []byte {
-	return this.GzipEncode(src)
-}
 
 // gzip 解码 （解压缩）
 func (this *InternalFunctionSet) GzipDecode(data []byte) []byte {
+	return gzipDecode(data)
+}
+func (this *InternalFunctionSet) Degzip(data []byte) []byte {
+	return gzipDecode(data)
+}
+func gzipDecode(data []byte) []byte {
 	bytesReader := bytes.NewReader(data)
 	gzipReader, err := gzip.NewReader(bytesReader)
 	if err != nil {
@@ -83,13 +92,14 @@ func (this *InternalFunctionSet) GzipDecode(data []byte) []byte {
 	}
 	return res
 }
-func (this *InternalFunctionSet) Degzip(data []byte) []byte {
-	return this.GzipDecode(data)
-}
 
 // md5 编码
 func (this *InternalFunctionSet) Md5(raw interface{}) string {
 	bs := toBytes(raw)
+	return md5Encode(bs)
+}
+
+func md5Encode(bs []byte) string {
 	m := md5.New()
 	m.Write(bs)
 	res := hex.EncodeToString(m.Sum(nil))
