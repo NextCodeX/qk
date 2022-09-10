@@ -1,6 +1,7 @@
 package test
 
 import (
+	"fmt"
 	"path/filepath"
 	"qk/core"
 	"testing"
@@ -12,7 +13,7 @@ func Test_demo(t *testing.T) {
 	// 		errorLog(err)
 	// 	}
 	// }()
-	demo, _ := filepath.Abs("../examples/http_client.qk")
+	demo, _ := filepath.Abs("../examples/type_all_pr_func.qk")
 	//demo, _ := filepath.Abs("../examples/demo.qk")
 	// core.DEBUG = true
 	core.TestFlag = true
@@ -20,5 +21,5 @@ func Test_demo(t *testing.T) {
 }
 
 func Test_api(t *testing.T) {
-
+	fmt.Println("要人没人啊")
 }

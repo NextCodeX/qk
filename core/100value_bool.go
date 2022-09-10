@@ -13,14 +13,17 @@ func newBooleanValue(raw bool) Value {
 	return bl
 }
 
-func (boolVal *BooleanValue) val() interface{} {
-	return boolVal.goValue
+func (this *BooleanValue) val() interface{} {
+	return this.goValue
 }
 
-func (boolVal *BooleanValue) isBoolean() bool {
+func (this *BooleanValue) isBoolean() bool {
 	return true
 }
 
-func (boolVal *BooleanValue) String() string {
-	return fmt.Sprint(boolVal.goValue)
+func (this *BooleanValue) Pr() {
+	fmt.Println(this.String())
+}
+func (this *BooleanValue) String() string {
+	return fmt.Sprint(this.goValue)
 }

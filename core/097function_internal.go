@@ -122,12 +122,12 @@ func findFuncArg(funcName string, index int, t reflect.Type, args []any) reflect
 }
 
 // 设置函数参数
-func (fn *InternalFunction) setGoArgs(rawArgs []interface{}) {
-	fn.rawArgs = rawArgs
+func (this *InternalFunction) setGoArgs(rawArgs []interface{}) {
+	this.rawArgs = rawArgs
 }
 
-func (fn *InternalFunction) execute() StatementResult {
-	params := extractModuleFuncArgs(fn.moduleFunc, fn.rawArgs)
-	res := fn.moduleFunc.Run(params)
+func (this *InternalFunction) execute() StatementResult {
+	params := extractModuleFuncArgs(this.moduleFunc, this.rawArgs)
+	res := this.moduleFunc.Run(params)
 	return newStatementResult(StatementNormal, newQKValue(res))
 }

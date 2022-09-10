@@ -5,14 +5,16 @@ import (
 )
 
 type Void struct{}
+
 var (
 	DEFAULT_VOID Void
-	NULL  = newNULLValue() // 空值
-	TRUE  = newQKValue(true)
-	FALSE = newQKValue(false)
+	NULL         = newNULLValue() // 空值
+	TRUE         = newQKValue(true)
+	FALSE        = newQKValue(false)
 )
 
 type Value interface {
+	Pr()
 	String() string
 	val() interface{}
 	typeName() string
@@ -34,30 +36,50 @@ func newQKValue(rawVal any) Value {
 		return NULL
 	}
 	switch v := rawVal.(type) {
-	case Value: return v
-	case JSONArray: return v
-	case JSONObject: return v
-	case Function: return v
+	case Value:
+		return v
+	case JSONArray:
+		return v
+	case JSONObject:
+		return v
+	case Function:
+		return v
 
-	case []byte: return newByteArrayValue(v)
-	case int: return newIntValue(int64(v))
-	case int64: return newIntValue(v)
-	case int32: return newIntValue(int64(v))
-	case float64: return newFloatValue(v)
-	case float32: return newFloatValue(float64(v))
-	case bool: return newBooleanValue(v)
-	case string: return newStringValue(v)
+	case []byte:
+		return newByteArrayValue(v)
+	case int:
+		return newIntValue(int64(v))
+	case int64:
+		return newIntValue(v)
+	case int32:
+		return newIntValue(int64(v))
+	case float64:
+		return newFloatValue(v)
+	case float32:
+		return newFloatValue(float64(v))
+	case bool:
+		return newBooleanValue(v)
+	case string:
+		return newStringValue(v)
 
-	case map[string]Value: return jsonObject(v)
-	case map[string]string: return jsonObject(v)
-	case map[string]interface{}: return jsonObject(v)
+	case map[string]Value:
+		return jsonObject(v)
+	case map[string]string:
+		return jsonObject(v)
+	case map[string]interface{}:
+		return jsonObject(v)
 
-	case []Value: return array(v)
-	case []string: return array(v)
-	case [][]byte: return array(v)
-	case []interface{}: return array(v)
+	case []Value:
+		return array(v)
+	case []string:
+		return array(v)
+	case [][]byte:
+		return array(v)
+	case []interface{}:
+		return array(v)
 
-	default: return newAnyValue(v)
+	default:
+		return newAnyValue(v)
 	}
 }
 

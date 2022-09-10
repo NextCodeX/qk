@@ -24,45 +24,45 @@ func newCustomFunction(name string, ts []Token, paramNames []string) *CustomFunc
 }
 
 // 初始化内置变量/函数
-func (fn *CustomFunction) setInternalVars(vars map[string]Value) {
+func (this *CustomFunction) setInternalVars(vars map[string]Value) {
 	for name, val := range vars {
-		fn.localVars.add(name, val)
+		this.localVars.add(name, val)
 	}
 	// 防止内置变量函数被覆盖无法使用，多提供一种方法以供调用
-	fn.localVars.add("_qk", jsonObject(vars))
+	this.localVars.add("_qk", jsonObject(vars))
 }
 
 // 调用自定义函数前， 初始化函数本地变量池
-func (fn *CustomFunction) setArgs(args []Value) {
+func (this *CustomFunction) setArgs(args []Value) {
 	// 每次执行自定义函数前，初始化本地变量池
-	fn.localVars = newVariables()
-	fn.args = args
+	this.localVars = newVariables()
+	this.args = args
 
-	argsLen := len(fn.args)
-	for i, paramName := range fn.paramNames {
+	argsLen := len(this.args)
+	for i, paramName := range this.paramNames {
 		var arg Value
 		if i >= argsLen {
 			arg = NULL
 		} else {
-			arg = fn.args[i]
+			arg = this.args[i]
 		}
-		fn.localVars.add(paramName, arg)
+		this.localVars.add(paramName, arg)
 	}
 }
 
-func (fn *CustomFunction) execute() StatementResult {
-	if fn.name != "main" && len(fn.paramNames) < 1 {
+func (this *CustomFunction) execute() StatementResult {
+	if this.name != "main" && len(this.paramNames) < 1 {
 		// 每次匿名函数调用时，重新初始化局部变量表
-		fn.localVars = newVariables()
+		this.localVars = newVariables()
 	}
 
-	return fn.executeStatementList(fn.block, StmtListTypeFunc)
+	return this.executeStatementList(this.block, StmtListTypeFunc)
 }
 
-func (fn *CustomFunction) varList() Variables {
-	return fn.localVars
+func (this *CustomFunction) varList() Variables {
+	return this.localVars
 }
 
-func (fn *CustomFunction) ptr() string {
-	return fmt.Sprintf("%p", fn)
+func (this *CustomFunction) ptr() string {
+	return fmt.Sprintf("%p", this)
 }

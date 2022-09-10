@@ -1,0 +1,20 @@
+d= "GO++
+ssss#
+line2#
+final#
+over!
+"
+
+d.clear("\n").pr()
+
+now().pr()
+"烨你".pr()
+i= 99
+f= 3.24
+b= false
+bs= newbs()
+bs.add("abc")
+i.pr()
+f.pr()
+b.pr()
+bs.pr()

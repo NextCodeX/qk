@@ -1,5 +1,7 @@
 package core
 
+import "fmt"
+
 type FunctionAdapter struct {
 	name     string
 	instance Function
@@ -7,34 +9,34 @@ type FunctionAdapter struct {
 	ValueAdapter
 }
 
-func (f *FunctionAdapter) init(name string, obj Function) {
-	f.name = name
-	f.instance = obj
-	f.StatementAdapter.initStatement(obj)
+func (this *FunctionAdapter) init(name string, obj Function) {
+	this.name = name
+	this.instance = obj
+	this.StatementAdapter.initStatement(obj)
 }
-func (f *FunctionAdapter) setArgs([]Value) {}
+func (this *FunctionAdapter) setArgs([]Value) {}
 
-func (f *FunctionAdapter) varList() Variables {
+func (this *FunctionAdapter) varList() Variables {
 	return nil
 }
-func (f *FunctionAdapter) parentFrame() Frame {
-	return f.instance.getParent()
+func (this *FunctionAdapter) parentFrame() Frame {
+	return this.instance.getParent()
 }
 
-func (f *FunctionAdapter) val() interface{} {
-	return f.instance
+func (this *FunctionAdapter) val() interface{} {
+	return this.instance
 }
-func (f *FunctionAdapter) typeName() string {
+func (this *FunctionAdapter) typeName() string {
 	return "Function"
 }
-func (f *FunctionAdapter) isFunction() bool {
+func (this *FunctionAdapter) isFunction() bool {
 	return true
 }
-func (f *FunctionAdapter) isObject() bool {
+func (this *FunctionAdapter) isObject() bool {
 	return true
 }
 
-func (f *FunctionAdapter) get(key string) Value {
+func (this *FunctionAdapter) get(key string) Value {
 	if key == "type" {
 		return callable(func() Value {
 			return newQKValue("Function")
@@ -44,6 +46,9 @@ func (f *FunctionAdapter) get(key string) Value {
 	}
 }
 
-func (f *FunctionAdapter) String() string {
-	return f.name + "()"
+func (this *FunctionAdapter) Pr() {
+	fmt.Println(this.String())
+}
+func (this *FunctionAdapter) String() string {
+	return "function " + this.name + "()"
 }

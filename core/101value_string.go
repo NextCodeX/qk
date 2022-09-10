@@ -2,7 +2,6 @@ package core
 
 import (
 	"bytes"
-	"fmt"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -26,25 +25,19 @@ func newStringValue(raw string) Value {
 	return str
 }
 
-func (str *StringValue) val() interface{} {
-	return str.goValue
+func (this *StringValue) val() interface{} {
+	return this.goValue
 }
-func (str *StringValue) isString() bool {
+func (this *StringValue) isString() bool {
 	return true
 }
 
-func (str *StringValue) String() string {
-	return str.goValue
-}
-func (str *StringValue) Atoi() string {
-	if len(str.chars) == 1 {
-		return fmt.Sprint(str.chars[0])
-	}
-	return fmt.Sprint(str.chars)
+func (this *StringValue) String() string {
+	return this.goValue
 }
 
-func (str *StringValue) indexs() []interface{} {
-	size := len(str.chars)
+func (this *StringValue) indexs() []interface{} {
+	size := len(this.chars)
 	indexs := make([]interface{}, size)
 
 	for i := 0; i < size; i++ {
@@ -53,106 +46,109 @@ func (str *StringValue) indexs() []interface{} {
 	return indexs
 }
 
-func (str *StringValue) getItem(index interface{}) Value {
+func (this *StringValue) getItem(index interface{}) Value {
 	i := index.(int)
-	return newQKValue(string(str.chars[i]))
+	return newQKValue(string(this.chars[i]))
 }
 
-func (str *StringValue) getChar(index int) string {
-	return string(str.chars[index])
+func (this *StringValue) getChar(index int) string {
+	return string(this.chars[index])
 }
-func (str *StringValue) At(index int) string {
-	return str.getChar(index)
+func (this *StringValue) At(index int) string {
+	return this.getChar(index)
 }
 
-func (str *StringValue) sub(start, end int) string {
+func (this *StringValue) sub(start, end int) string {
 	var buf bytes.Buffer
-	for _, ch := range str.chars[start:end] {
+	for _, ch := range this.chars[start:end] {
 		buf.WriteRune(ch)
 	}
 	return buf.String()
 }
 
-func (str *StringValue) Int() int {
-	res, err := strconv.Atoi(str.goValue)
+func (this *StringValue) Int() int {
+	res, err := strconv.Atoi(this.goValue)
 	if err != nil {
 		return -1
 	}
 	return res
 }
-func (str *StringValue) Float() float64 {
-	res, err := strconv.ParseFloat(str.goValue, 64)
+func (this *StringValue) Float() float64 {
+	res, err := strconv.ParseFloat(this.goValue, 64)
 	if err != nil {
 		return -1
 	}
 	return res
 }
-func (str *StringValue) Number() interface{} {
-	return strToNumber(str.goValue)
+func (this *StringValue) Number() interface{} {
+	return strToNumber(this.goValue)
 }
-func (str *StringValue) Bool() bool {
-	res, err := strconv.ParseBool(str.goValue)
+func (this *StringValue) Bool() bool {
+	res, err := strconv.ParseBool(this.goValue)
 	if err != nil {
 		runtimeExcption(err)
 	}
 	return res
 }
 
-func (str *StringValue) Bytes() []byte {
-	return []byte(str.goValue)
+func (this *StringValue) Bytes() []byte {
+	return []byte(this.goValue)
 }
 
-func (str *StringValue) Size() int {
-	return len(str.chars)
+func (this *StringValue) Size() int {
+	return len(this.chars)
 }
 
-func (str *StringValue) Index(subStr string) int {
-	return strings.Index(str.goValue, subStr)
+func (this *StringValue) Index(subStr string) int {
+	return strings.Index(this.goValue, subStr)
 }
-func (str *StringValue) LastIndex(subStr string) int {
-	return strings.LastIndex(str.goValue, subStr)
+func (this *StringValue) LastIndex(subStr string) int {
+	return strings.LastIndex(this.goValue, subStr)
 }
-func (str *StringValue) Trim() string {
-	return strings.TrimSpace(str.goValue)
+func (this *StringValue) Trim() string {
+	return strings.TrimSpace(this.goValue)
 }
-func (str *StringValue) Replace(old, newStr string) string {
-	return strings.ReplaceAll(str.goValue, old, newStr)
+func (this *StringValue) Replace(old, newStr string) string {
+	return strings.ReplaceAll(this.goValue, old, newStr)
 }
-func (str *StringValue) Repl(old, newStr string) string {
-	return strings.ReplaceAll(str.goValue, old, newStr)
+func (this *StringValue) Repl(old, newStr string) string {
+	return strings.ReplaceAll(this.goValue, old, newStr)
 }
-func (str *StringValue) Contain(subStr string) bool {
-	return strings.Contains(str.goValue, subStr)
+func (this *StringValue) Clear(target string) string {
+	return strings.ReplaceAll(this.goValue, target, "")
 }
-func (str *StringValue) Has(subStr string) bool {
-	return strings.Contains(str.goValue, subStr)
+func (this *StringValue) Contains(subStr string) bool {
+	return strings.Contains(this.goValue, subStr)
 }
-func (str *StringValue) Lower() string {
-	return strings.ToLower(str.goValue)
+func (this *StringValue) Has(subStr string) bool {
+	return strings.Contains(this.goValue, subStr)
 }
-func (str *StringValue) Upper() string {
-	return strings.ToUpper(str.goValue)
+func (this *StringValue) Lower() string {
+	return strings.ToLower(this.goValue)
 }
-func (str *StringValue) LowerFirst() string {
-	return strings.ToLower(string(str.chars[0])) + string(str.chars[1:])
+func (this *StringValue) Upper() string {
+	return strings.ToUpper(this.goValue)
 }
-func (str *StringValue) UpperFirst() string {
-	return strings.ToUpper(string(str.chars[0])) + string(str.chars[1:])
+func (this *StringValue) LowerFirst() string {
+	return strings.ToLower(string(this.chars[0])) + string(this.chars[1:])
 }
-func (str *StringValue) ToTitle() string {
-	return strings.ToTitle(str.goValue)
+func (this *StringValue) UpperFirst() string {
+	return strings.ToUpper(string(this.chars[0])) + string(this.chars[1:])
 }
-func (str *StringValue) Title() string {
-	return strings.Title(str.goValue)
+func (this *StringValue) ToTitle() string {
+	return strings.ToTitle(this.goValue)
 }
-func (str *StringValue) HasPrefix(prefix string) bool {
-	return strings.HasPrefix(str.goValue, prefix)
+func (this *StringValue) Title() string {
+	return strings.Title(this.goValue)
 }
-func (str *StringValue) HasSuffix(suffix string) bool {
-	return strings.HasSuffix(str.goValue, suffix)
+func (this *StringValue) HasPrefix(prefix string) bool {
+	return strings.HasPrefix(this.goValue, prefix)
 }
-func (str *StringValue) Split(seperator string, rawFlag bool) []string {
-	ss := strings.Split(str.goValue, seperator)
+func (this *StringValue) HasSuffix(suffix string) bool {
+	return strings.HasSuffix(this.goValue, suffix)
+}
+func (this *StringValue) Split(seperator string, rawFlag bool) []string {
+	ss := strings.Split(this.goValue, seperator)
 	if rawFlag {
 		return ss
 	}
@@ -161,13 +157,13 @@ func (str *StringValue) Split(seperator string, rawFlag bool) []string {
 	}
 	return ss
 }
-func (str *StringValue) Is(target string) bool {
-	return str.goValue == target || strings.ToLower(str.goValue) == strings.ToLower(target)
+func (this *StringValue) Is(target string) bool {
+	return this.goValue == target || strings.ToLower(this.goValue) == strings.ToLower(target)
 }
 
-func (str *StringValue) Match(tmpl string) bool {
-	return regMatch(tmpl, str.goValue)
+func (this *StringValue) Match(tmpl string) bool {
+	return regMatch(tmpl, this.goValue)
 }
-func (str *StringValue) Find(tmpl string) []interface{} {
-	return regFind(tmpl, str.goValue)
+func (this *StringValue) Find(tmpl string) []interface{} {
+	return regFind(tmpl, this.goValue)
 }

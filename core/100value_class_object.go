@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"reflect"
 )
 
@@ -24,55 +25,62 @@ func newClass(name string, raw interface{}) Value {
 	return clazz
 }
 
-func (clazz *ClassObject) initAsClass(name string, raw interface{}) {
-	clazz.name = name
-	clazz.raw = raw
-	clazz.initMethods()
+func (this *ClassObject) initAsClass(name string, raw interface{}) {
+	this.name = name
+	this.raw = raw
+	this.initMethods()
 }
 
-func (clazz *ClassObject) String() string {
-	if clazz.show != nil {
+func (this *ClassObject) Pr() {
+	fmt.Println(this.String())
+}
+func (this *ClassObject) String() string {
+	if this.show != nil {
 		var args []reflect.Value
-		resList := clazz.show.Call(args)
+		resList := this.show.Call(args)
 		res := resList[0].Interface()
 		return res.(string)
 	} else {
-		return "class " + clazz.name
+		return "class " + this.name
 	}
 }
 
-func (clazz *ClassObject) val() interface{} {
-	return clazz
+func (this *ClassObject) val() interface{} {
+	return this
 }
-func (clazz *ClassObject) typeName() string {
-	return clazz.name
+func (this *ClassObject) typeName() string {
+	return this.name
 }
-func (clazz *ClassObject) isObject() bool {
+func (this *ClassObject) isObject() bool {
 	return true
 }
 
-func (clazz *ClassObject) get(key string) Value {
-	mt, ok := clazz.methods[key]
+func (this *ClassObject) get(key string) Value {
+	mt, ok := this.methods[key]
 	if ok {
 		return mt
 	}
 
-	if key != "type" {
+	if key == "type" {
+		return callable(func() Value {
+			return newQKValue(this.name)
+		})
+	} else if key == "pr" {
+		return runnable(func() {
+			fmt.Println(this.String())
+		})
+	} else {
 		return NULL
 	}
-
-	return callable(func() Value {
-		return newQKValue(clazz.name)
-	})
 }
 
-func (clazz *ClassObject) initMethods() {
-	mts := collectFunctionInfo(clazz.raw)
-	clazz.methods = make(map[string]Function)
+func (this *ClassObject) initMethods() {
+	mts := collectFunctionInfo(this.raw)
+	this.methods = make(map[string]Function)
 	for name, mt := range mts {
 		if name == "string" {
-			clazz.show = &mt.obj
+			this.show = &mt.obj
 		}
-		clazz.methods[name] = newInternalFunc(name, mt)
+		this.methods[name] = newInternalFunc(name, mt)
 	}
 }

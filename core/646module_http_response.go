@@ -4,8 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
+	"os"
 )
 
 type HttpResponse struct {
@@ -17,13 +18,18 @@ type HttpResponse struct {
 }
 
 func newHttpResponse(resp *http.Response) Value {
-	defer resp.Body.Close()
+	defer func() {
+		err := resp.Body.Close()
+		if err != nil {
+			runtimeExcption(err)
+		}
+	}()
 
 	obj := &HttpResponse{cookies: resp.Cookies()}
 	obj.status = resp.Status
 	obj.statusCode = resp.StatusCode
 	obj.headers = resp.Header
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println(resp.StatusCode, err)
 		obj.statusCode = 504
@@ -90,7 +96,7 @@ func (resp *HttpResponse) Ok() bool {
 }
 
 func (resp *HttpResponse) Save(path string) {
-	err := ioutil.WriteFile(path, resp.body, 0666)
+	err := os.WriteFile(path, resp.body, 0666)
 	if err != nil {
 		runtimeExcption(err)
 	}

@@ -29,23 +29,23 @@ func newByteArrayValue(raw []byte) Value {
 	return bs
 }
 
-func (bs *ByteArrayValue) val() interface{} {
-	return bs.goValue
+func (this *ByteArrayValue) val() interface{} {
+	return this.goValue
 }
-func (bs *ByteArrayValue) isByteArray() bool {
+func (this *ByteArrayValue) isByteArray() bool {
 	return true
 }
-func (bs *ByteArrayValue) sub(start, end int) []byte {
-	return bs.goValue[start:end]
+func (this *ByteArrayValue) sub(start, end int) []byte {
+	return this.goValue[start:end]
 }
 
 // 获取指定位置的单个字节字符，以字符串形式返回
-func (bs *ByteArrayValue) At(index int) string {
-	return string(bs.goValue[index])
+func (this *ByteArrayValue) At(index int) string {
+	return string(this.goValue[index])
 }
 
 // 字节数组与ByteArray或String比较
-func (bs *ByteArrayValue) Equal(arg interface{}) bool {
+func (this *ByteArrayValue) Equal(arg interface{}) bool {
 	var data []byte
 	if subBytes, ok := arg.([]byte); ok {
 		data = subBytes
@@ -54,34 +54,34 @@ func (bs *ByteArrayValue) Equal(arg interface{}) bool {
 	} else {
 		return false
 	}
-	if len(bs.goValue) != len(data) {
+	if len(this.goValue) != len(data) {
 		return false
 	}
-	if len(bs.goValue) == 0 && len(data) == 0 {
+	if len(this.goValue) == 0 && len(data) == 0 {
 		return true
 	}
-	for i, b := range bs.goValue {
+	for i, b := range this.goValue {
 		if data[i] != b {
 			return false
 		}
 	}
 	return true
 }
-func (bs *ByteArrayValue) Eq(arg interface{}) bool {
-	return bs.Equal(arg)
+func (this *ByteArrayValue) Eq(arg interface{}) bool {
+	return this.Equal(arg)
 }
 
 // 转字符串
-func (bs *ByteArrayValue) Str() string {
-	return string(bs.goValue)
+func (this *ByteArrayValue) Str() string {
+	return string(this.goValue)
 }
 
 // 转Integer
-func (bs *ByteArrayValue) Int() int64 {
-	return bytesToInt(bs.goValue)
+func (this *ByteArrayValue) Int() int64 {
+	return bytesToInt(this.goValue)
 }
-func (bs *ByteArrayValue) I() int64 {
-	res, err := strconv.Atoi(string(bs.goValue))
+func (this *ByteArrayValue) I() int64 {
+	res, err := strconv.Atoi(string(this.goValue))
 	if err != nil {
 		fmt.Println(err)
 		return 0
@@ -90,11 +90,11 @@ func (bs *ByteArrayValue) I() int64 {
 }
 
 // 转Float
-func (bs *ByteArrayValue) Float() float64 {
-	return bytesToFloat(bs.goValue)
+func (this *ByteArrayValue) Float() float64 {
+	return bytesToFloat(this.goValue)
 }
-func (bs *ByteArrayValue) F() float64 {
-	res, err := strconv.ParseFloat(string(bs.goValue), 64)
+func (this *ByteArrayValue) F() float64 {
+	res, err := strconv.ParseFloat(string(this.goValue), 64)
 	if err != nil {
 		fmt.Println(err)
 		return 0
@@ -103,29 +103,29 @@ func (bs *ByteArrayValue) F() float64 {
 }
 
 // 是否包含指定ByteArray或String
-func (bs *ByteArrayValue) Contain(arg interface{}) bool {
+func (this *ByteArrayValue) Contain(arg interface{}) bool {
 	if subBytes, ok := arg.([]byte); ok {
-		return bytes.Contains(bs.goValue, subBytes)
+		return bytes.Contains(this.goValue, subBytes)
 	} else if subStr, ok := arg.(string); ok {
-		return bytes.Contains(bs.goValue, []byte(subStr))
+		return bytes.Contains(this.goValue, []byte(subStr))
 	} else {
 		return false
 	}
 }
 
 // 指定ByteArray或String在当前字节数组的位置
-func (bs *ByteArrayValue) Index(arg interface{}) int {
+func (this *ByteArrayValue) Index(arg interface{}) int {
 	if subBytes, ok := arg.([]byte); ok {
-		return bytes.Index(bs.goValue, subBytes)
+		return bytes.Index(this.goValue, subBytes)
 	} else if subStr, ok := arg.(string); ok {
-		return bytes.Index(bs.goValue, []byte(subStr))
+		return bytes.Index(this.goValue, []byte(subStr))
 	} else {
 		return -1
 	}
 }
 
 // 根据ByteArray, String, Integer或Float对字节数组进行切割
-func (bs *ByteArrayValue) Split(arg interface{}) [][]byte {
+func (this *ByteArrayValue) Split(arg interface{}) [][]byte {
 	var sep []byte
 	if bs, ok := arg.([]byte); ok {
 		sep = bs
@@ -138,34 +138,37 @@ func (bs *ByteArrayValue) Split(arg interface{}) [][]byte {
 	} else {
 		fmt.Println("ByteArray.Split() parameter type must be one of ByteArray/String/Number")
 	}
-	return bytes.Split(bs.goValue, sep)
+	return bytes.Split(this.goValue, sep)
 }
 
 // 往字节数组里添加ByteArray, String, Integer或Float
-func (bs *ByteArrayValue) Add(arg interface{}) {
+func (this *ByteArrayValue) Add(arg interface{}) {
 	if subBytes, ok := arg.([]byte); ok {
-		bs.goValue = append(bs.goValue, subBytes...)
+		this.goValue = append(this.goValue, subBytes...)
 	} else if subStr, ok := arg.(string); ok {
-		bs.goValue = append(bs.goValue, []byte(subStr)...)
+		this.goValue = append(this.goValue, []byte(subStr)...)
 	} else if ival, ok := arg.(int64); ok {
-		bs.goValue = append(bs.goValue, intToBytes(ival)...)
+		this.goValue = append(this.goValue, intToBytes(ival)...)
 	} else if fval, ok := arg.(float64); ok {
-		bs.goValue = append(bs.goValue, floatToBytes(fval)...)
+		this.goValue = append(this.goValue, floatToBytes(fval)...)
 	} else {
 		fmt.Println("ByteArray.add() parameter type must be one of ByteArray/String/Number")
 	}
 }
 
 // 字节数组大小
-func (bs *ByteArrayValue) Size() int {
-	return len(bs.goValue)
+func (this *ByteArrayValue) Size() int {
+	return len(this.goValue)
 }
 
 // 以二进制形式打印字节数组
-func (bs *ByteArrayValue) Show() {
-	showBytes(bs.goValue)
+func (this *ByteArrayValue) Show() {
+	showBytes(this.goValue)
 }
 
-func (bs *ByteArrayValue) String() string {
-	return fmt.Sprint(bs.goValue)
+func (this *ByteArrayValue) Pr() {
+	fmt.Println(this.String())
+}
+func (this *ByteArrayValue) String() string {
+	return fmt.Sprint(this.goValue)
 }
