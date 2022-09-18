@@ -6,15 +6,16 @@ type SourceCode interface {
 	source() string
 }
 type SourceCodeImpl struct {
-	tokens []Token
+	tokens   []Token
+	errPrint bool
 }
 
-func (src *SourceCodeImpl) tokenList() []Token {
-	return src.tokens
+func (this *SourceCodeImpl) tokenList() []Token {
+	return this.tokens
 }
-func (src *SourceCodeImpl) setTokenList(ts []Token) {
-	src.tokens = ts
+func (this *SourceCodeImpl) setTokenList(ts []Token) {
+	this.tokens = ts
 }
-func (src *SourceCodeImpl) source() string {
-	return tokensString(src.tokens)
+func (this *SourceCodeImpl) source() string {
+	return tokensString(this.tokens)
 }

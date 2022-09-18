@@ -12,4 +12,19 @@ rawSize.pr()
 afterGzipSize = dt.gzip().size()
 afterGzipSize.pr()
 echo(rawSize/afterGzipSize)
-dt.gzip().deGzip().save(`$root/afterData`)
+//dt.gzip().deGzip().save(`$root/afterData`)
+
+testStr = "
+s\r
+line2
+    cc dd
+? "
+testStr.raw().pr()
+
+echo("----------------")
+testStr += "\r\n\n\t"
+testStr.escape().pr()
+
+echo("----------------")
+echof("##%v##", testStr)
+

@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -37,6 +36,25 @@ func fileExist(pt string) bool {
 	return st != nil && !st.IsDir() && !os.IsNotExist(err)
 }
 
+// 判断目录或文件是否存在
+func dirExists(pt string) bool {
+	if st, err := os.Stat(pt); st != nil && !os.IsNotExist(err) {
+		return true
+	} else {
+		return false
+	}
+}
+
+func mkdirIfNotExists(pt string) {
+	if dirExists(pt) {
+		return
+	}
+	err := os.MkdirAll(pt, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+}
+
 // 路径拼接
 func pathJoin(base, uri string) string {
 	return path.Join(base, uri)
@@ -52,7 +70,7 @@ func doScanForInfo(path string, res *[]*FileInfo) {
 		log.Fatal(path, " is not directory.")
 		return
 	}
-	fs, err := ioutil.ReadDir(path)
+	fs, err := os.ReadDir(path)
 	if err != nil {
 		log.Fatal(fmt.Sprintf("failed to read path: %v, %v", path, err.Error()))
 		return

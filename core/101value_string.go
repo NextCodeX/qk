@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -15,6 +16,9 @@ const (
 	CR   = "\r"
 )
 
+// TODO https://blog.csdn.net/free0day/article/details/84651933
+// TODO https://golang.cafe/blog/golang-unzip-file-example.html
+// TODO https://golangdocs.com/tar-gzip-in-golang
 type StringValue struct {
 	goValue string
 	ClassObject
@@ -32,7 +36,12 @@ func (this *StringValue) val() interface{} {
 func (this *StringValue) isString() bool {
 	return true
 }
-
+func (this *StringValue) Raw() string {
+	return fmt.Sprintf("%q", this.goValue)
+}
+func (this *StringValue) Escape() string {
+	return strconv.Quote(this.goValue)
+}
 func (this *StringValue) String() string {
 	return this.goValue
 }
@@ -257,6 +266,7 @@ func trimSpaces(ss []string) []string {
 	return ss
 }
 func (this *StringValue) Is(target string) bool {
+	//strings.EqualFold()
 	return this.goValue == target || strings.ToLower(this.goValue) == strings.ToLower(target)
 }
 func (this *StringValue) In(targets []string, ignoreCase bool) bool {

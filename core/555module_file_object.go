@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"io/fs"
 	"os"
 	"path/filepath"
 )
@@ -105,10 +104,10 @@ func (f *QKFile) Flush() {
 // 文件信息对象
 type FileInfo struct {
 	parent string
-	info   fs.FileInfo
+	info   os.DirEntry
 }
 
-func newFileInfo(parent string, info fs.FileInfo) *FileInfo {
+func newFileInfo(parent string, info os.DirEntry) *FileInfo {
 	return &FileInfo{parent: parent, info: info}
 }
 
@@ -130,12 +129,20 @@ func (fi *FileInfo) Path() string {
 }
 
 func (fi *FileInfo) Size() int64 {
-	return fi.info.Size()
+	info, err := fi.info.Info()
+	if err != nil {
+		return -1
+	}
+	return info.Size()
 }
 
 // 毫秒时间戳
 func (fi *FileInfo) Modtime() int64 {
-	return fi.info.ModTime().Unix()
+	info, err := fi.info.Info()
+	if err != nil {
+		return -1
+	}
+	return info.ModTime().Unix()
 }
 
 func (fi *FileInfo) String() string {

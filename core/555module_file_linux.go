@@ -20,7 +20,7 @@ func (this *InternalFunctionSet) Mkdir(dir string) {
 
 // 当前目录文件查看
 func (this *InternalFunctionSet) Ls(dir string) Value {
-	fs, err := ioutil.ReadDir(dir)
+	fs, err := os.ReadDir(dir)
 	if err != nil {
 		fmt.Printf("failed to read path: %v, %v\n", dir, err.Error())
 		return nil

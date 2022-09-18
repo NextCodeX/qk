@@ -12,41 +12,41 @@ type ExpressionAdapter struct {
 	ValueStack
 }
 
-func (ea *ExpressionAdapter) setLocalScope() {
-	ea.localScope = true
+func (this *ExpressionAdapter) setLocalScope() {
+	this.localScope = true
 }
 
-func (ea *ExpressionAdapter) getVar(name string) Value {
+func (this *ExpressionAdapter) getVar(name string) Value {
 	if isTmpVar(name) {
-		tmpVars := ea.ValueStack.getVar(tmpVarsKey)
+		tmpVars := this.ValueStack.getVar(tmpVarsKey)
 		return goObj(tmpVars).get(name)
 	}
-	return ea.ValueStack.getVar(name)
+	return this.ValueStack.getVar(name)
 }
 
-func (ea *ExpressionAdapter) setVar(name string, value Value) {
+func (this *ExpressionAdapter) setVar(name string, value Value) {
 	if isTmpVar(name) {
-		tmpVars := ea.ValueStack.getVar(tmpVarsKey)
+		tmpVars := this.ValueStack.getVar(tmpVarsKey)
 		goObj(tmpVars).put(name, value)
 	} else {
-		if ea.localScope {
-			ea.ValueStack.setLocalVar(name, value)
+		if this.localScope {
+			this.ValueStack.setLocalVar(name, value)
 			return
 		}
-		ea.ValueStack.setVar(name, value)
+		this.ValueStack.setVar(name, value)
 	}
 }
 
-func (ea *ExpressionAdapter) setParent(p Function) {
-	ea.ValueStack.cur = p
-	ea.parent = p
+func (this *ExpressionAdapter) setParent(p Function) {
+	this.ValueStack.cur = p
+	this.parent = p
 }
-func (ea *ExpressionAdapter) getParant() Function {
-	return ea.parent
+func (this *ExpressionAdapter) getParant() Function {
+	return this.parent
 }
 
 // 赋值
-func (ea *ExpressionAdapter) evalAssign(priExpr Expression, res Value) {
+func (this *ExpressionAdapter) evalAssign(priExpr Expression, res Value) {
 	if expr, ok := priExpr.(ValueReceiver); ok {
 		expr.beAssigned(res)
 	} else {
@@ -78,12 +78,12 @@ func evalQKValues(exprs []Expression) []Value {
 	return res
 }
 
-func (ea *ExpressionAdapter) isPrimaryExpression() bool {
+func (this *ExpressionAdapter) isPrimaryExpression() bool {
 	return false
 }
-func (ea *ExpressionAdapter) isBinaryExpression() bool {
+func (this *ExpressionAdapter) isBinaryExpression() bool {
 	return false
 }
-func (ea *ExpressionAdapter) isMultiExpression() bool {
+func (this *ExpressionAdapter) isMultiExpression() bool {
 	return false
 }
