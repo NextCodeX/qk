@@ -3,7 +3,6 @@ package core
 import (
 	"bytes"
 	"fmt"
-	"runtime/debug"
 )
 
 func assert(flag bool, msg ...interface{}) {
@@ -83,6 +82,7 @@ func showBytes(bs []byte) {
 func catch() {
 	if err := recover(); err != nil {
 		fmt.Println(err)
-		debug.PrintStack()
+		//debug.PrintStack()
+
 	}
 }

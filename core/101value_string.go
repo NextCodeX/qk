@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"unicode/utf8"
@@ -35,6 +36,30 @@ func (this *StringValue) val() interface{} {
 }
 func (this *StringValue) isString() bool {
 	return true
+}
+func (this *StringValue) Templ(ctx JSONObject) string {
+	res := os.Expand(this.goValue, func(key string) string {
+		return evalByContext(key, ctx)
+	})
+	return res
+}
+
+func evalByContext(key string, ctx JSONObject) string {
+	ks := mySplit(key, ".")
+	cur := ctx
+	size := len(ks)
+	for i, k := range ks {
+		isFinal := i == size-1
+		val := cur.get(k)
+		if isFinal {
+			return fmt.Sprint(val)
+		} else if val.isJsonObject() {
+			cur = goObj(val)
+		} else {
+			return "null"
+		}
+	}
+	return ""
 }
 func (this *StringValue) Raw() string {
 	return fmt.Sprintf("%q", this.goValue)
@@ -259,6 +284,10 @@ func (this *StringValue) Split(seperator string, rawFlag bool) []string {
 	}
 	return trimSpaces(ss)
 }
+func mySplit(raw, seperator string) []string {
+	ss := strings.Split(raw, seperator)
+	return trimSpaces(ss)
+}
 func trimSpaces(ss []string) []string {
 	for i, s := range ss {
 		ss[i] = strings.TrimSpace(s)
@@ -266,8 +295,8 @@ func trimSpaces(ss []string) []string {
 	return ss
 }
 func (this *StringValue) Is(target string) bool {
-	//strings.EqualFold()
-	return this.goValue == target || strings.ToLower(this.goValue) == strings.ToLower(target)
+	return strings.EqualFold(this.goValue, target)
+	//return this.goValue == target || strings.ToLower(this.goValue) == strings.ToLower(target)
 }
 func (this *StringValue) In(targets []string, ignoreCase bool) bool {
 	for _, target := range targets {

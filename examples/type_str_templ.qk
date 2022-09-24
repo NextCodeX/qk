@@ -1,0 +1,17 @@
+
+s = "
+name:${name}
+age:$age
+addr:$addr
+"
+
+s.templ({
+name: "刘一",
+age:98,
+addr: "天津一号"
+}).pr()
+
+
+
+
+
