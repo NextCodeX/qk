@@ -1,11 +1,8 @@
 package test
 
 import (
-	"fmt"
-	"math"
 	"path/filepath"
 	"qk/core"
-	"runtime"
 	"testing"
 )
 
@@ -23,6 +20,5 @@ func Test_demo(t *testing.T) {
 }
 
 func Test_api(t *testing.T) {
-	fmt.Println(runtime.Version())
-	fmt.Println(math.Max(13, 9))
+
 }

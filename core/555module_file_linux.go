@@ -35,6 +35,18 @@ func (this *InternalFunctionSet) Ls(dir string) Value {
 
 // 删除文件或目录
 func (this *InternalFunctionSet) Rm(path string) {
+	var clearDirContent bool
+	if strings.HasSuffix(path, "/*") {
+		path = path[:len(path)-2]
+		clearDirContent = true
+	}
+	fileRemove(path)
+	if clearDirContent {
+		_ = os.MkdirAll(path, os.ModePerm)
+	}
+}
+
+func fileRemove(path string) {
 	err := os.RemoveAll(path)
 	if err != nil {
 		fmt.Println(err)

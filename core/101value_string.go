@@ -43,6 +43,9 @@ func (this *StringValue) Templ(ctx JSONObject) string {
 	})
 	return res
 }
+func (this *StringValue) Reg() Value {
+	return newRegexp(this.goValue)
+}
 
 func evalByContext(key string, ctx JSONObject) string {
 	ks := mySplit(key, ".")
