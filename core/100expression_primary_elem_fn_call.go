@@ -164,7 +164,6 @@ func (priExpr *ElemFunctionCallPrimaryExpression) beAssigned(res Value) {
 }
 
 func (priExpr *ElemFunctionCallPrimaryExpression) set(obj Value, tailExpr PrimaryExpression, res Value) {
-	//fmt.Println("mix#beAssigned#typeAsssert:", obj.val(), obj.isJsonObject(), obj.isJsonArray(), " | ", tailExpr.isVar(), tailExpr.isElement())
 	if obj.isJsonObject() && tailExpr.isElement() {
 		jsonObject := obj.(JSONObject)
 		elemExpr := tailExpr.(*ElementPrimaryExpression)

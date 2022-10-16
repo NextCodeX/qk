@@ -272,7 +272,6 @@ func (ds *DataSource) parseOracleSql(sql string) string {
 	argsCount := 1
 	var chs []rune
 	for _, ch := range sql {
-		//fmt.Println(string(ch), ch == '?')
 		if ch == '?' {
 			chs = append(chs, ':')
 			chs = append(chs, intToRunes(argsCount)...)
@@ -281,7 +280,6 @@ func (ds *DataSource) parseOracleSql(sql string) string {
 			chs = append(chs, ch)
 		}
 	}
-	//fmt.Println("final sql:", string(chs))
 	return string(chs)
 }
 
@@ -293,7 +291,6 @@ func (ds *DataSource) parseSqlServerSql(sql string) string {
 	argsCount := 1
 	var chs []rune
 	for _, ch := range sql {
-		//fmt.Println(string(ch), ch == '?')
 		if ch == '?' {
 			chs = append(chs, '@')
 			chs = append(chs, 'p')
@@ -303,7 +300,6 @@ func (ds *DataSource) parseSqlServerSql(sql string) string {
 			chs = append(chs, ch)
 		}
 	}
-	//fmt.Println("final sql:", string(chs))
 	return string(chs)
 }
 
@@ -315,7 +311,6 @@ func (ds *DataSource) parsePostgresSql(sql string) string {
 	argsCount := 1
 	var chs []rune
 	for _, ch := range sql {
-		//fmt.Println(string(ch), ch == '?')
 		if ch == '?' {
 			chs = append(chs, '$')
 			chs = append(chs, intToRunes(argsCount)...)
@@ -324,7 +319,6 @@ func (ds *DataSource) parsePostgresSql(sql string) string {
 			chs = append(chs, ch)
 		}
 	}
-	//fmt.Println("final sql:", string(chs))
 	return string(chs)
 }
 

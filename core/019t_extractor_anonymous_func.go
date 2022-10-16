@@ -1,9 +1,7 @@
 package core
 
-import "fmt"
-
 // 提取匿名函数字面值Token
-type AnonymousFuncTokenExtractor struct {}
+type AnonymousFuncTokenExtractor struct{}
 
 func (extractor *AnonymousFuncTokenExtractor) check(pre Token, cur Token, next Token, res []Token, raws []Token, curIndex int) bool {
 	return cur.assertSymbol("$")
@@ -15,7 +13,6 @@ func (extractor *AnonymousFuncTokenExtractor) extract(pre Token, cur Token, next
 
 	if endIndex := nextSymbolIndexNotError(ts, i, "->", ";", ")", "]", "}"); endIndex > 0 {
 		// $ [args...] -> result
-		fmt.Println("$ -> result")
 		retTokenRowIndex := ts[endIndex].rowIndex()
 		retToken := newKeyToken("return", retTokenRowIndex)
 		argsTokens := ts[i+1 : endIndex]
@@ -44,7 +41,7 @@ func (extractor *AnonymousFuncTokenExtractor) extract(pre Token, cur Token, next
 		bodyTokens = parse4ComplexTokens(bodyTokens)
 		bodyTokens = insert(retToken, bodyTokens)
 
-		scopeEnd:
+	scopeEnd:
 		funcToken := newFuncLiteralToken("", argsTokens, bodyTokens)
 		*res = append(*res, funcToken)
 		// 不能使endIndex+1, 避免";", ",", ")", "]", "}"这些分隔符被删除

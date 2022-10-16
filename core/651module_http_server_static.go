@@ -191,7 +191,6 @@ func (hfs *HttpFileServer) FileStateListener(w http.ResponseWriter, req *http.Re
 		return
 	}
 	localPath := hfs.localFilePath(parse.Path)
-	//fmt.Println("url ->", href, parse.Path, localPath)
 	if localPath == "" {
 		setResponseBody(w, "text/plain", []byte("page file is not found"))
 		return

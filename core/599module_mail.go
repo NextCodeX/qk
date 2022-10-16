@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"gopkg.in/gomail.v2"
 	"strings"
 )
@@ -99,8 +98,6 @@ func (m *Mailer) Password(mpassword string) {
 func (m *Mailer) Send() {
 	host := m.parseHost()
 	port := m.parsePort()
-	fmt.Println("host", host)
-	fmt.Println("port", port)
 
 	d := gomail.NewDialer(host, port, m.musername, m.mpassword)
 
