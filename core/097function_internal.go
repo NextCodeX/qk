@@ -17,7 +17,7 @@ var DEFAULT_STR_VALUE string
 var JSON_ARRAY_TYPE = reflect.TypeOf(emptyArray())
 var JSON_OBJECT_TYPE = reflect.TypeOf(emptyJsonObject())
 var BYTE_ARRAY_TYPE = reflect.TypeOf(EMPTY_BYTE_ARRAY)
-var STR_ARRAY_TYPE = reflect.TypeOf(DEFAULT_STR_VALUE)
+var STR_ARRAY_TYPE = reflect.TypeOf(EMPTY_STR_ARRAY)
 var BOOL_TYPE = reflect.TypeOf(DEFAULT_BOOL_VALUE)
 var INT_TYPE = reflect.TypeOf(DEFAULT_INT_VALUE)
 var I32_TYPE = reflect.TypeOf(DEFAULT_I32_VALUE)

@@ -1,0 +1,10 @@
+
+echo(`$ abc$`)
+
+
+"abc post fast hello world: loop".has("tt", "AJ", "lo").pr()
+
+echo("string with method!")
+echo("------------------------------------------")
+"abc post fast hello world: loop".with("tt", "AJ", "lo").pr()
+"abc post fast hello world: loop".with("fa", "ab", "lo").pr()

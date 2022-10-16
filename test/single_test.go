@@ -12,7 +12,7 @@ func Test_demo(t *testing.T) {
 	// 		errorLog(err)
 	// 	}
 	// }()
-	demo, _ := filepath.Abs("../examples/type_str_templ.qk")
+	demo, _ := filepath.Abs("../examples/type_str_check.qk")
 	//demo, _ := filepath.Abs("../examples/demo.qk")
 	// core.DEBUG = true
 	core.TestFlag = true

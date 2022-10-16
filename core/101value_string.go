@@ -247,8 +247,21 @@ func (this *StringValue) Clear(target string) string {
 func (this *StringValue) Contains(subStr string) bool {
 	return strings.Contains(this.goValue, subStr)
 }
-func (this *StringValue) Has(subStr string) bool {
-	return strings.Contains(this.goValue, subStr)
+func (this *StringValue) Has(subStrs []string) bool {
+	for _, subStr := range subStrs {
+		if strings.Contains(this.goValue, subStr) {
+			return true
+		}
+	}
+	return false
+}
+func (this *StringValue) With(subStrs []string) bool {
+	for _, subStr := range subStrs {
+		if !strings.Contains(this.goValue, subStr) {
+			return false
+		}
+	}
+	return true
 }
 func (this *StringValue) Lower() string {
 	return strings.ToLower(this.goValue)
