@@ -4,5 +4,14 @@ str = "  a, b, c    "
 str.split(",").pr()
 str.split(",", true).pr()
 
+ss = "hell-检多作业多不《大9527海》"
+si = ss.index("《")
+ei = ss.index("》")
+ei1 = ss.lastIndex("》")
+echo(si, ei, ei1,  ss[si+1:ei])
 
 
+"he".in(["hell", "he"]).pr()
+"he".in(["x", "hex"]).pr()
+"he".in(["HE", "hex"]).pr()
+"he".in(["HE", "hex"], true).pr()

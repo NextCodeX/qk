@@ -105,6 +105,11 @@ func findFuncArg(funcName string, index int, t reflect.Type, args []any) reflect
 			resTmp = DEFAULT_STR_VALUE
 		}
 	} else {
+		if STR_ARRAY_TYPE.AssignableTo(t) {
+			if jarr, ok := resTmp.(JSONArray); ok {
+				return toStrArrFromJsonArray(jarr)
+			}
+		}
 		if reflect.TypeOf(resTmp).Kind() == reflect.Int64 {
 			if t.Kind() == reflect.Int {
 				return reflect.ValueOf(int(resTmp.(int64)))
@@ -119,6 +124,14 @@ func findFuncArg(funcName string, index int, t reflect.Type, args []any) reflect
 		}
 	}
 	return reflect.ValueOf(resTmp)
+}
+
+func toStrArrFromJsonArray(jarr JSONArray) reflect.Value {
+	var res []string
+	for _, item := range jarr.values() {
+		res = append(res, fmt.Sprint(item.val()))
+	}
+	return reflect.ValueOf(res)
 }
 
 // 设置函数参数

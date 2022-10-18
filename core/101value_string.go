@@ -188,6 +188,9 @@ func (this *StringValue) DeGzip() []byte {
 func (this *StringValue) Size() int {
 	return utf8.RuneCountInString(this.goValue)
 }
+func (this *StringValue) Len() int {
+	return len(this.goValue)
+}
 
 func (this *StringValue) ToJson() any {
 	rawStr := strings.TrimSpace(this.goValue)
@@ -213,10 +216,14 @@ func (this *StringValue) ToJson() any {
 	return nil
 }
 func (this *StringValue) Index(subStr string) int {
-	return strings.Index(this.goValue, subStr)
+	endIndex := strings.Index(this.goValue, subStr)
+	tmp := this.goValue[:endIndex]
+	return utf8.RuneCountInString(tmp)
 }
 func (this *StringValue) LastIndex(subStr string) int {
-	return strings.LastIndex(this.goValue, subStr)
+	endIndex := strings.LastIndex(this.goValue, subStr)
+	tmp := this.goValue[:endIndex]
+	return utf8.RuneCountInString(tmp)
 }
 func (this *StringValue) Trim() string {
 	return strings.TrimSpace(this.goValue)
