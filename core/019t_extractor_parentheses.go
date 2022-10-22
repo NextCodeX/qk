@@ -7,6 +7,7 @@ func (nt *ParenthesesTokenExtractor) check(pre Token, cur Token, next Token, res
 }
 func (nt *ParenthesesTokenExtractor) extract(pre Token, cur Token, next Token, res *[]Token, raws []Token, curIndex int) int {
 	endIndex := scopeEndIndex(raws, curIndex, "(", ")")
-	*res = append(*res, newExprToken(raws[curIndex+1:endIndex]))
+	tmp := parse4ComplexTokens(raws[curIndex+1 : endIndex])
+	*res = append(*res, newExprToken(tmp))
 	return endIndex + 1
 }

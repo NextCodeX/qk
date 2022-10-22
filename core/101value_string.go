@@ -217,11 +217,17 @@ func (this *StringValue) ToJson() any {
 }
 func (this *StringValue) Index(subStr string) int {
 	endIndex := strings.Index(this.goValue, subStr)
+	if endIndex < 1 {
+		return endIndex
+	}
 	tmp := this.goValue[:endIndex]
 	return utf8.RuneCountInString(tmp)
 }
 func (this *StringValue) LastIndex(subStr string) int {
 	endIndex := strings.LastIndex(this.goValue, subStr)
+	if endIndex < 1 {
+		return endIndex
+	}
 	tmp := this.goValue[:endIndex]
 	return utf8.RuneCountInString(tmp)
 }

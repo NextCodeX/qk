@@ -12,9 +12,9 @@ func Test_demo(t *testing.T) {
 	// 		errorLog(err)
 	// 	}
 	// }()
-	demo, _ := filepath.Abs("../examples/type_string.qk")
+	demo, _ := filepath.Abs("../examples/demo.qk")
 	//demo, _ := filepath.Abs("../examples/demo.qk")
-	// core.DEBUG = true
+	core.DEBUG = true
 	//core.TestFlag = true
 	core.ExecScriptFile(demo)
 }
