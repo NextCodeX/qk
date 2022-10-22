@@ -1,8 +1,7 @@
 package test
 
 import (
-	"path/filepath"
-	"qk/core"
+	//"qk/core"
 	"testing"
 )
 
@@ -12,11 +11,11 @@ func Test_demo(t *testing.T) {
 	// 		errorLog(err)
 	// 	}
 	// }()
-	demo, _ := filepath.Abs("../examples/demo.qk")
 	//demo, _ := filepath.Abs("../examples/demo.qk")
-	core.DEBUG = true
+	//demo, _ := filepath.Abs("../examples/demo.qk")
+	//core.DEBUG = true
 	//core.TestFlag = true
-	core.ExecScriptFile(demo)
+	//core.ExecScriptFile(demo)
 }
 
 func Test_api(t *testing.T) {

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"qk/core"
 	"testing"
 )
 
@@ -43,8 +42,8 @@ func singleFileTest(f string) (res bool) {
 		}
 	}()
 
-	core.TestFlag = true
-	core.ExecScriptFile(f)
+	//core.TestFlag = true
+	//core.ExecScriptFile(f)
 	res = true
 	return
 }
