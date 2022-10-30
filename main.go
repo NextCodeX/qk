@@ -6,7 +6,6 @@ import (
 	"os"
 	"qk/core"
 	"runtime"
-	"time"
 )
 
 //go:embed version
@@ -20,9 +19,6 @@ func main() {
 			return
 		}
 	}
-
-	// 时区固定为 东八区
-	time.Local = time.FixedZone("CST", 8*3600) // 东八
 
 	core.Start()
 }

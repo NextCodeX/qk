@@ -25,6 +25,8 @@ archives:
     format_overrides:
     - goos: windows
       format: zip
+    files:
+    - src: /home/xp/software/go/lib/time/zoneinfo.zip
 checksum:
   name_template: 'checksums.txt'
 snapshot:

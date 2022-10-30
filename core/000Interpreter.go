@@ -80,12 +80,7 @@ func (this *Interpreter) initInternalVars() {
 	}
 
 	// 提供qk执行文件所在的目录
-	if executable, err := os.Executable(); err == nil {
-		rootDir := filepath.Dir(executable)
-		initVars["qkDir"] = newQKValue(rootDir)
-	} else {
-		fmt.Println(err)
-	}
+	initVars["qkDir"] = newQKValue(qkDirGet())
 
 	// 当前命令行所在的路径，与`pwd`等同(工作路径)
 	if cwd, err := os.Getwd(); err == nil {
@@ -116,4 +111,13 @@ func (this *Interpreter) initInternalVars() {
 	}
 
 	this.main.setInternalVars(initVars)
+}
+
+func qkDirGet() string {
+	if executable, err := os.Executable(); err == nil {
+		return filepath.Dir(executable)
+	} else {
+		panic(err)
+		return ""
+	}
 }

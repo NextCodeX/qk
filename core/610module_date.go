@@ -1,6 +1,8 @@
 package core
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -9,6 +11,11 @@ const (
 	CommonDatetimeFormat = "2006-01-02 15:04:05"
 	CommonDateFormat     = "2006-01-02"
 )
+
+func init() {
+	zoneInfoFilePath := filepath.Join(qkDirGet(), "zoneinfo.zip")
+	os.Setenv("ZONEINFO", zoneInfoFilePath)
+}
 
 // current timestamp (Microsecond)
 func (this *InternalFunctionSet) Timestamp() interface{} {
