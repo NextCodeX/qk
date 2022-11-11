@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"regexp"
@@ -19,7 +18,7 @@ var regBlankChar = regexp.MustCompile(`\s+`)
 
 // 读取文件所有内容，返回字节数组
 func (this *InternalFunctionSet) Fbytes(filename string) []byte {
-	bs, err := ioutil.ReadFile(filename)
+	bs, err := os.ReadFile(filename)
 	if err == nil {
 		return bs
 	}
@@ -34,7 +33,7 @@ func (this *InternalFunctionSet) Fbs(filename string) []byte {
 
 // 读取文件所有内容，返回字符串
 func (this *InternalFunctionSet) Fstr(filename string) string {
-	bs, err := ioutil.ReadFile(filename)
+	bs, err := os.ReadFile(filename)
 	if err == nil {
 		return string(bs)
 	}

@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -84,7 +83,7 @@ func (f *FileSizeStatistic) doStatistic(dir string) {
 		return
 	}
 
-	infos, err := ioutil.ReadDir(dir)
+	infos, err := os.ReadDir(dir)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -99,7 +98,8 @@ func (f *FileSizeStatistic) doStatistic(dir string) {
 			nextDir := pathJoin(dir, info.Name())
 			go f.doStatistic(nextDir)
 		} else {
-			f.sizeChan <- info.Size()
+			fileInfo, _ := info.Info()
+			f.sizeChan <- fileInfo.Size()
 		}
 	}
 }

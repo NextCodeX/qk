@@ -12,6 +12,15 @@ import (
 	"time"
 )
 
+// 返回所有内置函数及变量名称
+func (this *InternalFunctionSet) Allfns() []string {
+	res := make([]string, 0, len(this.internalFuntions))
+	for k := range this.internalFuntions {
+		res = append(res, k)
+	}
+	return res
+}
+
 // 获取当前系统名称
 func (this *InternalFunctionSet) Sys() string {
 	return runtime.GOOS

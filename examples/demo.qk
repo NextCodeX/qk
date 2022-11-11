@@ -1,9 +1,3 @@
-list = [
-{name:"change", age:18},
-{name:"tom", age:911},
-{name:"jerry", age:333}
-]
 
-for i=1; i<list.size(); i++ {
-    echo(list[i].name, (list[i].age*2))
-}
+
+allFuncs().pr()

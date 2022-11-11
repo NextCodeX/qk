@@ -13,7 +13,7 @@ func (this *InternalFunctionSet) Cron(expr string, fn Function) {
 		qkcron = cron.New()
 	}
 
-	qkcron.AddFunc(expr, func() {
+	_ = qkcron.AddFunc(expr, func() {
 		fn.execute()
 	})
 

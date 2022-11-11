@@ -25,17 +25,6 @@ func newInternalFunctionSet(parent *Interpreter) *InternalFunctionSet {
 	return fns
 }
 
-// 返回所有内置函数及变量名称
-func (this *InternalFunctionSet) Allfns() []string {
-	res := make([]string, len(this.internalFuntions))
-	i := 0
-	for k := range this.internalFuntions {
-		res[i] = k
-		i++
-	}
-	return res
-}
-
 // 通过反射收集函数信息
 func collectFunctionInfo(objDoublePtr interface{}) (res map[string]*FunctionExecutor) {
 	res = make(map[string]*FunctionExecutor)
