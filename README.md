@@ -2,7 +2,7 @@
 It's a script language made by Golang.
 
 ### Documentation
-The complete documentation can be found [here](https://www.chenlh.cn/qk-doc/).
+The complete documentation can be found [here](https://chenlh.cn/qk-doc/).
 
 Examples can be found under the [examples](./examples) directory.
 
@@ -24,5 +24,5 @@ Apache License 2.0 - see [`LICENSE`](./LICENSE) for more details
 
 ### Thanks
 
-[<img src="https://www.chenlh.cn/resource/jetBrain.png" width="200"/>](https://www.jetbrains.com/zh-cn/)
+[<img src="https://chenlh.cn/resource/jetBrain.png" width="200"/>](https://www.jetbrains.com/zh-cn/)
 
