@@ -1,3 +1,9 @@
 
 
-allFuncs().pr()
+forv info: localips() {
+    info.pr()
+}
+
+localips().pr()
+
+getOutBoundIP().pr()

@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"net"
@@ -9,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"time"
 )
 
@@ -177,4 +179,54 @@ func getClientIp() string {
 		}
 	}
 	return ""
+}
+
+// 所有ip地址
+func (this *InternalFunctionSet) Localips() []Value {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		fmt.Println(err)
+		return nil
+	}
+	var res []Value
+	for _, address := range addrs {
+		// 检查ip地址判断是否回环地址
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			res = append(res, newIpInfo(ipnet.IP.String(), ipnet.IP.To4() != nil))
+		}
+	}
+	return res
+}
+
+type IpInfo struct {
+	Addr_ string
+	Is4_  bool
+}
+
+func (this *IpInfo) Addr() string {
+	return this.Addr_
+}
+func (this *IpInfo) Is4() bool {
+	return this.Is4_
+}
+func (this *IpInfo) String() string {
+	if result, err := json.Marshal(this); err == nil {
+		return string(result)
+	} else {
+		return "{}"
+	}
+}
+
+func newIpInfo(addr string, is4 bool) Value {
+	ipInfo := &IpInfo{addr, is4}
+	return newClass("IpInfo", &ipInfo)
+}
+
+func (this *InternalFunctionSet) GetOutBoundIP() string {
+	conn, err := net.Dial("udp", "8.8.8.8:53")
+	if err != nil {
+		return ""
+	}
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return strings.Split(localAddr.String(), ":")[0]
 }
