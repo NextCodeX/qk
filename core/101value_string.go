@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 	"os"
 	"strconv"
 	"strings"
@@ -256,6 +258,19 @@ func (this *StringValue) Lines() []string {
 }
 func (this *StringValue) Clear(target string) string {
 	return strings.ReplaceAll(this.goValue, target, "")
+}
+func (this *StringValue) ToCamel() string {
+	tmp1 := strings.TrimSpace(this.goValue)
+	ss := strings.Split(tmp1, "_")
+	var res string
+	for i, s := range ss {
+		if i < 1 {
+			res += s
+		} else {
+			res += cases.Title(language.AmericanEnglish).String(s)
+		}
+	}
+	return res
 }
 func (this *StringValue) Contains(subStr string) bool {
 	return strings.Contains(this.goValue, subStr)

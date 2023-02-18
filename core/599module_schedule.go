@@ -21,13 +21,16 @@ func (this *InternalFunctionSet) Interval(action Function, ms int64) {
 	go func() {
 		defer catch()
 		defer goroutineWaiter.Done()
+		action.execute()
 
 		duration := time.Duration(ms) * time.Millisecond
 		ticker := time.NewTicker(duration)
 		for range ticker.C {
+
+			goroutineWaiter.Add(1)
 			go func() {
 				defer catch()
-
+				defer goroutineWaiter.Done()
 				action.execute()
 			}()
 		}

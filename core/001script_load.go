@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,11 +12,7 @@ import (
 func findScriptFile() string {
 	cmdDir := getCmdDir()
 	if len(os.Args) > 1 {
-		arg, err := filepath.Abs(os.Args[1])
-		if err != nil {
-			fmt.Println(err)
-			return ""
-		}
+		arg := os.Args[1]
 		if fileExist(arg) {
 			return arg
 		}

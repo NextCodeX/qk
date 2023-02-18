@@ -7,3 +7,9 @@ forv info: localips() {
 localips().pr()
 
 getOutBoundIP().pr()
+
+
+echo("start test interval function! at", now())
+interval(${
+    echo("i test at", now())
+}, 5000)

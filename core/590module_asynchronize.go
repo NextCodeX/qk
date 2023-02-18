@@ -4,7 +4,7 @@ import (
 	"sync"
 )
 
-var goroutineWaiter = &sync.WaitGroup{}
+var goroutineWaiter sync.WaitGroup
 
 func (this *InternalFunctionSet) Async(args []interface{}) Function {
 	if len(args) < 1 {

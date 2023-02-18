@@ -4,7 +4,7 @@ It's a script language made by Golang.
 ### Documentation
 The complete documentation can be found [here](https://chenlh.cn/qk-doc/).
 
-Examples can be found under the [examples](./examples) directory.
+Examples can be found under the [`examples`](./examples) directory.
 
 ### Compile from source
 If you wish to build `Quick` you'll need Go version 1.19+ installed.
